@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Side: {{ side.name }}{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Side: {{ side.name }}</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>ID</th>
+                                    <td>{{ side.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <td>{{ side.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Color</th>
+                                    <td>
+                                        <span class="badge px-3 py-2" style="background-color: {{ side.color }}">{{ side.color }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ side.description }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h4>Associated GeoObjects</h4>
+                        {% if side.geoObjects|length > 0 %}
+                            <ul class="list-group">
+                                {% for obj in side.geoObjects %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ obj.name }}
+                                        <span class="badge bg-primary rounded-pill">{{ obj.geometryType }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">No objects associated with this side.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ path('side_index') }}" class="btn btn-secondary">Back to list</a>
+                <a href="{{ path('side_edit', {'id': side.id}) }}" class="btn btn-warning">Edit</a>
+                {{ include('side/_delete_form.html.twig') }}
+            </div>
+        </div>
+    </div>
+{% endblock %} 

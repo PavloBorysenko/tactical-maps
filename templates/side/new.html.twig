@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Side{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Create New Side</h1>
+
+        {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.name) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.color) }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form_row(form.description) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="{{ path('side_index') }}" class="btn btn-secondary">Back to list</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %} 

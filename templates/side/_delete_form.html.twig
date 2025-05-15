@@ -1,0 +1,6 @@
+<form method="post" action="{{ path('side_delete', {'id': side.id}) }}" onsubmit="return confirm('Вы уверены, что хотите удалить эту сторону? Это действие нельзя отменить.');" class="d-inline">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ side.id) }}">
+    <button class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-trash-alt"></i> Delete side
+    </button>
+</form> 
