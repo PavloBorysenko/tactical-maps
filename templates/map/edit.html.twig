@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ map.id ? 'Edit' : 'Create New' }} Map{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('map-editor') }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header {{ map.id ? 'bg-warning' : 'bg-primary text-white' }}">
+                <h1 class="h3 mb-0">{{ map.id ? 'Edit' : 'Create New' }} Map</h1>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.title) }}
+                        {{ form_widget(form.title) }}
+                        {{ form_errors(form.title) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(form.description) }}
+                        {{ form_widget(form.description) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                    
+                    {# Map container with data attributes #}
+                    <div class="mb-3">
+                        <label class="form-label">Map Position</label>
+                        <div id="map-container" class="map-container"
+                             data-lat="{{ map.centerLat }}"
+                             data-lng="{{ map.centerLng }}"
+                             data-zoom="{{ map.zoomLevel }}"></div>
+                        <div class="map-coordinates">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Latitude:</strong> <span id="display-lat" class="coordinate-display">{{ map.centerLat }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Longitude:</strong> <span id="display-lng" class="coordinate-display">{{ map.centerLng }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Zoom:</strong> <span id="display-zoom" class="coordinate-display">{{ map.zoomLevel }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 small text-muted">
+                                Pan and zoom the map to set the center position and zoom level. Values will update automatically.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {# Hidden fields for map coordinates and zoom #}
+                    {{ form_widget(form.centerLat) }}
+                    {{ form_widget(form.centerLng) }}
+                    {{ form_widget(form.zoomLevel) }}
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('map_index') }}" class="btn btn-secondary">Back to list</a>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+        
+        {% if map.id %}
+        <div class="mt-3">
+            {{ include('map/_delete_form.html.twig') }}
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('map-editor') }}
+{% endblock %} 

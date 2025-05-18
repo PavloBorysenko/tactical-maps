@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create New Map{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('map-editor') }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h3 mb-0">Create New Map</h1>
+            </div>
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'id': 'map-form'}}) }}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form_label(form.title) }}
+                                {{ form_widget(form.title) }}
+                                {{ form_errors(form.title) }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description) }}
+                                {{ form_errors(form.description) }}
+                                <small class="form-text text-muted">Enter a description for this map (optional).</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Map Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Create a new map by:</p>
+                                    <ol>
+                                        <li>Enter a title and description</li>
+                                        <li>Adjust the map view below</li>
+                                        <li>Click Save to create the map</li>
+                                    </ol>
+                                    <p class="mb-0">After creating the map, you can add geo objects to it from the map view page.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {# Map container with data attributes #}
+                    <div class="mb-3">
+                        <label class="form-label">Map Position</label>
+                        <div id="map-container" class="map-container"
+                             data-lat="{{ map.centerLat }}"
+                             data-lng="{{ map.centerLng }}"
+                             data-zoom="{{ map.zoomLevel }}"></div>
+                        <div class="map-coordinates">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Latitude:</strong> <span id="display-lat" class="coordinate-display">{{ map.centerLat }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Longitude:</strong> <span id="display-lng" class="coordinate-display">{{ map.centerLng }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Zoom:</strong> <span id="display-zoom" class="coordinate-display">{{ map.zoomLevel }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 small text-muted">
+                                <i class="fas fa-info-circle"></i> Pan and zoom the map to set the center position and zoom level. Values will update automatically.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {# Hidden fields for map coordinates and zoom #}
+                    {{ form_widget(form.centerLat) }}
+                    {{ form_widget(form.centerLng) }}
+                    {{ form_widget(form.zoomLevel) }}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ path('map_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to list
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Create Map
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('map-editor') }}
+{% endblock %} 

@@ -1,0 +1,130 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ map.title }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('map-viewer') }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">{{ map.title }}</h1>
+                <div>
+                    <a href="{{ path('map_edit', {'id': map.id}) }}" class="btn btn-warning">Edit</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h3>Map Details</h3>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>ID</th>
+                                    <td>{{ map.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Title</th>
+                                    <td>{{ map.title }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ map.description }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Center</th>
+                                    <td>{{ map.centerLat }}, {{ map.centerLng }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Zoom Level</th>
+                                    <td>{{ map.zoomLevel }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Geo Objects</th>
+                                    <td>{{ map.geoObjects|length }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Map Preview</h3>
+                        
+                        {# Prepare geoObjects data as a JSON string #}
+                        {% set geoObjectsData = [] %}
+                        {% for obj in map.geoObjects %}
+                            {% set geoObj = {
+                                'id': obj.id,
+                                'type': obj.type,
+                                'name': obj.name
+                            } %}
+                            
+                            {# Add type-specific properties #}
+                            {% if obj.type == 'point' and obj.lat is defined and obj.lng is defined %}
+                                {% set geoObj = geoObj|merge({'lat': obj.lat, 'lng': obj.lng}) %}
+                            {% elseif obj.type == 'polygon' and obj.coordinates is defined %}
+                                {% set geoObj = geoObj|merge({'coordinates': obj.coordinates, 'color': obj.color|default('blue')}) %}
+                            {% endif %}
+                            
+                            {% set geoObjectsData = geoObjectsData|merge([geoObj]) %}
+                        {% endfor %}
+                        
+                        {# Map container with data attributes #}
+                        <div id="map-display" class="map-display"
+                             data-lat="{{ map.centerLat }}"
+                             data-lng="{{ map.centerLng }}"
+                             data-zoom="{{ map.zoomLevel }}"
+                             data-geo-objects="{{ geoObjectsData|json_encode|e('html_attr') }}"
+                             data-title="{{ map.title }}"></div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('map_index') }}" class="btn btn-secondary">Back to list</a>
+                    {{ include('map/_delete_form.html.twig') }}
+                </div>
+            </div>
+        </div>
+        
+        {% if map.geoObjects|length > 0 %}
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h3 class="h4 mb-0">Geo Objects ({{ map.geoObjects|length }})</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for geoObject in map.geoObjects %}
+                                <tr>
+                                    <td>{{ geoObject.id }}</td>
+                                    <td>{{ geoObject.type }}</td>
+                                    <td>{{ geoObject.name }}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-info">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('map-viewer') }}
+{% endblock %} 
