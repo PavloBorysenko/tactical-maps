@@ -67,7 +67,9 @@ export default class MapViewer {
 
         // Add center marker if required
         if (this.options.showCenterMarker) {
-            L.marker([this.options.centerLat, this.options.centerLng])
+            L.marker([this.options.centerLat, this.options.centerLng], {
+                icon: this.options.centerIcon,
+            })
                 .addTo(this.map)
                 .bindPopup(this.options.title)
                 .openPopup();
@@ -163,6 +165,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoomLevel = parseInt(mapDisplay.dataset.zoom || 13);
     const title = mapDisplay.dataset.title || 'Map Center';
 
+    const centerIcon = L.icon({
+        iconUrl: '/build/images/custom-marker/frame.webp',
+
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16],
+        // shadowSize: [41, 41],
+    });
+
     // Parse geo objects from data attribute if present
     const geoObjectsJson = mapDisplay.dataset.geoObjects;
     const geoObjects = geoObjectsJson ? JSON.parse(geoObjectsJson) : [];
@@ -174,5 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomLevel,
         geoObjects,
         title,
+        centerIcon,
     });
 });

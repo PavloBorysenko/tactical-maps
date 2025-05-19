@@ -85,6 +85,7 @@ export default class MapEditor {
         // Add draggable marker at center
         this.marker = L.marker([initialLat, initialLng], {
             draggable: true,
+            icon: this.options.centerIcon,
         }).addTo(this.map);
 
         // Set up event listeners
@@ -191,7 +192,7 @@ export default class MapEditor {
     }
 }
 
-// Инициализация карты при загрузке документа
+// Initialize map editor
 document.addEventListener('DOMContentLoaded', () => {
     // Check if map container exists
     const mapContainer = document.getElementById('map-container');
@@ -202,10 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialLng = parseFloat(mapContainer.dataset.lng || -0.09);
     const initialZoom = parseInt(mapContainer.dataset.zoom || 13);
 
+    const centerIcon = L.icon({
+        iconUrl: '/build/images/custom-marker/frame.webp',
+
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16],
+    });
+
     // Create map editor
     new MapEditor('map-container', {
         initialLat,
         initialLng,
         initialZoom,
+        centerIcon,
     });
 });

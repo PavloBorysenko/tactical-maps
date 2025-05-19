@@ -63,6 +63,10 @@ Encore
         from: './node_modules/leaflet/dist/images',
         to: 'images/leaflet/[name].[ext]',
     })
+    .copyFiles({
+        from: './assets/images',
+        to: 'images/custom-marker/[name].[ext]',
+    })
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()
 
