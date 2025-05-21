@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tactical Maps{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('home') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('home') }}
+{% endblock %}
+
+{% block body %}
+<div class="multicam-bg d-flex align-items-center justify-content-center min-vh-100">
+    <div class="bg-white bg-opacity-90 p-4 p-md-5 rounded shadow-lg" style="max-width: 400px;">
+        <h1 class="display-5 fw-bold text-center mb-3">Tactical Maps</h1>
+        
+        <p class="text-muted text-center mb-4">
+            Interactive mapping solution for tactical planning and operation coordination.
+        </p>
+        
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ path('map_index') }}" class="btn btn-success btn-tactical">
+                View Maps
+            </a>
+            <a href="{{ path('map_new') }}" class="btn btn-secondary btn-tactical">
+                Create Map
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
