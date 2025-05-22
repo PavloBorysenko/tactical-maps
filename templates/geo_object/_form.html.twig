@@ -1,0 +1,74 @@
+<div class="geo-object-form-container">
+    <h3 class="geo-form-title mb-3">Create New Geo Object</h3>
+    
+    <form id="geo-object-form" class="needs-validation" novalidate>
+        {% if form._token is defined %}
+            {{ form_widget(form._token) }}
+        {% endif %}
+        
+        {% if form.id is defined %}
+            {{ form_widget(form.id) }}
+        {% endif %}
+        
+        <!-- Map ID hidden field -->
+        {{ form_widget(form.mapId, {'attr': {'value': map.id}}) }}
+        
+        <!-- Basic information -->
+        <div class="row mb-3">
+            <div class="col">
+                <div class="form-group">
+                    {{ form_label(form.title) }}
+                    {{ form_widget(form.title) }}
+                    <div class="invalid-feedback">
+                        Please provide a title for the geo object.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col">
+                <div class="form-group">
+                    {{ form_label(form.description) }}
+                    {{ form_widget(form.description) }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- TTL and type selection -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form_label(form.ttl) }}
+                    {{ form_widget(form.ttl) }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form_label(form.type) }}
+                    {{ form_widget(form.type) }}
+                    <small id="geo-type-help" class="form-text text-muted">
+                        Select a type and then interact with the map.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hidden fields -->
+        {{ form_widget(form.geoJson) }}
+        {{ form_widget(form.hash) }}
+        
+        <!-- Form actions -->
+        <div class="form-actions mt-4">
+            <button type="submit" id="btn-create-geo" class="btn btn-success">
+                <i class="fas fa-save me-1"></i> Create
+            </button>
+            <button type="submit" id="btn-update-geo" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-save me-1"></i> Update
+            </button>
+            <button type="button" id="btn-cancel-geo" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i> Cancel
+            </button>
+        </div>
+    </form>
+</div> 

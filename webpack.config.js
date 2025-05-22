@@ -23,7 +23,7 @@ Encore
     .addEntry('app', './assets/app.js')
     .addEntry('home', './assets/js/home.js')
     .addEntry('map-editor', './assets/js/map-editor.js')
-    .addEntry('map-viewer', './assets/js/map-viewer.js')
+    .addEntry('map_viewer', './assets/js/map_viewer.js')
     .addEntry('geo_object_form', './assets/js/geo_object_form.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
@@ -70,7 +70,8 @@ Encore
     .copyFiles({
         from: './assets/images',
         to: 'images/custom-marker/[name].[ext]',
-    });
+    })
+    .addStyleEntry('geo_objects', './assets/styles/geo_objects.css');
 // uncomment if you use TypeScript
 //.enableTypeScriptLoader()
 

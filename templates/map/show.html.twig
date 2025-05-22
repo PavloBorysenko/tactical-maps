@@ -1,130 +1,160 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ map.title }}{% endblock %}
+{% block title %}Map: {{ map.title }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
-    {{ encore_entry_link_tags('map-viewer') }}
+    {{ encore_entry_link_tags('map_viewer') }}
+    <style>
+        .map-container {
+            height: 70vh;
+            margin-bottom: 2rem;
+        }
+        
+        .geo-objects-sidebar {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .geo-type-icon {
+            font-size: 1.2rem;
+            width: 25px;
+            text-align: center;
+        }
+        
+        .geo-objects-list {
+            max-height: 40vh;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+        }
+    </style>
 {% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <div class="card">
-            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h1 class="h3 mb-0">{{ map.title }}</h1>
-                <div>
-                    <a href="{{ path('map_edit', {'id': map.id}) }}" class="btn btn-warning">Edit</a>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h3>Map Details</h3>
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <th>ID</th>
-                                    <td>{{ map.id }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Title</th>
-                                    <td>{{ map.title }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Description</th>
-                                    <td>{{ map.description }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Center</th>
-                                    <td>{{ map.centerLat }}, {{ map.centerLng }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Zoom Level</th>
-                                    <td>{{ map.zoomLevel }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Geo Objects</th>
-                                    <td>{{ map.geoObjects|length }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Map Preview</h3>
-                        
-                        {# Prepare geoObjects data as a JSON string #}
-                        {% set geoObjectsData = [] %}
-                        {% for obj in map.geoObjects %}
-                            {% set geoObj = {
-                                'id': obj.id,
-                                'type': obj.type,
-                                'name': obj.name
-                            } %}
-                            
-                            {# Add type-specific properties #}
-                            {% if obj.type == 'point' and obj.lat is defined and obj.lng is defined %}
-                                {% set geoObj = geoObj|merge({'lat': obj.lat, 'lng': obj.lng}) %}
-                            {% elseif obj.type == 'polygon' and obj.coordinates is defined %}
-                                {% set geoObj = geoObj|merge({'coordinates': obj.coordinates, 'color': obj.color|default('blue')}) %}
-                            {% endif %}
-                            
-                            {% set geoObjectsData = geoObjectsData|merge([geoObj]) %}
-                        {% endfor %}
-                        
-                        {# Map container with data attributes #}
-                        <div id="map-display" class="map-display"
-                             data-lat="{{ map.centerLat }}"
-                             data-lng="{{ map.centerLng }}"
-                             data-zoom="{{ map.zoomLevel }}"
-                             data-geo-objects="{{ geoObjectsData|json_encode|e('html_attr') }}"
-                             data-title="{{ map.title }}"></div>
-                    </div>
-                </div>
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1>
+                    <i class="fas fa-map me-2"></i> {{ map.title }}
+                </h1>
+                <p class="lead">{{ map.description }}</p>
                 
-                <div class="d-flex justify-content-between">
-                    <a href="{{ path('map_index') }}" class="btn btn-secondary">Back to list</a>
-                    {{ include('map/_delete_form.html.twig') }}
+                <div class="btn-toolbar mb-3">
+                    <div class="btn-group me-2">
+                        <a href="{{ path('map_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Maps
+                        </a>
+                        <a href="{{ path('map_edit', {'id': map.id}) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> Edit Map
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         
-        {% if map.geoObjects|length > 0 %}
-        <div class="card mt-4">
-            <div class="card-header bg-light">
-                <h3 class="h4 mb-0">Geo Objects ({{ map.geoObjects|length }})</h3>
+        <div class="row">
+            <!-- Map Display -->
+            <div class="col-lg-8">
+                <div id="map-container" class="map-container"
+                     data-map-id="{{ map.id }}" 
+                     data-map-center-lat="{{ map.centerLat }}" 
+                     data-map-center-lng="{{ map.centerLng }}" 
+                     data-map-zoom="{{ map.zoomLevel }}">
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Type</th>
-                                <th>Name</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for geoObject in map.geoObjects %}
-                                <tr>
-                                    <td>{{ geoObject.id }}</td>
-                                    <td>{{ geoObject.type }}</td>
-                                    <td>{{ geoObject.name }}</td>
-                                    <td>
-                                        <a href="#" class="btn btn-sm btn-info">View</a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            
+            <!-- Geo Objects Sidebar -->
+            <div class="col-lg-4">
+                <div class="geo-objects-sidebar">
+                    <!-- List of Geo Objects -->
+                    {% include 'geo_object/_list.html.twig' with {'geoObjects': geoObjects|default([])} %}
+                    
+                    <!-- Geo Object Form -->
+                    {% include 'geo_object/_form.html.twig' with {'form': geoObjectForm, 'map': map} %}
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {{ encore_entry_script_tags('map-viewer') }}
+    {{ encore_entry_script_tags('map_viewer') }}
+    {{ encore_entry_script_tags('geo_object_form') }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize delete confirmation
+            let objectToDelete = null;
+            const confirmDeleteBtn = document.getElementById('confirm-delete-geo-btn');
+            
+            document.querySelectorAll('.geo-object-delete').forEach(button => {
+                button.addEventListener('click', function() {
+                    objectToDelete = this.getAttribute('data-id');
+                });
+            });
+            
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    if (objectToDelete) {
+                        deleteGeoObject(objectToDelete);
+                    }
+                });
+            }
+            
+            // Function to delete a geo object
+            function deleteGeoObject(id) {
+                fetch(`/geo-object/${id}/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('delete-geo-modal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Refresh the objects
+                        if (window.geoObjectForm && window.geoObjectForm.refreshObjects) {
+                            window.geoObjectForm.refreshObjects();
+                        }
+                        
+                        // Refresh the list (may require page reload or AJAX)
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to delete the object'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting object:', error);
+                    alert('An error occurred while deleting the object');
+                });
+            }
+            
+            // Setup edit buttons
+            document.querySelectorAll('.geo-object-edit').forEach(button => {
+                button.addEventListener('click', function() {
+                    const objectId = this.getAttribute('data-id');
+                    if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
+                        window.geoObjectForm.setEditMode(objectId);
+                    }
+                });
+            });
+            
+            // Setup focus buttons
+            document.querySelectorAll('.geo-object-focus').forEach(button => {
+                button.addEventListener('click', function() {
+                    const objectId = this.getAttribute('data-id');
+                    if (window.tacticalMap && window.tacticalMap.focusOnObject) {
+                        window.tacticalMap.focusOnObject(objectId);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %} 

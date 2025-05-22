@@ -1,0 +1,90 @@
+/* Geo Objects Styling */
+
+/* List items */
+.geo-object-item {
+    transition: background-color 0.2s;
+}
+
+.geo-object-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.geo-type-icon {
+    width: 24px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+/* Type-specific icons */
+.geo-type-icon.point {
+    color: #dc3545;
+}
+
+.geo-type-icon.polygon {
+    color: #0d6efd;
+}
+
+.geo-type-icon.circle {
+    color: #fd7e14;
+}
+
+.geo-type-icon.line {
+    color: #198754;
+}
+
+/* Form styling */
+.geo-object-form-container {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* Popup styling */
+.geo-popup {
+    min-width: 200px;
+}
+
+.geo-popup h5 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.geo-popup p {
+    margin-bottom: 0.75rem;
+}
+
+/* Help text styling */
+#geo-type-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* Drawing mode indicator */
+.drawing-mode-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.drawing-mode-indicator.point {
+    color: #dc3545;
+}
+
+.drawing-mode-indicator.polygon {
+    color: #0d6efd;
+}
+
+.drawing-mode-indicator.circle {
+    color: #fd7e14;
+}
+
+.drawing-mode-indicator.line {
+    color: #198754;
+}
