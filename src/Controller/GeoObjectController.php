@@ -77,7 +77,7 @@ class GeoObjectController extends AbstractController
     /**
      * API for getting all GeoObject for map
      */
-    #[Route('/map/{id}', name: 'geo_object_by_map', methods: ['GET'])]
+    #[Route('/by-map/{map}', name: 'geo_object_by_map', methods: ['GET'])]
     public function getByMap(Map $map): JsonResponse
     {
         $result = $this->geoObjectService->getGeoObjectsByMap($map);

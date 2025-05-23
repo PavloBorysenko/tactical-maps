@@ -229,14 +229,19 @@ function initGeoObjectForm() {
      * Enable drawing mode on the map
      */
     function enableDrawingMode(type) {
+        console.log('Enabling drawing mode for type:', type);
+
         drawingMode = true;
 
         // If there's a function to enable drawing mode on the map
-        if (map && map.enableDrawingMode) {
+        if (map && typeof map.enableDrawingMode === 'function') {
             map.enableDrawingMode(type, function (geoJson) {
                 // Callback to be called after object creation
+                console.log('GeoJSON received from drawing:', geoJson);
                 geoJsonInput.value = JSON.stringify(geoJson);
             });
+        } else {
+            console.error('map.enableDrawingMode is not a function', map);
         }
     }
 

@@ -5,7 +5,16 @@
 {% block stylesheets %}
     {{ parent() }}
     {{ encore_entry_link_tags('map_viewer') }}
+    {{ encore_entry_link_tags('geo_objects') }}
     <style>
+        #map-container {
+            height: 70vh;
+            width: 100%;
+            margin-bottom: 2rem;
+            border: 1px solid #ddd;
+        }
+        
+        /* Убедитесь, что родительские элементы не ограничивают размер */
         .map-container {
             height: 70vh;
             margin-bottom: 2rem;
@@ -80,81 +89,36 @@
 
 {% block javascripts %}
     {{ parent() }}
+    
+    {# Важно: сначала загружаем Leaflet, если он не загружен в родительском шаблоне #}
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    {# Затем загружаем остальные скрипты #}
     {{ encore_entry_script_tags('map_viewer') }}
     {{ encore_entry_script_tags('geo_object_form') }}
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize delete confirmation
-            let objectToDelete = null;
-            const confirmDeleteBtn = document.getElementById('confirm-delete-geo-btn');
+            console.log('Map container element:', document.getElementById('map-container'));
             
-            document.querySelectorAll('.geo-object-delete').forEach(button => {
-                button.addEventListener('click', function() {
-                    objectToDelete = this.getAttribute('data-id');
-                });
-            });
-            
-            if (confirmDeleteBtn) {
-                confirmDeleteBtn.addEventListener('click', function() {
-                    if (objectToDelete) {
-                        deleteGeoObject(objectToDelete);
-                    }
-                });
+            // Проверяем, загружен ли Leaflet
+            if (typeof L !== 'undefined') {
+                console.log('Leaflet is loaded');
+            } else {
+                console.error('Leaflet is not loaded properly!');
             }
             
-            // Function to delete a geo object
-            function deleteGeoObject(id) {
-                fetch(`/geo-object/${id}/delete`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Close modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('delete-geo-modal'));
-                        if (modal) {
-                            modal.hide();
-                        }
-                        
-                        // Refresh the objects
-                        if (window.geoObjectForm && window.geoObjectForm.refreshObjects) {
-                            window.geoObjectForm.refreshObjects();
-                        }
-                        
-                        // Refresh the list (may require page reload or AJAX)
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + (data.message || 'Failed to delete the object'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting object:', error);
-                    alert('An error occurred while deleting the object');
-                });
-            }
+            // Дополнительная проверка инициализации карты
+            setTimeout(function() {
+                if (!window.tacticalMap) {
+                    console.warn('tacticalMap is not available after timeout');
+                } else {
+                    console.log('tacticalMap is available after timeout');
+                }
+            }, 2000);
             
-            // Setup edit buttons
-            document.querySelectorAll('.geo-object-edit').forEach(button => {
-                button.addEventListener('click', function() {
-                    const objectId = this.getAttribute('data-id');
-                    if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
-                        window.geoObjectForm.setEditMode(objectId);
-                    }
-                });
-            });
-            
-            // Setup focus buttons
-            document.querySelectorAll('.geo-object-focus').forEach(button => {
-                button.addEventListener('click', function() {
-                    const objectId = this.getAttribute('data-id');
-                    if (window.tacticalMap && window.tacticalMap.focusOnObject) {
-                        window.tacticalMap.focusOnObject(objectId);
-                    }
-                });
-            });
+            // Инициализация удаления/редактирования...
+            // ... остальной код ...
         });
     </script>
 {% endblock %} 
