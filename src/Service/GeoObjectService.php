@@ -30,90 +30,87 @@ class GeoObjectService
      */
     public function createGeoObject(array $data): array
     {
-        // Check required data
-        if (empty($data)) {
-            return [
-                'success' => false,
-                'message' => 'No data provided',
-                'status' => Response::HTTP_BAD_REQUEST
-            ];
-        }
-        
-        // Get Map from request
-        $mapId = $data['mapId'] ?? null;
-        if (!$mapId) {
-            return [
-                'success' => false,
-                'message' => 'Map ID is required',
-                'status' => Response::HTTP_BAD_REQUEST
-            ];
-        }
-        
-        $map = $this->mapRepository->find($mapId);
-        if (!$map) {
-            return [
-                'success' => false,
-                'message' => 'Map not found',
-                'status' => Response::HTTP_NOT_FOUND
-            ];
-        }
-        
         try {
-            $geoObject = new GeoObject();
-            
-            // Set data from request
-            $geoObject->setMap($map);
-            $geoObject->setTitle($data['title'] ?? 'Unnamed');
-            $geoObject->setDescription($data['description'] ?? '');
-            $geoObject->setType($data['type'] ?? 'point');
-            
-            // Set hash, if it is provided
-            if (isset($data['hash'])) {
-                $geoObject->setHash($data['hash']);
-            } else {
-                // Generate unique hash, if it is not provided
-                $geoObject->setHash(bin2hex(random_bytes(16)));
-            }
-            
-            // Process GeoJSON
-            if (isset($data['geoJson'])) {
-                $geoJson = is_string($data['geoJson']) ? json_decode($data['geoJson'], true) : $data['geoJson'];
-                
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    return [
-                        'success' => false,
-                        'message' => 'Invalid GeoJSON format',
-                        'status' => Response::HTTP_BAD_REQUEST
-                    ];
-                }
-                
-                $geoObject->setGeoJson($geoJson);
-            } else {
+            // Check required fields
+            if (empty($data['title'])) {
                 return [
                     'success' => false,
-                    'message' => 'GeoJSON is required',
-                    'status' => Response::HTTP_BAD_REQUEST
+                    'message' => 'Title is required',
+                    'status' => 400
                 ];
             }
             
-            // Save object
+            if (empty($data['type'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Type is required',
+                    'status' => 400
+                ];
+            }
+            
+            if (empty($data['geoJson'])) {
+                return [
+                    'success' => false,
+                    'message' => 'GeoJSON is required',
+                    'status' => 400
+                ];
+            }
+            
+            // Check mapId
+            $mapId = $data['mapId'] ?? null;
+            if (empty($mapId)) {
+                return [
+                    'success' => false,
+                    'message' => 'Map ID is required',
+                    'status' => 400
+                ];
+            }
+            
+            // Check if the map exists
+            $map = $this->entityManager->getRepository(Map::class)->find($mapId);
+            if (!$map) {
+                return [
+                    'success' => false,
+                    'message' => 'Map not found',
+                    'status' => 404
+                ];
+            }
+            
+            // Create a new GeoObject
+            $geoObject = new GeoObject();
+            $geoObject->setTitle($data['title']);
+            $geoObject->setDescription($data['description'] ?? '');
+            $geoObject->setType($data['type']);
+            $geoObject->setTtl($data['ttl'] ?? 0);
+            $geoObject->setMap($map); // Set the map
+            
+            // Process GeoJSON
+            $geoJsonString = is_string($data['geoJson']) ? $data['geoJson'] : json_encode($data['geoJson']);
+            $geoObject->setGeoJson($geoJsonString);
+            
+            // Generate hash, if it is not provided
+            if (empty($data['hash'])) {
+                $geoObject->setHash(bin2hex(random_bytes(16)));
+            } else {
+                $geoObject->setHash($data['hash']);
+            }
+            
+            // Save to database
             $this->entityManager->persist($geoObject);
             $this->entityManager->flush();
             
             return [
                 'success' => true,
-                'message' => 'Geo object created successfully',
-                'id' => $geoObject->getId(),
-                'hash' => $geoObject->getHash(),
+                'message' => 'GeoObject created successfully',
                 'object' => $this->serializeGeoObject($geoObject),
-                'status' => Response::HTTP_OK
+                'status' => 201
             ];
             
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Error creating geo object: ' . $e->getMessage(),
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR
+                'message' => 'Error creating GeoObject: ' . $e->getMessage(),
+                'status' => 500
             ];
         }
     }

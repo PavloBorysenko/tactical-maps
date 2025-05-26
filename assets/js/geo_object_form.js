@@ -8,16 +8,38 @@ document.addEventListener('DOMContentLoaded', function () {
 /**
  * Initialize the form for working with geo objects
  */
-function initGeoObjectForm() {
+function initGeoObjectForm(mapInstance) {
     // Form elements
     const form = document.getElementById('geo-object-form');
-    if (!form) return;
+    if (!form) {
+        console.log('Geo object form not found, skipping initialization');
+        return;
+    }
+
+    console.log('Found geo object form, setting up handlers');
 
     const typeSelect = document.querySelector('.geo-object-type');
     const ttlSelect = document.querySelector('.geo-object-ttl');
     const geoJsonInput = document.querySelector('.geo-object-geojson');
     const titleInput = document.querySelector('.geo-object-title');
     const mapIdInput = document.querySelector('.geo-object-map-id');
+
+    // Ensure mapId is set correctly
+    if (mapIdInput) {
+        // Get mapId from the map container
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer) {
+            const mapId = mapContainer.getAttribute('data-map-id');
+            if (mapId) {
+                mapIdInput.value = mapId;
+                console.log('Map ID set to:', mapId);
+            } else {
+                console.error('Map ID not found in map container');
+            }
+        }
+    } else {
+        console.error('Map ID input field not found');
+    }
 
     const createBtn = document.getElementById('btn-create-geo');
     const updateBtn = document.getElementById('btn-update-geo');
@@ -60,7 +82,7 @@ function initGeoObjectForm() {
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        // Validate required fields
+        // Check the basic fields
         if (!titleInput.value.trim()) {
             alert('Please enter a title');
             titleInput.focus();
@@ -72,16 +94,35 @@ function initGeoObjectForm() {
             return;
         }
 
-        // Collect form data
+        // Check if mapId is set
+        if (!mapIdInput.value) {
+            alert('Map ID is missing. Please refresh the page and try again.');
+            return;
+        }
+
+        console.log('Submitting form with mapId:', mapIdInput.value);
+
+        // Collect the form data
         const formData = new FormData(form);
 
-        // Determine URL and method based on the mode
+        // Additionaly add mapId, if it was not added automatically
+        if (!formData.has('geo_object[mapId]') && mapIdInput.value) {
+            formData.append('geo_object[mapId]', mapIdInput.value);
+        }
+
+        // Log the form data for debugging
+        console.log('Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+
+        // Determine the URL and method depending on the mode
         let url = '/geo-object/new';
         if (currentMode === 'edit' && currentObjectId) {
             url = `/geo-object/${currentObjectId}/update`;
         }
 
-        // Submit the request
+        // Send the request
         fetch(url, {
             method: 'POST',
             body: formData,
@@ -89,10 +130,10 @@ function initGeoObjectForm() {
             .then((response) => response.json())
             .then((data) => {
                 if (data.success) {
-                    // Refresh objects on the map
+                    // Update the list of objects on the map
                     refreshGeoObjects();
 
-                    // Reset form
+                    // Reset the form
                     resetForm();
                     setCreateMode();
                     disableDrawingMode();

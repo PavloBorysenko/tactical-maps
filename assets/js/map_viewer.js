@@ -32,17 +32,17 @@ class TacticalMapViewer {
 
         console.log('TacticalMapViewer: Container found:', this.container);
 
-        // Важно! Сначала инициализируем карту
+        // Important! First initialize the map
         this.initMap();
 
-        // Затем создаем менеджер гео-объектов
-        console.log('MapGeoObjectManager импортирован:', MapGeoObjectManager);
+        // Then create the geo-objects manager
+        console.log('MapGeoObjectManager imported:', MapGeoObjectManager);
         try {
             console.log('Creating new MapGeoObjectManager instance...');
             this.geoObjectManager = new MapGeoObjectManager(this);
             console.log('GeoObjectManager initialized:', this.geoObjectManager);
 
-            // Загружаем объекты ТОЛЬКО ПОСЛЕ создания менеджера
+            // Load objects ONLY AFTER the manager is created
             const mapId = this.container.getAttribute('data-map-id');
             if (mapId) {
                 this.loadGeoObjects(mapId);
@@ -57,7 +57,7 @@ class TacticalMapViewer {
      */
     initMap() {
         try {
-            // Получаем настройки карты из атрибутов контейнера
+            // Get map settings from container attributes
             const mapId = this.container.getAttribute('data-map-id');
             let centerLat =
                 parseFloat(
@@ -73,20 +73,20 @@ class TacticalMapViewer {
 
             console.log('Map settings:', { mapId, centerLat, centerLng, zoom });
 
-            // Создаем Leaflet-карту
+            // Create Leaflet map
             this.map = L.map(this.container, {
                 center: [centerLat, centerLng],
                 zoom: zoom,
                 zoomControl: true,
             });
 
-            // Добавляем слой тайлов OpenStreetMap
+            // Add OpenStreetMap tile layer
             L.tileLayer(this.options.tileUrl, {
                 attribution: this.options.attribution,
                 maxZoom: this.options.maxZoom,
             }).addTo(this.map);
 
-            // Принудительно обновляем размер карты после инициализации
+            // Forcefully update the map size after initialization
             setTimeout(() => {
                 this.map.invalidateSize();
                 console.log('Map size invalidated');
@@ -94,11 +94,11 @@ class TacticalMapViewer {
 
             console.log('Leaflet map initialized successfully', this.map);
 
-            // Делаем объект карты доступным глобально
+            // Make the map object available globally
             window.tacticalMap = this;
             console.log('Map exposed globally as window.tacticalMap');
 
-            // Генерируем пользовательское событие для оповещения других скриптов
+            // Generate a user event to notify other scripts
             const mapReadyEvent = new CustomEvent('tactical-map-ready', {
                 detail: { map: this },
             });
@@ -267,14 +267,14 @@ class TacticalMapViewer {
     }
 }
 
-// Инициализация карты при загрузке DOM
+// Initialize the map when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM loaded, initializing TacticalMapViewer');
 
-    // Создаем экземпляр TacticalMapViewer
+    // Create an instance of TacticalMapViewer
     const mapViewer = new TacticalMapViewer();
 
-    // Загружаем гео-объекты ПОСЛЕ полной инициализации
+    // Load geo-objects AFTER full initialization
     const mapContainer = document.getElementById('map-container');
     if (mapContainer && mapViewer.geoObjectManager) {
         const mapId = mapContainer.getAttribute('data-map-id');

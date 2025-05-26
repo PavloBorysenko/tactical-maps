@@ -13,13 +13,13 @@ class MapGeoObjectManager {
         this.drawingType = null;
         this.drawingCallback = null;
 
-        // Обработчики событий для различных типов объектов
+        // Handlers for different object types
         this.pointClickHandler = this.handlePointClick.bind(this);
         this.circleFirstClickHandler = this.handleCircleFirstClick.bind(this);
         this.polygonClickHandler = this.handlePolygonClick.bind(this);
         this.lineClickHandler = this.handleLineClick.bind(this);
 
-        // Временные данные для рисования
+        // Temporary data for drawing
         this.tempPoints = [];
         this.tempCircleCenter = null;
 
@@ -33,7 +33,7 @@ class MapGeoObjectManager {
     loadGeoObjects(mapId) {
         console.log('Loading geo objects for map ID:', mapId);
 
-        // Проверяем, что аргумент является числом или строкой
+        // Check if the argument is a number or string
         if (
             !mapId ||
             (typeof mapId !== 'number' && typeof mapId !== 'string')
@@ -92,13 +92,13 @@ class MapGeoObjectManager {
 
         objects.forEach((object) => {
             try {
-                // Проверка и обработка JSON-строки
+                // Check and process JSON string
                 const geoJson =
                     typeof object.geoJson === 'string'
                         ? JSON.parse(object.geoJson)
                         : object.geoJson;
 
-                // Создаем слой в зависимости от типа
+                // Create a layer depending on the type
                 let layer;
                 switch (object.type) {
                     case 'point':
@@ -184,7 +184,7 @@ class MapGeoObjectManager {
 
         content += '</div>';
 
-        // Для простоты возвращаем HTML-строку вместо функции
+        // For simplicity, return the HTML string instead of a function
         return content;
     }
 
@@ -338,7 +338,7 @@ class MapGeoObjectManager {
         if (this.map && typeof this.map.setDrawingCursor === 'function') {
             this.map.setDrawingCursor(type);
         } else {
-            // Резервный вариант, если метод не определен в map
+            // Backup variant if the method is not defined in map
             this.setDrawingCursor(type);
         }
 
@@ -384,7 +384,7 @@ class MapGeoObjectManager {
         if (this.map && typeof this.map.resetCursor === 'function') {
             this.map.resetCursor();
         } else {
-            // Резервный вариант, если метод не определен в map
+            // Backup variant if the method is not defined in map
             this.resetCursor();
         }
 
@@ -639,5 +639,5 @@ class MapGeoObjectManager {
     }
 }
 
-// Очень важно - экспортируем класс как default
+// Very important - export the class as default
 export default MapGeoObjectManager;
