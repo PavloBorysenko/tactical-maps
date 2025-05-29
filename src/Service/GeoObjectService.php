@@ -30,6 +30,10 @@ class GeoObjectService
      */
     public function createGeoObject(array $data): array
     {
+        error_log('=== GeoObjectService::createGeoObject ===');
+        error_log('Received data: ' . json_encode($data));
+        error_log('Data keys: ' . implode(', ', array_keys($data)));
+        
         try {
             // Check required fields
             if (empty($data['title'])) {
@@ -78,15 +82,22 @@ class GeoObjectService
             
             // Create a new GeoObject
             $geoObject = new GeoObject();
-            $geoObject->setTitle($data['title']);
+            $geoObject->setName($data['title']);
             $geoObject->setDescription($data['description'] ?? '');
-            $geoObject->setType($data['type']);
+            $geoObject->setGeometryType($data['type']);
             $geoObject->setTtl($data['ttl'] ?? 0);
             $geoObject->setMap($map); // Set the map
             
             // Process GeoJSON
-            $geoJsonString = is_string($data['geoJson']) ? $data['geoJson'] : json_encode($data['geoJson']);
-            $geoObject->setGeoJson($geoJsonString);
+            $geoJsonData = is_string($data['geoJson']) ? json_decode($data['geoJson'], true) : $data['geoJson'];
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid GeoJSON format',
+                    'status' => 400
+                ];
+            }
+            $geoObject->setGeometry($geoJsonData);
             
             // Generate hash, if it is not provided
             if (empty($data['hash'])) {
@@ -131,7 +142,7 @@ class GeoObjectService
         try {
             // Update object data
             if (isset($data['title'])) {
-                $geoObject->setTitle($data['title']);
+                $geoObject->setName($data['title']);
             }
             
             if (isset($data['description'])) {
@@ -139,7 +150,7 @@ class GeoObjectService
             }
             
             if (isset($data['type'])) {
-                $geoObject->setType($data['type']);
+                $geoObject->setGeometryType($data['type']);
             }
             
             // Update hash, if it is provided
@@ -159,7 +170,7 @@ class GeoObjectService
                     ];
                 }
                 
-                $geoObject->setGeoJson($geoJson);
+                $geoObject->setGeometry($geoJson);
             }
             
             // Save changes
@@ -348,10 +359,11 @@ class GeoObjectService
         $data = [
             'id' => $geoObject->getId(),
             'hash' => $geoObject->getHash(),
-            'title' => $geoObject->getTitle(),
+            'title' => $geoObject->getName(),
             'description' => $geoObject->getDescription(),
-            'type' => $geoObject->getType(),
-            'geoJson' => $geoObject->getGeoJson(),
+            'type' => $geoObject->getGeometryType(),
+            'geoJson' => $geoObject->getGeometry(),
+            'ttl' => $geoObject->getTtl(),
         ];
         
         if ($includeMapId) {

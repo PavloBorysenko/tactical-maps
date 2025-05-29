@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+error_log('=== GeoObjectController.php loaded ===');
+
 #[Route('/geo-object')]
 class GeoObjectController extends AbstractController
 {
@@ -22,37 +24,70 @@ class GeoObjectController extends AbstractController
     }
 
     /**
+     * Test endpoint
+     */
+    #[Route('/test', name: 'geo_object_test', methods: ['GET', 'POST'])]
+    public function test(Request $request): JsonResponse
+    {
+        error_log('=== TEST ENDPOINT CALLED ===');
+        error_log('Method: ' . $request->getMethod());
+        error_log('Content: ' . $request->getContent());
+        
+        return $this->json([
+            'success' => true,
+            'message' => 'Test endpoint works',
+            'method' => $request->getMethod(),
+            'content' => $request->getContent()
+        ]);
+    }
+
+    /**
      * API for creating new GeoObject
      */
     #[Route('/new', name: 'geo_object_new', methods: ['POST'])]
     public function new(Request $request, GeoObjectService $geoObjectService): JsonResponse
     {
+        error_log('=== CONTROLLER START ===');
+        error_log('Method called: GeoObjectController::new');
+        
         try {
             // Get data from JSON body
             $content = $request->getContent();
             $data = json_decode($content, true);
+            
+            // Log raw request data
+            error_log('=== GeoObject Creation Debug ===');
+            error_log('Request method: ' . $request->getMethod());
+            error_log('Content-Type: ' . $request->headers->get('Content-Type'));
+            error_log('Raw content: ' . $content);
+            error_log('JSON decoded data: ' . json_encode($data));
+            error_log('Request has geo_object: ' . ($request->request->has('geo_object') ? 'YES' : 'NO'));
+            
+            if ($request->request->has('geo_object')) {
+                error_log('geo_object raw data: ' . json_encode($request->request->get('geo_object')));
+            }
             
             // If JSON was not passed, try to get data from form
             if (empty($data)) {
                 if ($request->request->has('geo_object')) {
                     $geoObjectData = $request->request->get('geo_object');
                     $data = [
-                        'title' => $geoObjectData['title'] ?? '',
+                        'title' => $geoObjectData['name'] ?? '',
                         'description' => $geoObjectData['description'] ?? '',
-                        'type' => $geoObjectData['type'] ?? '',
+                        'type' => $geoObjectData['geometryType'] ?? '',
                         'ttl' => (int)($geoObjectData['ttl'] ?? 0),
-                        'geoJson' => $geoObjectData['geoJson'] ?? '',
+                        'geoJson' => $geoObjectData['geometry'] ?? '',
                         'hash' => $geoObjectData['hash'] ?? '',
                         'mapId' => $geoObjectData['mapId'] ?? null
                     ];
                 } else {
                     // Alternative way to get data
                     $data = [
-                        'title' => $request->request->get('title', ''),
+                        'title' => $request->request->get('name', ''),
                         'description' => $request->request->get('description', ''),
-                        'type' => $request->request->get('type', ''),
+                        'type' => $request->request->get('geometryType', ''),
                         'ttl' => (int)$request->request->get('ttl', 0),
-                        'geoJson' => $request->request->get('geoJson', ''),
+                        'geoJson' => $request->request->get('geometry', ''),
                         'hash' => $request->request->get('hash', ''),
                         'mapId' => $request->request->get('mapId')
                     ];
@@ -60,8 +95,12 @@ class GeoObjectController extends AbstractController
             }
             
             // Log the received data for debugging
-            error_log('Raw request content: ' . $content);
-            error_log('Parsed data for new GeoObject: ' . json_encode($data));
+            error_log('Final processed data: ' . json_encode($data));
+            
+            // Ensure geoJson is properly formatted
+            if (isset($data['geoJson']) && is_string($data['geoJson'])) {
+                $data['geoJson'] = json_decode($data['geoJson'], true);
+            }
             
             // Check if data was received
             if (empty($data)) {
@@ -95,7 +134,29 @@ class GeoObjectController extends AbstractController
         
         // If data is not in JSON, check the form
         if (!$data) {
-            $data = $request->request->all();
+            if ($request->request->has('geo_object')) {
+                $geoObjectData = $request->request->get('geo_object');
+                $data = [
+                    'title' => $geoObjectData['name'] ?? '',
+                    'description' => $geoObjectData['description'] ?? '',
+                    'type' => $geoObjectData['geometryType'] ?? '',
+                    'ttl' => (int)($geoObjectData['ttl'] ?? 0),
+                    'geoJson' => $geoObjectData['geometry'] ?? '',
+                    'hash' => $geoObjectData['hash'] ?? '',
+                    'mapId' => $geoObjectData['mapId'] ?? null
+                ];
+            } else {
+                // Alternative way to get data
+                $data = [
+                    'title' => $request->request->get('name', ''),
+                    'description' => $request->request->get('description', ''),
+                    'type' => $request->request->get('geometryType', ''),
+                    'ttl' => (int)$request->request->get('ttl', 0),
+                    'geoJson' => $request->request->get('geometry', ''),
+                    'hash' => $request->request->get('hash', ''),
+                    'mapId' => $request->request->get('mapId')
+                ];
+            }
         }
         
         $result = $this->geoObjectService->updateGeoObject($geoObject, $data);

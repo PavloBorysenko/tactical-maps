@@ -36,7 +36,7 @@ class GeoObjectType extends AbstractType
         
         // Main fields
         $builder
-            ->add('title', TextType::class, [
+            ->add('name', TextType::class, [
                 'label' => 'Title',
                 'required' => true,
                 'constraints' => [
@@ -83,14 +83,13 @@ class GeoObjectType extends AbstractType
                     'class' => 'form-control geo-object-ttl'
                 ]
             ])
-            ->add('type', ChoiceType::class, [
+            ->add('geometryType', ChoiceType::class, [
                 'label' => 'Type',
                 'required' => true,
                 'choices' => [
-                    'Point' => 'point',
-                    'Polygon' => 'polygon',
-                    'Circle' => 'circle',
-                    'Line' => 'line'
+                    'Point' => 'Point',
+                    'Polygon' => 'Polygon',
+                    'Circle' => 'Circle'
                 ],
                 'constraints' => [
                     new NotBlank([
@@ -102,7 +101,7 @@ class GeoObjectType extends AbstractType
                     'data-toggle' => 'geo-type-select'
                 ]
             ])
-            ->add('geoJson', HiddenType::class, [
+            ->add('geometry', HiddenType::class, [
                 'attr' => [
                     'class' => 'geo-object-geojson'
                 ]

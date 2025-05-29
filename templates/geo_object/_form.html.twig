@@ -17,8 +17,8 @@
         <div class="row mb-3">
             <div class="col">
                 <div class="form-group">
-                    {{ form_label(form.title) }}
-                    {{ form_widget(form.title) }}
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
                     <div class="invalid-feedback">
                         Please provide a title for the geo object.
                     </div>
@@ -45,8 +45,8 @@
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    {{ form_label(form.type) }}
-                    {{ form_widget(form.type) }}
+                    {{ form_label(form.geometryType) }}
+                    {{ form_widget(form.geometryType) }}
                     <small id="geo-type-help" class="form-text text-muted">
                         Select a type and then interact with the map.
                     </small>
@@ -55,7 +55,7 @@
         </div>
         
         <!-- Hidden fields -->
-        {{ form_widget(form.geoJson) }}
+        {{ form_widget(form.geometry) }}
         {{ form_widget(form.hash) }}
         
         <!-- Form actions -->

@@ -55,6 +55,14 @@ class MapGeoObjectManager {
                 console.log('Parsed response data:', data);
                 if (data.success) {
                     this.renderGeoObjects(data.objects);
+
+                    // Also update the objects list in the sidebar
+                    if (
+                        window.geoObjectForm &&
+                        window.geoObjectForm.updateObjectsList
+                    ) {
+                        window.geoObjectForm.updateObjectsList(data.objects);
+                    }
                 } else {
                     console.error('Failed to load geo objects:', data.message);
                 }
@@ -100,7 +108,8 @@ class MapGeoObjectManager {
 
                 // Create a layer depending on the type
                 let layer;
-                switch (object.type) {
+                const objectType = object.type.toLowerCase(); // Normalize to lowercase
+                switch (objectType) {
                     case 'point':
                         layer = this.createPointLayer(geoJson);
                         break;
@@ -111,6 +120,7 @@ class MapGeoObjectManager {
                         layer = this.createCircleLayer(geoJson);
                         break;
                     case 'line':
+                    case 'linestring':
                         layer = this.createLineLayer(geoJson);
                         break;
                     default:
@@ -121,6 +131,11 @@ class MapGeoObjectManager {
                 if (layer) {
                     // Add a popup with object info
                     layer.bindPopup(this.createPopupContent(object));
+
+                    // Add event listener for popup open to attach button handlers
+                    layer.on('popupopen', () => {
+                        this.attachPopupEventListeners(object);
+                    });
 
                     // Store the layer with object ID
                     this.geoObjectLayers[object.id] = {
@@ -278,7 +293,8 @@ class MapGeoObjectManager {
         }
 
         let layer;
-        switch (type) {
+        const normalizedType = type.toLowerCase(); // Normalize to lowercase
+        switch (normalizedType) {
             case 'point':
                 layer = this.createPointLayer(geoJson);
                 break;
@@ -289,6 +305,7 @@ class MapGeoObjectManager {
                 layer = this.createCircleLayer(geoJson);
                 break;
             case 'line':
+            case 'linestring':
                 layer = this.createLineLayer(geoJson);
                 break;
             default:
@@ -301,9 +318,9 @@ class MapGeoObjectManager {
             this.tempLayer.addTo(this.leafletMap);
 
             // Fit bounds for non-point objects
-            if (type !== 'point' && layer.getBounds) {
+            if (normalizedType !== 'point' && layer.getBounds) {
                 this.leafletMap.fitBounds(layer.getBounds());
-            } else if (type === 'point' && layer.getLatLng) {
+            } else if (normalizedType === 'point' && layer.getLatLng) {
                 this.leafletMap.setView(layer.getLatLng(), 15);
             }
         }
@@ -342,8 +359,9 @@ class MapGeoObjectManager {
             this.setDrawingCursor(type);
         }
 
-        // Attach appropriate event handlers based on type
-        switch (type) {
+        // Add event handlers depending on the type
+        const normalizedType = type.toLowerCase(); // Normalize to lowercase
+        switch (normalizedType) {
             case 'point':
                 this.leafletMap.on('click', this.pointClickHandler);
                 break;
@@ -355,6 +373,7 @@ class MapGeoObjectManager {
                 this.leafletMap.on('dblclick', this.finishPolygon.bind(this));
                 break;
             case 'line':
+            case 'linestring':
                 this.leafletMap.on('click', this.lineClickHandler);
                 this.leafletMap.on('dblclick', this.finishLine.bind(this));
                 break;
@@ -407,13 +426,15 @@ class MapGeoObjectManager {
         if (!this.leafletMap || !this.leafletMap.getContainer()) return;
 
         const container = this.leafletMap.getContainer();
+        const normalizedType = type.toLowerCase(); // Normalize to lowercase
 
-        switch (type) {
+        switch (normalizedType) {
             case 'point':
                 container.style.cursor = 'crosshair';
                 break;
             case 'polygon':
             case 'line':
+            case 'linestring':
                 container.style.cursor = 'pointer';
                 break;
             case 'circle':
@@ -636,6 +657,116 @@ class MapGeoObjectManager {
 
         // Exit drawing mode
         this.disableDrawingMode();
+    }
+
+    /**
+     * Attach popup event listeners to a geo object
+     */
+    attachPopupEventListeners(object) {
+        const layer = this.geoObjectLayers[object.id].layer;
+        const editButton = layer
+            .getPopup()
+            .getElement()
+            .querySelector('.edit-from-popup');
+        const deleteButton = layer
+            .getPopup()
+            .getElement()
+            .querySelector('.delete-from-popup');
+
+        if (editButton) {
+            editButton.addEventListener('click', () => {
+                this.editGeoObject(object);
+            });
+        }
+
+        if (deleteButton) {
+            deleteButton.addEventListener('click', () => {
+                this.deleteGeoObject(object);
+            });
+        }
+    }
+
+    /**
+     * Edit a geo object
+     */
+    editGeoObject(object) {
+        console.log('Editing geo object:', object);
+
+        // Close the popup
+        this.leafletMap.closePopup();
+
+        // Call the global form function to set edit mode
+        if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
+            window.geoObjectForm.setEditMode(object.id);
+        } else {
+            console.error('geoObjectForm.setEditMode not available');
+        }
+    }
+
+    /**
+     * Delete a geo object
+     */
+    deleteGeoObject(object) {
+        console.log('Deleting geo object:', object);
+
+        // Close the popup
+        this.leafletMap.closePopup();
+
+        // Confirm deletion
+        if (confirm(`Are you sure you want to delete "${object.title}"?`)) {
+            // Send delete request
+            fetch(`/geo-object/${object.id}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        console.log('Object deleted successfully from server');
+
+                        // Get mapId for refresh
+                        const mapContainer =
+                            document.getElementById('map-container');
+                        const mapId = mapContainer
+                            ? mapContainer.getAttribute('data-map-id')
+                            : null;
+
+                        if (mapId) {
+                            console.log(
+                                'Forcing complete refresh after popup deletion'
+                            );
+
+                            // Clear and reload using current instance
+                            this.clearGeoObjects();
+                            this.loadGeoObjects(mapId);
+
+                            // Also try to refresh via global reference if available
+                            if (
+                                window.geoObjectForm &&
+                                window.geoObjectForm.refreshObjects
+                            ) {
+                                console.log(
+                                    'Refreshing via global form reference'
+                                );
+                                window.geoObjectForm.refreshObjects();
+                            }
+                        }
+
+                        alert('Object deleted successfully');
+                    } else {
+                        alert(
+                            'Error deleting object: ' +
+                                (data.message || 'Unknown error')
+                        );
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error deleting object:', error);
+                    alert('Error deleting object. Please try again.');
+                });
+        }
     }
 }
 

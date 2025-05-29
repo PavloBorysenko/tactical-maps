@@ -24,6 +24,15 @@ function initGeoObjectForm(mapInstance) {
     const titleInput = document.querySelector('.geo-object-title');
     const mapIdInput = document.querySelector('.geo-object-map-id');
 
+    // Debug: Check if all elements are found
+    console.log('Form elements found:', {
+        typeSelect: !!typeSelect,
+        ttlSelect: !!ttlSelect,
+        geoJsonInput: !!geoJsonInput,
+        titleInput: !!titleInput,
+        mapIdInput: !!mapIdInput,
+    });
+
     // Ensure mapId is set correctly
     if (mapIdInput) {
         // Get mapId from the map container
@@ -89,6 +98,16 @@ function initGeoObjectForm(mapInstance) {
             return;
         }
 
+        console.log('geoJsonInput element:', geoJsonInput);
+        console.log(
+            'geoJsonInput value:',
+            geoJsonInput ? geoJsonInput.value : 'element not found'
+        );
+        console.log(
+            'geoJsonInput value length:',
+            geoJsonInput ? geoJsonInput.value.length : 0
+        );
+
         if (!geoJsonInput.value) {
             alert('Please create a geo object on the map');
             return;
@@ -102,19 +121,27 @@ function initGeoObjectForm(mapInstance) {
 
         console.log('Submitting form with mapId:', mapIdInput.value);
 
-        // Collect the form data
-        const formData = new FormData(form);
-
-        // Additionaly add mapId, if it was not added automatically
-        if (!formData.has('geo_object[mapId]') && mapIdInput.value) {
-            formData.append('geo_object[mapId]', mapIdInput.value);
+        // Collect the form data as JSON instead of FormData
+        let geoJsonData;
+        try {
+            geoJsonData = JSON.parse(geoJsonInput.value);
+        } catch (e) {
+            alert('Invalid GeoJSON format');
+            return;
         }
 
-        // Log the form data for debugging
-        console.log('Form data being sent:');
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value);
-        }
+        const jsonData = {
+            title: titleInput.value.trim(),
+            description: document.querySelector('.geo-object-description')
+                .value,
+            type: typeSelect.value,
+            ttl: parseInt(ttlSelect.value) || 0,
+            geoJson: geoJsonData, // Send as object, not string
+            hash: document.querySelector('.geo-object-hash').value,
+            mapId: mapIdInput.value,
+        };
+
+        console.log('JSON data being sent:', jsonData);
 
         // Determine the URL and method depending on the mode
         let url = '/geo-object/new';
@@ -122,10 +149,13 @@ function initGeoObjectForm(mapInstance) {
             url = `/geo-object/${currentObjectId}/update`;
         }
 
-        // Send the request
+        // Send the request as JSON
         fetch(url, {
             method: 'POST',
-            body: formData,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData),
         })
             .then((response) => response.json())
             .then((data) => {
@@ -204,7 +234,7 @@ function initGeoObjectForm(mapInstance) {
                     titleInput.value = data.object.title || '';
                     document.querySelector('.geo-object-description').value =
                         data.object.description || '';
-                    typeSelect.value = data.object.type || 'point';
+                    typeSelect.value = data.object.type || 'Point';
                     geoJsonInput.value = JSON.stringify(
                         data.object.geoJson || {}
                     );
@@ -267,19 +297,42 @@ function initGeoObjectForm(mapInstance) {
     }
 
     /**
+     * Convert form geometry type to map-compatible type
+     */
+    function convertTypeForMap(formType) {
+        const typeMap = {
+            Point: 'point',
+            Polygon: 'polygon',
+            Circle: 'circle',
+        };
+        return typeMap[formType] || formType.toLowerCase();
+    }
+
+    /**
      * Enable drawing mode on the map
      */
     function enableDrawingMode(type) {
         console.log('Enabling drawing mode for type:', type);
+        console.log('Map object available:', !!map);
+        console.log(
+            'Map enableDrawingMode function available:',
+            !!(map && typeof map.enableDrawingMode === 'function')
+        );
 
         drawingMode = true;
 
+        // Convert type for map compatibility
+        const mapType = convertTypeForMap(type);
+        console.log('Converted type for map:', mapType);
+
         // If there's a function to enable drawing mode on the map
         if (map && typeof map.enableDrawingMode === 'function') {
-            map.enableDrawingMode(type, function (geoJson) {
+            map.enableDrawingMode(mapType, function (geoJson) {
                 // Callback to be called after object creation
                 console.log('GeoJSON received from drawing:', geoJson);
+                console.log('Setting geoJsonInput value');
                 geoJsonInput.value = JSON.stringify(geoJson);
+                console.log('geoJsonInput value set to:', geoJsonInput.value);
             });
         } else {
             console.error('map.enableDrawingMode is not a function', map);
@@ -306,20 +359,16 @@ function initGeoObjectForm(mapInstance) {
         if (!helpText) return;
 
         switch (type) {
-            case 'point':
+            case 'Point':
                 helpText.textContent = 'Click on the map to place a point.';
                 break;
-            case 'polygon':
+            case 'Polygon':
                 helpText.textContent =
                     'Click on the map to add polygon points. Double-click to finish.';
                 break;
-            case 'circle':
+            case 'Circle':
                 helpText.textContent =
                     'First click sets the center, second click sets the radius.';
-                break;
-            case 'line':
-                helpText.textContent =
-                    'Click on the map to add line points. Double-click to finish.';
                 break;
             default:
                 helpText.textContent =
@@ -331,13 +380,332 @@ function initGeoObjectForm(mapInstance) {
      * Refresh the list of objects on the map
      */
     function refreshGeoObjects() {
+        console.log('=== refreshGeoObjects called ===');
         const mapId = mapIdInput.value;
-        if (!mapId) return;
+        console.log('Map ID:', mapId);
+
+        if (!mapId) {
+            console.log('No mapId found, returning');
+            return;
+        }
+
+        console.log('Map object:', map);
+        console.log('Map object type:', typeof map);
+
+        if (map) {
+            console.log(
+                'Available map functions:',
+                Object.getOwnPropertyNames(map)
+            );
+            console.log(
+                'map.loadGeoObjects available:',
+                typeof map.loadGeoObjects
+            );
+        }
+
+        // Always fetch and update the list manually
+        console.log('Fetching objects manually to update list');
+        fetch(`/geo-object/by-map/${mapId}`)
+            .then((response) => response.json())
+            .then((data) => {
+                console.log('Fetched objects for list update:', data);
+                if (data.success && data.objects) {
+                    // Update the HTML list of objects
+                    updateObjectsList(data.objects);
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching objects for list:', error);
+            });
 
         // If there's a function to load objects on the map
         if (map && map.loadGeoObjects) {
+            console.log('Calling map.loadGeoObjects with mapId:', mapId);
             map.loadGeoObjects(mapId);
+        } else {
+            console.log(
+                'map.loadGeoObjects not available, trying alternative methods'
+            );
+
+            // Try alternative method - reload the page or manually fetch and display objects
+            if (map && map.refreshObjects) {
+                console.log('Trying map.refreshObjects');
+                map.refreshObjects();
+            } else if (map && map.reload) {
+                console.log('Trying map.reload');
+                map.reload();
+            } else {
+                console.log(
+                    'No refresh method found, objects already fetched above'
+                );
+            }
         }
+    }
+
+    /**
+     * Update the HTML list of geo objects
+     */
+    function updateObjectsList(objects) {
+        console.log('Updating objects list with:', objects);
+
+        const listContainer = document.querySelector(
+            '.geo-objects-list .list-group'
+        );
+        if (!listContainer) {
+            console.log('Objects list container not found');
+            return;
+        }
+
+        // Clear existing list
+        listContainer.innerHTML = '';
+
+        if (objects.length === 0) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-info';
+            alertDiv.innerHTML =
+                '<i class="fas fa-info-circle me-2"></i> No geo objects available for this map.';
+            listContainer.parentElement.replaceWith(alertDiv);
+            return;
+        }
+
+        // Add each object to the list
+        objects.forEach((object) => {
+            const listItem = createObjectListItem(object);
+            listContainer.appendChild(listItem);
+        });
+
+        // Re-attach event listeners for the new elements
+        attachObjectListEventListeners();
+    }
+
+    /**
+     * Create HTML element for a geo object list item
+     */
+    function createObjectListItem(object) {
+        const div = document.createElement('div');
+        div.className =
+            'list-group-item d-flex justify-content-between align-items-center geo-object-item';
+        div.setAttribute('data-id', object.id);
+        div.setAttribute('data-type', object.type);
+        div.setAttribute('data-hash', object.hash);
+
+        // Get icon based on type
+        let iconClass = 'fas fa-map';
+        if (object.type === 'Point') iconClass = 'fas fa-map-marker-alt';
+        else if (object.type === 'Polygon') iconClass = 'fas fa-draw-polygon';
+        else if (object.type === 'Circle') iconClass = 'fas fa-circle';
+        else if (object.type === 'Line') iconClass = 'fas fa-route';
+
+        // Format TTL display
+        let ttlDisplay = 'Unlimited time';
+        if (object.ttl && object.ttl > 0) {
+            if (object.ttl >= 3600) {
+                const hours = Math.floor(object.ttl / 3600);
+                const minutes = Math.floor((object.ttl % 3600) / 60);
+                ttlDisplay = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                if (minutes > 0) {
+                    ttlDisplay += ` ${minutes} min`;
+                }
+            } else if (object.ttl >= 60) {
+                ttlDisplay = `${Math.floor(object.ttl / 60)} min`;
+            } else {
+                ttlDisplay = `${object.ttl} sec`;
+            }
+        }
+
+        div.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="${iconClass} me-2 geo-type-icon"></i>
+                <div>
+                    <h5 class="mb-1">${object.title}</h5>
+                    <small class="text-muted">${ttlDisplay}</small>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary geo-object-focus" 
+                        title="Focus on map" 
+                        data-id="${object.id}">
+                    <i class="fas fa-search-location"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning geo-object-edit" 
+                        title="Edit object" 
+                        data-id="${object.id}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger geo-object-delete" 
+                        title="Delete object" 
+                        data-id="${object.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        return div;
+    }
+
+    /**
+     * Attach event listeners to object list items
+     */
+    function attachObjectListEventListeners() {
+        // Focus buttons
+        document.querySelectorAll('.geo-object-focus').forEach((btn) => {
+            btn.addEventListener('click', function () {
+                const objectId = this.getAttribute('data-id');
+                console.log('Focus button clicked for object:', objectId);
+
+                if (
+                    map &&
+                    map.geoObjectManager &&
+                    map.geoObjectManager.geoObjectLayers
+                ) {
+                    const layerInfo =
+                        map.geoObjectManager.geoObjectLayers[objectId];
+                    if (layerInfo && layerInfo.layer) {
+                        const layer = layerInfo.layer;
+
+                        // Focus on the object
+                        if (layer.getLatLng) {
+                            // For points
+                            map.getLeafletMap().setView(layer.getLatLng(), 16);
+                        } else if (layer.getBounds) {
+                            // For polygons, circles, lines
+                            map.getLeafletMap().fitBounds(layer.getBounds());
+                        }
+
+                        // Open popup if it exists
+                        if (layer.getPopup) {
+                            layer.openPopup();
+                        }
+                    } else {
+                        console.error('Layer not found for object:', objectId);
+                    }
+                } else {
+                    console.error('Map or geoObjectManager not available');
+                }
+            });
+        });
+
+        // Edit buttons
+        document.querySelectorAll('.geo-object-edit').forEach((btn) => {
+            btn.addEventListener('click', function () {
+                const objectId = this.getAttribute('data-id');
+                if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
+                    window.geoObjectForm.setEditMode(objectId);
+                }
+            });
+        });
+
+        // Delete buttons - handle directly without modal
+        document.querySelectorAll('.geo-object-delete').forEach((btn) => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const objectId = this.getAttribute('data-id');
+                const objectTitle =
+                    this.closest('.geo-object-item').querySelector(
+                        'h5'
+                    ).textContent;
+
+                if (
+                    confirm(`Are you sure you want to delete "${objectTitle}"?`)
+                ) {
+                    // Send delete request directly
+                    fetch(`/geo-object/${objectId}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.success) {
+                                console.log(
+                                    'Object deleted successfully from list'
+                                );
+
+                                // Force complete refresh of both map and list
+                                const mapId = mapIdInput.value;
+                                console.log('MapId for refresh:', mapId);
+                                console.log('Map object:', map);
+                                console.log(
+                                    'Window.tacticalMap:',
+                                    window.tacticalMap
+                                );
+
+                                if (mapId) {
+                                    console.log(
+                                        'Forcing complete refresh after deletion'
+                                    );
+
+                                    // Clear and reload map objects
+                                    if (map && map.geoObjectManager) {
+                                        console.log(
+                                            'Using local map reference'
+                                        );
+                                        console.log('Clearing map objects');
+                                        map.geoObjectManager.clearGeoObjects();
+                                        console.log('Reloading map objects');
+                                        map.geoObjectManager.loadGeoObjects(
+                                            mapId
+                                        );
+                                    } else {
+                                        console.log(
+                                            'Map or geoObjectManager not available, trying global reference'
+                                        );
+                                        if (
+                                            window.tacticalMap &&
+                                            window.tacticalMap.geoObjectManager
+                                        ) {
+                                            console.log(
+                                                'Using global tacticalMap reference'
+                                            );
+                                            window.tacticalMap.geoObjectManager.clearGeoObjects();
+                                            window.tacticalMap.geoObjectManager.loadGeoObjects(
+                                                mapId
+                                            );
+                                        } else {
+                                            console.error(
+                                                'No map reference available for refresh!'
+                                            );
+                                            console.log(
+                                                'Trying to trigger map refresh via event'
+                                            );
+
+                                            // Try to trigger refresh via custom event
+                                            const refreshEvent =
+                                                new CustomEvent(
+                                                    'geo-objects-refresh',
+                                                    {
+                                                        detail: {
+                                                            mapId: mapId,
+                                                        },
+                                                    }
+                                                );
+                                            document.dispatchEvent(
+                                                refreshEvent
+                                            );
+                                        }
+                                    }
+
+                                    // Also refresh the list manually
+                                    console.log('Refreshing objects list');
+                                    refreshGeoObjects();
+                                }
+
+                                alert('Object deleted successfully');
+                            } else {
+                                alert(
+                                    'Error deleting object: ' +
+                                        (data.message || 'Unknown error')
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting object:', error);
+                            alert('Error deleting object. Please try again.');
+                        });
+                }
+            });
+        });
     }
 
     /**
@@ -363,6 +731,7 @@ function initGeoObjectForm(mapInstance) {
         },
         resetForm: resetForm,
         refreshObjects: refreshGeoObjects,
+        updateObjectsList: updateObjectsList,
     };
 
     // Initialize form
@@ -370,4 +739,7 @@ function initGeoObjectForm(mapInstance) {
     if (typeSelect.value) {
         updateTypeHelp(typeSelect.value);
     }
+
+    // Load initial objects list
+    refreshGeoObjects();
 }

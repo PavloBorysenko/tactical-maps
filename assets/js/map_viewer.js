@@ -103,6 +103,23 @@ class TacticalMapViewer {
                 detail: { map: this },
             });
             document.dispatchEvent(mapReadyEvent);
+
+            // Add event listener for geo objects refresh
+            document.addEventListener('geo-objects-refresh', (event) => {
+                console.log(
+                    'Received geo-objects-refresh event:',
+                    event.detail
+                );
+                if (
+                    event.detail &&
+                    event.detail.mapId &&
+                    this.geoObjectManager
+                ) {
+                    console.log('Refreshing geo objects via event');
+                    this.geoObjectManager.clearGeoObjects();
+                    this.geoObjectManager.loadGeoObjects(event.detail.mapId);
+                }
+            });
         } catch (error) {
             console.error('Error initializing map:', error);
         }
@@ -274,20 +291,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Create an instance of TacticalMapViewer
     const mapViewer = new TacticalMapViewer();
 
-    // Load geo-objects AFTER full initialization
-    const mapContainer = document.getElementById('map-container');
-    if (mapContainer && mapViewer.geoObjectManager) {
-        const mapId = mapContainer.getAttribute('data-map-id');
-        if (mapId) {
-            console.log(
-                'Loading geo objects for map ID after initialization:',
-                mapId
-            );
-            setTimeout(() => {
-                mapViewer.loadGeoObjects(mapId);
-            }, 500);
-        }
-    }
+    // Objects are already loaded in the constructor, no need to load them again
+    console.log('TacticalMapViewer initialized, objects loaded in constructor');
 });
 
 export default TacticalMapViewer;
