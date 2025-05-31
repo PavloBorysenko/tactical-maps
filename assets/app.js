@@ -10,3 +10,6 @@ import './styles/app.scss';
 
 import 'bootstrap';
 
+// Import Leaflet and fix default icons path
+import L from 'leaflet';
+L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';

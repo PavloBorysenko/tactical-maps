@@ -12,26 +12,14 @@ function initGeoObjectForm(mapInstance) {
     // Form elements
     const form = document.getElementById('geo-object-form');
     if (!form) {
-        console.log('Geo object form not found, skipping initialization');
         return;
     }
-
-    console.log('Found geo object form, setting up handlers');
 
     const typeSelect = document.querySelector('.geo-object-type');
     const ttlSelect = document.querySelector('.geo-object-ttl');
     const geoJsonInput = document.querySelector('.geo-object-geojson');
     const titleInput = document.querySelector('.geo-object-title');
     const mapIdInput = document.querySelector('.geo-object-map-id');
-
-    // Debug: Check if all elements are found
-    console.log('Form elements found:', {
-        typeSelect: !!typeSelect,
-        ttlSelect: !!ttlSelect,
-        geoJsonInput: !!geoJsonInput,
-        titleInput: !!titleInput,
-        mapIdInput: !!mapIdInput,
-    });
 
     // Ensure mapId is set correctly
     if (mapIdInput) {
@@ -41,13 +29,8 @@ function initGeoObjectForm(mapInstance) {
             const mapId = mapContainer.getAttribute('data-map-id');
             if (mapId) {
                 mapIdInput.value = mapId;
-                console.log('Map ID set to:', mapId);
-            } else {
-                console.error('Map ID not found in map container');
             }
         }
-    } else {
-        console.error('Map ID input field not found');
     }
 
     const createBtn = document.getElementById('btn-create-geo');
@@ -62,9 +45,6 @@ function initGeoObjectForm(mapInstance) {
     const map = window.tacticalMap || null;
 
     if (!map) {
-        console.error(
-            'Map object not found. Make sure the map is initialized before the form.'
-        );
         return;
     }
 
@@ -98,16 +78,6 @@ function initGeoObjectForm(mapInstance) {
             return;
         }
 
-        console.log('geoJsonInput element:', geoJsonInput);
-        console.log(
-            'geoJsonInput value:',
-            geoJsonInput ? geoJsonInput.value : 'element not found'
-        );
-        console.log(
-            'geoJsonInput value length:',
-            geoJsonInput ? geoJsonInput.value.length : 0
-        );
-
         if (!geoJsonInput.value) {
             alert('Please create a geo object on the map');
             return;
@@ -118,8 +88,6 @@ function initGeoObjectForm(mapInstance) {
             alert('Map ID is missing. Please refresh the page and try again.');
             return;
         }
-
-        console.log('Submitting form with mapId:', mapIdInput.value);
 
         // Collect the form data as JSON instead of FormData
         let geoJsonData;
@@ -140,8 +108,6 @@ function initGeoObjectForm(mapInstance) {
             hash: document.querySelector('.geo-object-hash').value,
             mapId: mapIdInput.value,
         };
-
-        console.log('JSON data being sent:', jsonData);
 
         // Determine the URL and method depending on the mode
         let url = '/geo-object/new';
@@ -179,7 +145,6 @@ function initGeoObjectForm(mapInstance) {
                 }
             })
             .catch((error) => {
-                console.error('Error submitting form:', error);
                 showErrorMessage(
                     'Failed to save geo object. Please try again.'
                 );
@@ -276,7 +241,6 @@ function initGeoObjectForm(mapInstance) {
                 }
             })
             .catch((error) => {
-                console.error('Error loading object data:', error);
                 showErrorMessage(
                     'Failed to load geo object data. Please try again.'
                 );
@@ -312,30 +276,17 @@ function initGeoObjectForm(mapInstance) {
      * Enable drawing mode on the map
      */
     function enableDrawingMode(type) {
-        console.log('Enabling drawing mode for type:', type);
-        console.log('Map object available:', !!map);
-        console.log(
-            'Map enableDrawingMode function available:',
-            !!(map && typeof map.enableDrawingMode === 'function')
-        );
-
         drawingMode = true;
 
         // Convert type for map compatibility
         const mapType = convertTypeForMap(type);
-        console.log('Converted type for map:', mapType);
 
         // If there's a function to enable drawing mode on the map
         if (map && typeof map.enableDrawingMode === 'function') {
             map.enableDrawingMode(mapType, function (geoJson) {
                 // Callback to be called after object creation
-                console.log('GeoJSON received from drawing:', geoJson);
-                console.log('Setting geoJsonInput value');
                 geoJsonInput.value = JSON.stringify(geoJson);
-                console.log('geoJsonInput value set to:', geoJsonInput.value);
             });
-        } else {
-            console.error('map.enableDrawingMode is not a function', map);
         }
     }
 
@@ -380,64 +331,34 @@ function initGeoObjectForm(mapInstance) {
      * Refresh the list of objects on the map
      */
     function refreshGeoObjects() {
-        console.log('=== refreshGeoObjects called ===');
         const mapId = mapIdInput.value;
-        console.log('Map ID:', mapId);
 
         if (!mapId) {
-            console.log('No mapId found, returning');
             return;
         }
 
-        console.log('Map object:', map);
-        console.log('Map object type:', typeof map);
-
-        if (map) {
-            console.log(
-                'Available map functions:',
-                Object.getOwnPropertyNames(map)
-            );
-            console.log(
-                'map.loadGeoObjects available:',
-                typeof map.loadGeoObjects
-            );
-        }
-
         // Always fetch and update the list manually
-        console.log('Fetching objects manually to update list');
         fetch(`/geo-object/by-map/${mapId}`)
             .then((response) => response.json())
             .then((data) => {
-                console.log('Fetched objects for list update:', data);
                 if (data.success && data.objects) {
                     // Update the HTML list of objects
                     updateObjectsList(data.objects);
                 }
             })
             .catch((error) => {
-                console.error('Error fetching objects for list:', error);
+                // Silent error handling
             });
 
         // If there's a function to load objects on the map
         if (map && map.loadGeoObjects) {
-            console.log('Calling map.loadGeoObjects with mapId:', mapId);
             map.loadGeoObjects(mapId);
         } else {
-            console.log(
-                'map.loadGeoObjects not available, trying alternative methods'
-            );
-
             // Try alternative method - reload the page or manually fetch and display objects
             if (map && map.refreshObjects) {
-                console.log('Trying map.refreshObjects');
                 map.refreshObjects();
             } else if (map && map.reload) {
-                console.log('Trying map.reload');
                 map.reload();
-            } else {
-                console.log(
-                    'No refresh method found, objects already fetched above'
-                );
             }
         }
     }
@@ -446,13 +367,10 @@ function initGeoObjectForm(mapInstance) {
      * Update the HTML list of geo objects
      */
     function updateObjectsList(objects) {
-        console.log('Updating objects list with:', objects);
-
         const listContainer = document.querySelector(
             '.geo-objects-list .list-group'
         );
         if (!listContainer) {
-            console.log('Objects list container not found');
             return;
         }
 
@@ -551,7 +469,6 @@ function initGeoObjectForm(mapInstance) {
         document.querySelectorAll('.geo-object-focus').forEach((btn) => {
             btn.addEventListener('click', function () {
                 const objectId = this.getAttribute('data-id');
-                console.log('Focus button clicked for object:', objectId);
 
                 if (
                     map &&
@@ -576,11 +493,7 @@ function initGeoObjectForm(mapInstance) {
                         if (layer.getPopup) {
                             layer.openPopup();
                         }
-                    } else {
-                        console.error('Layer not found for object:', objectId);
                     }
-                } else {
-                    console.error('Map or geoObjectManager not available');
                 }
             });
         });

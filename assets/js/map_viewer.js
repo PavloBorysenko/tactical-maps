@@ -1,6 +1,9 @@
 import L from 'leaflet';
 import MapGeoObjectManager from './map_geo_objects';
 
+// Fix Leaflet default icons path
+L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
+
 console.log('map_viewer.js загружен');
 
 /**
