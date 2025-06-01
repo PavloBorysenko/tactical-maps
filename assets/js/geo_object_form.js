@@ -344,23 +344,20 @@ function initGeoObjectForm(mapInstance) {
                 if (data.success && data.objects) {
                     // Update the HTML list of objects
                     updateObjectsList(data.objects);
+
+                    // Also update the map via geoObjectManager
+                    if (
+                        map &&
+                        map.geoObjectManager &&
+                        map.geoObjectManager.loadGeoObjects
+                    ) {
+                        map.geoObjectManager.loadGeoObjects(mapId);
+                    }
                 }
             })
             .catch((error) => {
                 // Silent error handling
             });
-
-        // If there's a function to load objects on the map
-        if (map && map.loadGeoObjects) {
-            map.loadGeoObjects(mapId);
-        } else {
-            // Try alternative method - reload the page or manually fetch and display objects
-            if (map && map.refreshObjects) {
-                map.refreshObjects();
-            } else if (map && map.reload) {
-                map.reload();
-            }
-        }
     }
 
     /**
@@ -370,7 +367,12 @@ function initGeoObjectForm(mapInstance) {
         const listContainer = document.querySelector(
             '.geo-objects-list .list-group'
         );
+
         if (!listContainer) {
+            // Try alternative selector
+            const altContainer = document.querySelector(
+                '.geo-objects-container'
+            );
             return;
         }
 
@@ -387,7 +389,7 @@ function initGeoObjectForm(mapInstance) {
         }
 
         // Add each object to the list
-        objects.forEach((object) => {
+        objects.forEach((object, index) => {
             const listItem = createObjectListItem(object);
             listContainer.appendChild(listItem);
         });
@@ -531,58 +533,26 @@ function initGeoObjectForm(mapInstance) {
                         .then((response) => response.json())
                         .then((data) => {
                             if (data.success) {
-                                console.log(
-                                    'Object deleted successfully from list'
-                                );
-
                                 // Force complete refresh of both map and list
                                 const mapId = mapIdInput.value;
-                                console.log('MapId for refresh:', mapId);
-                                console.log('Map object:', map);
-                                console.log(
-                                    'Window.tacticalMap:',
-                                    window.tacticalMap
-                                );
 
                                 if (mapId) {
-                                    console.log(
-                                        'Forcing complete refresh after deletion'
-                                    );
-
                                     // Clear and reload map objects
                                     if (map && map.geoObjectManager) {
-                                        console.log(
-                                            'Using local map reference'
-                                        );
-                                        console.log('Clearing map objects');
                                         map.geoObjectManager.clearGeoObjects();
-                                        console.log('Reloading map objects');
                                         map.geoObjectManager.loadGeoObjects(
                                             mapId
                                         );
                                     } else {
-                                        console.log(
-                                            'Map or geoObjectManager not available, trying global reference'
-                                        );
                                         if (
                                             window.tacticalMap &&
                                             window.tacticalMap.geoObjectManager
                                         ) {
-                                            console.log(
-                                                'Using global tacticalMap reference'
-                                            );
                                             window.tacticalMap.geoObjectManager.clearGeoObjects();
                                             window.tacticalMap.geoObjectManager.loadGeoObjects(
                                                 mapId
                                             );
                                         } else {
-                                            console.error(
-                                                'No map reference available for refresh!'
-                                            );
-                                            console.log(
-                                                'Trying to trigger map refresh via event'
-                                            );
-
                                             // Try to trigger refresh via custom event
                                             const refreshEvent =
                                                 new CustomEvent(
@@ -600,7 +570,6 @@ function initGeoObjectForm(mapInstance) {
                                     }
 
                                     // Also refresh the list manually
-                                    console.log('Refreshing objects list');
                                     refreshGeoObjects();
                                 }
 
