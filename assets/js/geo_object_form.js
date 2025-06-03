@@ -78,6 +78,48 @@ function initGeoObjectForm(mapInstance) {
             return;
         }
 
+        // Special handling for polygon and line drawing in progress
+        if (drawingMode && map && map.geoObjectManager) {
+            const drawingStatus = map.geoObjectManager.getDrawingStatus();
+
+            if (
+                drawingStatus.isDrawing &&
+                (drawingStatus.type === 'polygon' ||
+                    drawingStatus.type === 'line')
+            ) {
+                if (!drawingStatus.canFinish) {
+                    const minPoints = drawingStatus.minPoints;
+                    const currentPoints = drawingStatus.pointCount;
+                    const needed = minPoints - currentPoints;
+                    alert(
+                        `Please add ${needed} more point${
+                            needed > 1 ? 's' : ''
+                        } to complete the ${
+                            drawingStatus.type
+                        }. Currently you have ${currentPoints} point${
+                            currentPoints !== 1 ? 's' : ''
+                        }, need minimum ${minPoints}.`
+                    );
+                    return;
+                }
+
+                // Try to finish the drawing
+                let finishResult = false;
+                if (drawingStatus.type === 'polygon') {
+                    finishResult =
+                        map.geoObjectManager.finishPolygonFromButton();
+                } else if (drawingStatus.type === 'line') {
+                    finishResult = map.geoObjectManager.finishLineFromButton();
+                }
+
+                if (!finishResult) {
+                    return; // Drawing couldn't be finished
+                }
+
+                // Continue with form submission after successful drawing completion
+            }
+        }
+
         if (!geoJsonInput.value) {
             alert('Please create a geo object on the map');
             return;
@@ -314,8 +356,12 @@ function initGeoObjectForm(mapInstance) {
                 helpText.textContent = 'Click on the map to place a point.';
                 break;
             case 'Polygon':
-                helpText.textContent =
-                    'Click on the map to add polygon points. Double-click to finish.';
+                helpText.innerHTML =
+                    'Click on the map to add polygon points (minimum 3 required).<br><strong>Then click "Create" button to finish the polygon.</strong>';
+                break;
+            case 'Line':
+                helpText.innerHTML =
+                    'Click on the map to add line points (minimum 2 required).<br><strong>Then click "Create" button to finish the line.</strong>';
                 break;
             case 'Circle':
                 helpText.textContent =
