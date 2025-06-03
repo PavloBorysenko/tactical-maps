@@ -342,6 +342,8 @@ class MapGeoObjectManager {
      * Enable drawing mode for a specific type
      */
     enableDrawingMode(type, callback) {
+        console.log('Enabling drawing mode for type:', type);
+
         // Disable current drawing mode if active
         this.disableDrawingMode();
 
@@ -361,23 +363,37 @@ class MapGeoObjectManager {
 
         // Add event handlers depending on the type
         const normalizedType = type.toLowerCase(); // Normalize to lowercase
+        console.log('Normalized type:', normalizedType);
+
         switch (normalizedType) {
             case 'point':
+                console.log('Adding point click handler');
                 this.leafletMap.on('click', this.pointClickHandler);
                 break;
             case 'circle':
+                console.log('Adding circle click handler');
                 this.leafletMap.on('click', this.circleFirstClickHandler);
                 break;
             case 'polygon':
+                console.log('Adding polygon click handlers');
                 this.leafletMap.on('click', this.polygonClickHandler);
+                // Keep double click for users who want to use it, but it's not required
                 this.leafletMap.on('dblclick', this.finishPolygonHandler);
                 break;
             case 'line':
             case 'linestring':
+                console.log('Adding line click handlers');
                 this.leafletMap.on('click', this.lineClickHandler);
+                // Keep double click for users who want to use it, but it's not required
                 this.leafletMap.on('dblclick', this.finishLineHandler);
                 break;
         }
+
+        console.log('Drawing mode enabled, current drawing state:', {
+            drawingMode: this.drawingMode,
+            drawingType: this.drawingType,
+            hasCallback: !!this.drawingCallback,
+        });
     }
 
     /**
@@ -411,6 +427,9 @@ class MapGeoObjectManager {
         this.drawingType = null;
         this.tempPoints = [];
         this.tempCircleCenter = null;
+
+        // Hide point counter if it exists
+        this.hidePointCounter();
     }
 
     /**
@@ -451,6 +470,8 @@ class MapGeoObjectManager {
      * Handle point drawing click
      */
     handlePointClick(e) {
+        console.log('Point click detected at:', e.latlng);
+
         // Clear any previous temp objects
         this.clearTempObjects();
 
@@ -463,6 +484,8 @@ class MapGeoObjectManager {
             type: 'Point',
             coordinates: [point.lng, point.lat],
         };
+
+        console.log('Point GeoJSON created:', geoJson);
 
         // Call the callback with the GeoJSON
         if (this.drawingCallback) {
@@ -528,6 +551,11 @@ class MapGeoObjectManager {
      * Handle clicks for polygon drawing
      */
     handlePolygonClick(e) {
+        console.log(
+            'Polygon click detected, point count:',
+            this.tempPoints.length
+        );
+
         // Add point to the temp points array
         this.tempPoints.push(e.latlng);
 
@@ -539,25 +567,27 @@ class MapGeoObjectManager {
             this.tempLayer = L.polyline(this.tempPoints, {
                 color: 'red',
                 weight: 3,
+                dashArray: '5, 5', // Dashed line to show it's temporary
             }).addTo(this.leafletMap);
         } else {
             // Just a marker for the first point
             this.tempLayer = L.marker(e.latlng).addTo(this.leafletMap);
         }
+
+        // Update point counter display
+        this.updatePointCounter();
+
+        console.log('Polygon points so far:', this.tempPoints.length);
     }
 
     /**
-     * Finish polygon on double click
+     * Finish polygon manually (called from form button)
      */
-    finishPolygon(e) {
-        // Prevent default behavior and stop propagation
-        e.originalEvent.preventDefault();
-        e.originalEvent.stopPropagation();
-
+    finishPolygonFromButton() {
         // Need at least 3 points for a polygon
         if (this.tempPoints.length < 3) {
             alert('Please add at least 3 points to create a polygon.');
-            return;
+            return false;
         }
 
         // Create polygon
@@ -565,6 +595,7 @@ class MapGeoObjectManager {
         this.tempLayer = L.polygon(this.tempPoints, {
             color: 'blue',
             weight: 2,
+            fillOpacity: 0.3,
         }).addTo(this.leafletMap);
 
         // Create GeoJSON
@@ -584,8 +615,7 @@ class MapGeoObjectManager {
             this.drawingCallback(geoJson);
         }
 
-        // Exit drawing mode
-        this.disableDrawingMode();
+        return true;
     }
 
     /**
@@ -601,24 +631,24 @@ class MapGeoObjectManager {
             this.tempLayer = L.polyline(this.tempPoints, {
                 color: 'green',
                 weight: 3,
+                dashArray: '5, 5', // Dashed line to show it's temporary
             }).addTo(this.leafletMap);
         } else {
             this.tempLayer = L.marker(e.latlng).addTo(this.leafletMap);
         }
+
+        // Update point counter display
+        this.updatePointCounter();
     }
 
     /**
-     * Finish line on double click
+     * Finish line manually (called from form button)
      */
-    finishLine(e) {
-        // Prevent default behavior and stop propagation
-        e.originalEvent.preventDefault();
-        e.originalEvent.stopPropagation();
-
+    finishLineFromButton() {
         // Need at least 2 points for a line
         if (this.tempPoints.length < 2) {
             alert('Please add at least 2 points to create a line.');
-            return;
+            return false;
         }
 
         this.clearTempObjects();
@@ -643,8 +673,117 @@ class MapGeoObjectManager {
             this.drawingCallback(geoJson);
         }
 
-        // Exit drawing mode
-        this.disableDrawingMode();
+        return true;
+    }
+
+    /**
+     * Update point counter display
+     */
+    updatePointCounter() {
+        const mapContainer = this.leafletMap.getContainer();
+        let counter = mapContainer.querySelector('.point-counter');
+
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.className = 'point-counter';
+            counter.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 14px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+            `;
+            mapContainer.appendChild(counter);
+        }
+
+        const pointCount = this.tempPoints.length;
+        const drawingType = this.drawingType
+            ? this.drawingType.toLowerCase()
+            : '';
+
+        if (drawingType === 'polygon') {
+            const minPoints = 3;
+            const status =
+                pointCount >= minPoints
+                    ? 'Ready to create!'
+                    : `Need ${minPoints - pointCount} more point${
+                          minPoints - pointCount > 1 ? 's' : ''
+                      }`;
+            counter.innerHTML = `
+                <div><strong>Polygon:</strong> ${pointCount} point${
+                pointCount !== 1 ? 's' : ''
+            }</div>
+                <div style="font-size: 12px; color: ${
+                    pointCount >= minPoints ? '#90EE90' : '#FFD700'
+                }">${status}</div>
+            `;
+        } else if (drawingType === 'line' || drawingType === 'linestring') {
+            const minPoints = 2;
+            const status =
+                pointCount >= minPoints
+                    ? 'Ready to create!'
+                    : `Need ${minPoints - pointCount} more point${
+                          minPoints - pointCount > 1 ? 's' : ''
+                      }`;
+            counter.innerHTML = `
+                <div><strong>Line:</strong> ${pointCount} point${
+                pointCount !== 1 ? 's' : ''
+            }</div>
+                <div style="font-size: 12px; color: ${
+                    pointCount >= minPoints ? '#90EE90' : '#FFD700'
+                }">${status}</div>
+            `;
+        }
+    }
+
+    /**
+     * Hide point counter
+     */
+    hidePointCounter() {
+        const mapContainer = this.leafletMap.getContainer();
+        const counter = mapContainer.querySelector('.point-counter');
+        if (counter) {
+            counter.remove();
+        }
+    }
+
+    /**
+     * Get current drawing status
+     */
+    getDrawingStatus() {
+        if (!this.drawingMode) {
+            return { isDrawing: false };
+        }
+
+        const drawingType = this.drawingType
+            ? this.drawingType.toLowerCase()
+            : '';
+        const pointCount = this.tempPoints.length;
+
+        if (drawingType === 'polygon') {
+            return {
+                isDrawing: true,
+                type: 'polygon',
+                pointCount: pointCount,
+                minPoints: 3,
+                canFinish: pointCount >= 3,
+            };
+        } else if (drawingType === 'line' || drawingType === 'linestring') {
+            return {
+                isDrawing: true,
+                type: 'line',
+                pointCount: pointCount,
+                minPoints: 2,
+                canFinish: pointCount >= 2,
+            };
+        }
+
+        return { isDrawing: true, canFinish: true };
     }
 
     /**
@@ -750,6 +889,34 @@ class MapGeoObjectManager {
                     alert('Error deleting object. Please try again.');
                 });
         }
+    }
+
+    /**
+     * Finish polygon on double click (kept for compatibility, but now works as manual finish)
+     */
+    finishPolygon(e) {
+        // Check if this is called from double click event
+        if (e && e.originalEvent) {
+            // Prevent default behavior and stop propagation only if it's a real event
+            e.originalEvent.preventDefault();
+            e.originalEvent.stopPropagation();
+        }
+
+        return this.finishPolygonFromButton();
+    }
+
+    /**
+     * Finish line on double click (kept for compatibility, but now works as manual finish)
+     */
+    finishLine(e) {
+        // Check if this is called from double click event
+        if (e && e.originalEvent) {
+            // Prevent default behavior and stop propagation only if it's a real event
+            e.originalEvent.preventDefault();
+            e.originalEvent.stopPropagation();
+        }
+
+        return this.finishLineFromButton();
     }
 }
 
