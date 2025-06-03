@@ -86,9 +86,11 @@ class GeoObjectType extends AbstractType
             ->add('geometryType', ChoiceType::class, [
                 'label' => 'Type',
                 'required' => true,
+                'placeholder' => 'Select type',
                 'choices' => [
                     'Point' => 'Point',
                     'Polygon' => 'Polygon',
+                    'Line' => 'Line',
                     'Circle' => 'Circle'
                 ],
                 'constraints' => [

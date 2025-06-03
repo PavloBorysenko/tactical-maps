@@ -20,6 +20,7 @@ class GeoObject
     // Standard GeoJSON geometry types
     public const GEOM_TYPE_POINT = 'Point';
     public const GEOM_TYPE_POLYGON = 'Polygon';
+    public const GEOM_TYPE_LINESTRING = 'Line';
     
     // Custom geometry type (not standard GeoJSON)
     public const GEOM_TYPE_CIRCLE = 'Circle';
@@ -43,10 +44,10 @@ class GeoObject
     private ?string $iconUrl = null;
 
     /**
-     * GeoJSON geometry type: Point, Polygon, or Circle (custom extension)
+     * GeoJSON geometry type: Point, Polygon, Line or Circle (custom extension)
      */
     #[ORM\Column(length: 30)]
-    #[Assert\Choice(choices: [self::GEOM_TYPE_POINT, self::GEOM_TYPE_POLYGON, self::GEOM_TYPE_CIRCLE])]
+    #[Assert\Choice(choices: [self::GEOM_TYPE_POINT, self::GEOM_TYPE_POLYGON, self::GEOM_TYPE_LINESTRING, self::GEOM_TYPE_CIRCLE])]
     private string $geometryType = self::GEOM_TYPE_POINT;
 
     /**
@@ -170,7 +171,7 @@ class GeoObject
 
     public function setGeometryType(string $geometryType): static
     {
-        if (!in_array($geometryType, [self::GEOM_TYPE_POINT, self::GEOM_TYPE_POLYGON, self::GEOM_TYPE_CIRCLE])) {
+        if (!in_array($geometryType, [self::GEOM_TYPE_POINT, self::GEOM_TYPE_POLYGON, self::GEOM_TYPE_LINESTRING, self::GEOM_TYPE_CIRCLE])) {
             throw new \InvalidArgumentException("Invalid geometry type: $geometryType");
         }
         
@@ -196,6 +197,9 @@ class GeoObject
                 break;
             case self::GEOM_TYPE_POLYGON:
                 $this->validatePolygonGeometry($geometry);
+                break;
+            case self::GEOM_TYPE_LINESTRING:
+                $this->validateLineStringGeometry($geometry);
                 break;
             case self::GEOM_TYPE_CIRCLE:
                 $this->validateCircleGeometry($geometry);
@@ -277,6 +281,43 @@ class GeoObject
                 !is_numeric($point[0]) || !is_numeric($point[1])) {
                 throw new \InvalidArgumentException(
                     'Polygon coordinates must be arrays of [longitude, latitude]'
+                );
+            }
+            
+            $longitude = $point[0];
+            $latitude = $point[1];
+            
+            if ($latitude < -90 || $latitude > 90) {
+                throw new \InvalidArgumentException(
+                    'Latitude must be between -90 and 90 degrees'
+                );
+            }
+            
+            if ($longitude < -180 || $longitude > 180) {
+                throw new \InvalidArgumentException(
+                    'Longitude must be between -180 and 180 degrees'
+                );
+            }
+        }
+    }
+
+    /**
+     * Validates LineString geometry (standard GeoJSON type)
+     * Format: {"coordinates": [[lon1, lat1], [lon2, lat2], ...]}
+     */
+    private function validateLineStringGeometry(array $geometry): void
+    {
+        if (!isset($geometry['coordinates']) || !is_array($geometry['coordinates']) || count($geometry['coordinates']) < 2) {
+            throw new \InvalidArgumentException(
+                'LineString geometry must have "coordinates" array with at least 2 points'
+            );
+        }
+        
+        foreach ($geometry['coordinates'] as $point) {
+            if (!is_array($point) || count($point) !== 2 || 
+                !is_numeric($point[0]) || !is_numeric($point[1])) {
+                throw new \InvalidArgumentException(
+                    'LineString coordinates must be arrays of [longitude, latitude]'
                 );
             }
             
@@ -506,6 +547,22 @@ class GeoObject
     }
     
     /**
+     * Helper method to create a GeoJSON LineString
+     * @param array $coordinates Array of points in format [[lon1, lat1], [lon2, lat2], ...]
+     */
+    public static function createLineString(string $name, array $coordinates): self
+    {
+        $lineString = new self();
+        $lineString->setName($name);
+        $lineString->setGeometryType(self::GEOM_TYPE_LINESTRING);
+        $lineString->setGeometry([
+            'coordinates' => $coordinates
+        ]);
+        
+        return $lineString;
+    }
+    
+    /**
      * Gets latitude from Point or Circle geometry
      */
     public function getLatitude(): ?float
@@ -557,6 +614,19 @@ class GeoObject
     }
     
     /**
+     * Gets coordinates array for LineString
+     * @return array Array of points in format [[lon1, lat1], [lon2, lat2], ...]
+     */
+    public function getLineStringCoordinates(): ?array
+    {
+        if ($this->geometryType !== self::GEOM_TYPE_LINESTRING) {
+            throw new \LogicException('getLineStringCoordinates() is only available for LineString type');
+        }
+        
+        return $this->geometry['coordinates'] ?? null;
+    }
+    
+    /**
      * Converts this entity to a GeoJSON Feature
      * @return array GeoJSON Feature representation
      */
@@ -591,7 +661,7 @@ class GeoObject
             ];
         }
         
-        // For standard GeoJSON types
+        // For standard GeoJSON types (Point, Polygon, LineString)
         return [
             'type' => 'Feature',
             'geometry' => [

@@ -52,11 +52,17 @@ function initGeoObjectForm(mapInstance) {
     typeSelect.addEventListener('change', function () {
         const type = this.value;
 
-        // Enable drawing mode and reset current temporary objects
-        enableDrawingMode(type);
-
-        // Update help text based on the selected type
-        updateTypeHelp(type);
+        if (type && type !== '') {
+            // Enable drawing mode only if type is selected
+            enableDrawingMode(type);
+            // Update help text based on the selected type
+            updateTypeHelp(type);
+        } else {
+            // Disable drawing mode if no type selected
+            disableDrawingMode();
+            // Show default help text
+            updateTypeHelp('');
+        }
     });
 
     // Handle cancel button
@@ -75,6 +81,13 @@ function initGeoObjectForm(mapInstance) {
         if (!titleInput.value.trim()) {
             alert('Please enter a title');
             titleInput.focus();
+            return;
+        }
+
+        // Check if type is selected
+        if (!typeSelect.value || typeSelect.value === '') {
+            alert('Please select a type for the geo object');
+            typeSelect.focus();
             return;
         }
 
@@ -296,6 +309,12 @@ function initGeoObjectForm(mapInstance) {
         form.reset();
         geoJsonInput.value = '';
 
+        // Reset type selection to placeholder
+        typeSelect.value = '';
+
+        // Update help text to default state
+        updateTypeHelp('');
+
         // Clear temporary objects from the map
         if (map && map.clearTempObjects) {
             map.clearTempObjects();
@@ -369,7 +388,7 @@ function initGeoObjectForm(mapInstance) {
                 break;
             default:
                 helpText.textContent =
-                    'Select type and then click on the map to create.';
+                    'Select a type from the dropdown to start creating a geo object on the map.';
         }
     }
 
@@ -664,8 +683,15 @@ function initGeoObjectForm(mapInstance) {
 
     // Initialize form
     setCreateMode();
-    if (typeSelect.value) {
+
+    // Update help text to default state (no type selected)
+    updateTypeHelp('');
+
+    // Only update type help if there's already a value selected (for edit mode)
+    if (typeSelect.value && typeSelect.value !== '') {
         updateTypeHelp(typeSelect.value);
+        // Enable drawing mode for existing selection (in edit mode)
+        enableDrawingMode(typeSelect.value);
     }
 
     // Load initial objects list
