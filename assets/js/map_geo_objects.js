@@ -24,6 +24,10 @@ class MapGeoObjectManager {
         // Temporary data for drawing
         this.tempPoints = [];
         this.tempCircleCenter = null;
+
+        // Edit mode data
+        this.editMode = false;
+        this.editPointMarkers = []; // Markers for editable points
     }
 
     /**
@@ -123,17 +127,17 @@ class MapGeoObjectManager {
                 const objectType = object.type.toLowerCase(); // Normalize to lowercase
                 switch (objectType) {
                     case 'point':
-                        layer = this.createPointLayer(geoJson);
+                        layer = this.createPointLayer(geoJson, object);
                         break;
                     case 'polygon':
-                        layer = this.createPolygonLayer(geoJson);
+                        layer = this.createPolygonLayer(geoJson, object);
                         break;
                     case 'circle':
-                        layer = this.createCircleLayer(geoJson);
+                        layer = this.createCircleLayer(geoJson, object);
                         break;
                     case 'line':
                     case 'linestring':
-                        layer = this.createLineLayer(geoJson);
+                        layer = this.createLineLayer(geoJson, object);
                         break;
                     default:
                         return;
@@ -148,12 +152,31 @@ class MapGeoObjectManager {
                     };
 
                     // Add a popup with object info
-                    layer.bindPopup(this.createPopupContent(object));
-
-                    // Add event listener for popup open to attach button handlers
-                    layer.on('popupopen', () => {
-                        this.attachPopupEventListeners(object);
-                    });
+                    // For LayerGroups, bind popup to each layer
+                    if (layer instanceof L.LayerGroup) {
+                        const popupContent = this.createPopupContent(object);
+                        layer.eachLayer((sublayer) => {
+                            sublayer.bindPopup(popupContent);
+                            // Remove any existing popupopen listeners to prevent duplicates
+                            sublayer.off('popupopen');
+                            sublayer.on('popupopen', () => {
+                                // Use setTimeout to ensure popup DOM is ready
+                                setTimeout(() => {
+                                    this.attachPopupEventListeners(object);
+                                }, 10);
+                            });
+                        });
+                    } else {
+                        layer.bindPopup(this.createPopupContent(object));
+                        // Remove any existing popupopen listeners to prevent duplicates
+                        layer.off('popupopen');
+                        layer.on('popupopen', () => {
+                            // Use setTimeout to ensure popup DOM is ready
+                            setTimeout(() => {
+                                this.attachPopupEventListeners(object);
+                            }, 10);
+                        });
+                    }
 
                     // Add to map
                     layer.addTo(this.leafletMap);
@@ -168,7 +191,7 @@ class MapGeoObjectManager {
      * Create a popup content for a geo object
      */
     createPopupContent(object) {
-        let content = `<div class="geo-popup">
+        let content = `<div class="geo-popup" data-object-id="${object.id}">
             <h5>${object.title || 'Unnamed object'}</h5>`;
 
         if (object.description) {
@@ -197,10 +220,10 @@ class MapGeoObjectManager {
         }
 
         content += `<div class="mt-2">
-            <button class="btn btn-sm btn-outline-primary edit-from-popup" data-id="${object.id}">
+            <button class="btn btn-sm btn-outline-primary edit-from-popup" data-id="${object.id}" id="edit-${object.id}">
                 <i class="fas fa-edit"></i> Edit
             </button>
-            <button class="btn btn-sm btn-outline-danger delete-from-popup" data-id="${object.id}">
+            <button class="btn btn-sm btn-outline-danger delete-from-popup" data-id="${object.id}" id="delete-${object.id}">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>`;
@@ -214,19 +237,33 @@ class MapGeoObjectManager {
     /**
      * Create a layer for a point geo object
      */
-    createPointLayer(geoJson) {
+    createPointLayer(geoJson, objectData = null) {
         if (!geoJson || geoJson.type !== 'Point' || !geoJson.coordinates) {
             return null;
         }
 
         const latlng = L.latLng(geoJson.coordinates[1], geoJson.coordinates[0]);
+
+        // Use custom icon if available
+        if (objectData && objectData.iconUrl) {
+            const customIcon = L.icon({
+                iconUrl: objectData.iconUrl,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32],
+            });
+
+            return L.marker(latlng, { icon: customIcon });
+        }
+
+        // Use default marker
         return L.marker(latlng);
     }
 
     /**
      * Create a layer for a polygon geo object
      */
-    createPolygonLayer(geoJson) {
+    createPolygonLayer(geoJson, objectData = null) {
         if (
             !geoJson ||
             geoJson.type !== 'Polygon' ||
@@ -239,17 +276,38 @@ class MapGeoObjectManager {
         const points = geoJson.coordinates[0].map((coord) =>
             L.latLng(coord[1], coord[0])
         );
-        return L.polygon(points, {
+        const polygon = L.polygon(points, {
             color: 'blue',
             weight: 2,
             fillOpacity: 0.3,
         });
+
+        // Add custom icon if available
+        if (objectData && objectData.iconUrl) {
+            // Calculate polygon center
+            const bounds = polygon.getBounds();
+            const center = bounds.getCenter();
+
+            const customIcon = L.icon({
+                iconUrl: objectData.iconUrl,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+            });
+
+            const iconMarker = L.marker(center, { icon: customIcon });
+
+            // Create a layer group with polygon and icon
+            return L.layerGroup([polygon, iconMarker]);
+        }
+
+        return polygon;
     }
 
     /**
      * Create a layer for a circle geo object
      */
-    createCircleLayer(geoJson) {
+    createCircleLayer(geoJson, objectData = null) {
         if (
             !geoJson ||
             geoJson.type !== 'Circle' ||
@@ -260,18 +318,35 @@ class MapGeoObjectManager {
         }
 
         const center = L.latLng(geoJson.coordinates[1], geoJson.coordinates[0]);
-        return L.circle(center, {
+        const circle = L.circle(center, {
             radius: geoJson.radius,
             color: 'red',
             weight: 2,
             fillOpacity: 0.2,
         });
+
+        // Add custom icon if available
+        if (objectData && objectData.iconUrl) {
+            const customIcon = L.icon({
+                iconUrl: objectData.iconUrl,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+            });
+
+            const iconMarker = L.marker(center, { icon: customIcon });
+
+            // Create a layer group with circle and icon
+            return L.layerGroup([circle, iconMarker]);
+        }
+
+        return circle;
     }
 
     /**
      * Create a layer for a line geo object
      */
-    createLineLayer(geoJson) {
+    createLineLayer(geoJson, objectData = null) {
         if (!geoJson || geoJson.type !== 'LineString' || !geoJson.coordinates) {
             return null;
         }
@@ -279,16 +354,37 @@ class MapGeoObjectManager {
         const points = geoJson.coordinates.map((coord) =>
             L.latLng(coord[1], coord[0])
         );
-        return L.polyline(points, {
+        const line = L.polyline(points, {
             color: 'green',
             weight: 3,
         });
+
+        // Add custom icon if available
+        if (objectData && objectData.iconUrl) {
+            // Calculate middle point of the line
+            const middleIndex = Math.floor(points.length / 2);
+            const center = points[middleIndex];
+
+            const customIcon = L.icon({
+                iconUrl: objectData.iconUrl,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+            });
+
+            const iconMarker = L.marker(center, { icon: customIcon });
+
+            // Create a layer group with line and icon
+            return L.layerGroup([line, iconMarker]);
+        }
+
+        return line;
     }
 
     /**
      * Display a specific GeoJSON object on the map (for editing)
      */
-    showGeoJsonObject(geoJson, type) {
+    showGeoJsonObject(geoJson, type, objectData = null) {
         this.clearTempObjects();
 
         if (!geoJson || !type) {
@@ -297,19 +393,26 @@ class MapGeoObjectManager {
 
         let layer;
         const normalizedType = type.toLowerCase(); // Normalize to lowercase
+
+        // During editing, don't use icons to avoid LayerGroup complexity
+        // Use simple geometry for better editing experience
         switch (normalizedType) {
             case 'point':
-                layer = this.createPointLayer(geoJson);
+                // For points, still show with icon if available
+                layer = this.createPointLayer(geoJson, objectData);
                 break;
             case 'polygon':
-                layer = this.createPolygonLayer(geoJson);
+                // Use simple polygon without icon for editing
+                layer = this.createPolygonLayer(geoJson, null);
                 break;
             case 'circle':
-                layer = this.createCircleLayer(geoJson);
+                // Use simple circle without icon for editing
+                layer = this.createCircleLayer(geoJson, null);
                 break;
             case 'line':
             case 'linestring':
-                layer = this.createLineLayer(geoJson);
+                // Use simple line without icon for editing
+                layer = this.createLineLayer(geoJson, null);
                 break;
             default:
                 return;
@@ -336,6 +439,9 @@ class MapGeoObjectManager {
             this.leafletMap.removeLayer(this.tempLayer);
             this.tempLayer = null;
         }
+
+        // Don't clear edit point markers in edit mode - they should persist
+        // Edit markers are cleared separately via clearEditPointMarkers()
     }
 
     /**
@@ -409,11 +515,16 @@ class MapGeoObjectManager {
         // Clear temp layer
         this.clearTempObjects();
 
+        // Clear edit mode data and markers
+        this.clearEditPointMarkers();
+        this.editMode = false;
+
         // Reset state
         this.drawingMode = false;
         this.drawingType = null;
+        this.drawingCallback = null;
         this.tempPoints = [];
-        this.tempCircleCenter = null;
+        this.tempCircleCenter = null; // Reset circle center
 
         // Hide point counter if it exists
         this.hidePointCounter();
@@ -457,12 +568,47 @@ class MapGeoObjectManager {
      * Handle point drawing click
      */
     handlePointClick(e) {
+        // In edit mode for points, replace the existing point
+        if (
+            this.editMode &&
+            this.drawingType &&
+            this.drawingType.toLowerCase() === 'point'
+        ) {
+            // Clear previous edit markers
+            this.clearEditPointMarkers();
+
+            // Update the point position
+            const point = e.latlng;
+            this.tempPoints = [point];
+
+            // Create new editable marker
+            this.createEditPointMarker(point, 0, 'point');
+
+            // Update geometry callback
+            this.updatePointGeometryCallback(point);
+
+            return;
+        }
+
         // Clear any previous temp objects
         this.clearTempObjects();
 
-        // Create a marker at the clicked location
+        // Create a marker at the clicked location with temporary styling
         const point = e.latlng;
-        this.tempLayer = L.marker(point).addTo(this.leafletMap);
+        this.tempLayer = L.marker(point, {
+            title: 'Click "Create" button to place this point',
+            opacity: 0.7,
+            icon: L.icon({
+                iconUrl:
+                    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41],
+            }),
+        }).addTo(this.leafletMap);
 
         // Create GeoJSON
         const geoJson = {
@@ -475,25 +621,97 @@ class MapGeoObjectManager {
             this.drawingCallback(geoJson);
         }
 
-        // Automatically exit drawing mode
-        this.disableDrawingMode();
+        // Don't automatically exit drawing mode for points - let the user see the marker
+        // Drawing mode will be disabled when form is submitted or cancelled
     }
 
     /**
      * Handle first click for circle drawing
      */
     handleCircleFirstClick(e) {
+        // In edit mode for circles, allow repositioning center
+        if (
+            this.editMode &&
+            this.drawingType &&
+            this.drawingType.toLowerCase() === 'circle'
+        ) {
+            // Clear previous edit markers
+            this.clearEditPointMarkers();
+
+            // Set new center but keep existing radius if available
+            const existingRadius =
+                this.tempLayer && this.tempLayer.getRadius
+                    ? this.tempLayer.getRadius()
+                    : 100; // Default 100m radius
+
+            this.tempCircleCenter = e.latlng;
+            this.tempPoints = [e.latlng];
+
+            // Create new editable circle marker
+            this.createEditCircleMarker(e.latlng, existingRadius);
+
+            // Update visual and callback
+            this.updateEditCircleVisual(existingRadius);
+            this.updateCircleGeometryCallback(e.latlng, existingRadius);
+
+            return;
+        }
+
         // Store center point
         this.tempCircleCenter = e.latlng;
+        this.tempPoints = [e.latlng];
 
-        // Create a temporary marker at the center
+        // Create editable center marker instead of temporary marker
         this.clearTempObjects();
-        this.tempLayer = L.marker(this.tempCircleCenter).addTo(this.leafletMap);
+        this.clearEditPointMarkers(); // Clear any previous edit markers
+
+        // Create center marker that can be dragged
+        const centerMarker = L.marker(this.tempCircleCenter, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl:
+                    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41],
+            }),
+            title: 'Circle center - click anywhere to set radius',
+        }).addTo(this.leafletMap);
+
+        // Handle center dragging
+        centerMarker.on('dragend', (e) => {
+            const newCenter = e.target.getLatLng();
+            this.tempCircleCenter = newCenter;
+            this.tempPoints[0] = newCenter;
+
+            // If we already have a radius marker, update circle but keep radius marker position
+            if (this.editPointMarkers.length > 1) {
+                const radiusMarker = this.editPointMarkers[1];
+                const currentRadius = newCenter.distanceTo(
+                    radiusMarker.getLatLng()
+                );
+
+                // Update visual and callback
+                this.updateEditCircleVisual(currentRadius);
+                this.updateCircleGeometryCallback(newCenter, currentRadius);
+
+                // Update counter
+                this.updatePointCounter();
+            }
+        });
+
+        this.editPointMarkers.push(centerMarker);
 
         // Change handler for second click
         this.leafletMap.off('click', this.circleFirstClickHandler);
         this.circleSecondClickHandler = this.handleCircleSecondClick.bind(this);
         this.leafletMap.on('click', this.circleSecondClickHandler);
+
+        // Update counter to show circle creation mode
+        this.updatePointCounter();
     }
 
     /**
@@ -505,13 +723,73 @@ class MapGeoObjectManager {
         // Calculate radius in meters
         const radius = this.tempCircleCenter.distanceTo(e.latlng);
 
-        // Remove temporary marker
+        // Remove previous temporary circle (if any)
         this.clearTempObjects();
 
-        // Create circle
+        // If we already have a radius marker, remove it
+        if (this.editPointMarkers.length > 1) {
+            this.leafletMap.removeLayer(this.editPointMarkers[1]);
+            this.editPointMarkers.splice(1, 1);
+        }
+
+        // Create radius control marker
+        const radiusMarker = L.marker(e.latlng, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl:
+                    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [20, 32],
+                iconAnchor: [10, 32],
+                popupAnchor: [1, -28],
+                shadowSize: [32, 32],
+            }),
+            title: 'Drag to adjust circle radius',
+        }).addTo(this.leafletMap);
+
+        // Handle radius dragging
+        radiusMarker.on('dragend', (e) => {
+            const newRadius = this.tempCircleCenter.distanceTo(
+                e.target.getLatLng()
+            );
+
+            // Update visual and callback
+            this.updateEditCircleVisual(newRadius);
+            this.updateCircleGeometryCallback(this.tempCircleCenter, newRadius);
+
+            // Update counter
+            this.updatePointCounter();
+        });
+
+        this.editPointMarkers.push(radiusMarker);
+
+        // Create circle with temporary styling
         this.tempLayer = L.circle(this.tempCircleCenter, {
             radius: radius,
+            color: 'red',
+            weight: 2,
+            fillColor: 'red',
+            fillOpacity: 0.2,
+            dashArray: '5, 5', // Dashed border to show it's temporary
+            opacity: 0.7,
         }).addTo(this.leafletMap);
+
+        // Add tooltip with radius information
+        const radiusText =
+            radius < 1000
+                ? `${Math.round(radius)} meters`
+                : `${(radius / 1000).toFixed(2)} km`;
+
+        this.tempLayer
+            .bindTooltip(
+                `Radius: ${radiusText}<br>Drag markers to adjust or "Create" to place this circle`,
+                {
+                    permanent: false,
+                    direction: 'top',
+                }
+            )
+            .openTooltip();
 
         // Create GeoJSON
         const geoJson = {
@@ -525,9 +803,12 @@ class MapGeoObjectManager {
             this.drawingCallback(geoJson);
         }
 
-        // Reset event handlers and exit drawing mode
-        this.leafletMap.off('click', this.circleSecondClickHandler);
-        this.disableDrawingMode();
+        // Keep the click handler active so user can continue adjusting radius
+        // Don't remove the click handler - let user click again to adjust radius
+        // Drawing mode will be disabled when form is submitted or cancelled
+
+        // Update counter to show circle creation with markers
+        this.updatePointCounter();
     }
 
     /**
@@ -537,20 +818,15 @@ class MapGeoObjectManager {
         // Add point to the temp points array
         this.tempPoints.push(e.latlng);
 
-        // Clear previous temp layer
-        this.clearTempObjects();
+        // Always create editable marker for better UX (both creation and edit mode)
+        const newIndex = this.tempPoints.length - 1;
+        this.createEditPointMarker(e.latlng, newIndex);
 
-        // Create a temporary polyline to show progress
-        if (this.tempPoints.length > 1) {
-            this.tempLayer = L.polyline(this.tempPoints, {
-                color: 'red',
-                weight: 3,
-                dashArray: '5, 5', // Dashed line to show it's temporary
-            }).addTo(this.leafletMap);
-        } else {
-            // Just a marker for the first point
-            this.tempLayer = L.marker(e.latlng).addTo(this.leafletMap);
-        }
+        // Update visual representation
+        this.updateEditPolygonVisual();
+
+        // Update geometry callback
+        this.updateGeometryCallback();
 
         // Update point counter display
         this.updatePointCounter();
@@ -601,17 +877,15 @@ class MapGeoObjectManager {
         // Similar to polygon clicks
         this.tempPoints.push(e.latlng);
 
-        this.clearTempObjects();
+        // Always create editable marker for better UX (both creation and edit mode)
+        const newIndex = this.tempPoints.length - 1;
+        this.createEditPointMarker(e.latlng, newIndex);
 
-        if (this.tempPoints.length > 1) {
-            this.tempLayer = L.polyline(this.tempPoints, {
-                color: 'green',
-                weight: 3,
-                dashArray: '5, 5', // Dashed line to show it's temporary
-            }).addTo(this.leafletMap);
-        } else {
-            this.tempLayer = L.marker(e.latlng).addTo(this.leafletMap);
-        }
+        // Update visual representation
+        this.updateEditLineVisual();
+
+        // Update geometry callback
+        this.updateGeometryCallback();
 
         // Update point counter display
         this.updatePointCounter();
@@ -690,13 +964,17 @@ class MapGeoObjectManager {
                     : `Need ${minPoints - pointCount} more point${
                           minPoints - pointCount > 1 ? 's' : ''
                       }`;
+
+            const modeText = this.editMode ? 'EDIT MODE' : 'CREATE MODE';
+
             counter.innerHTML = `
                 <div><strong>Polygon:</strong> ${pointCount} point${
                 pointCount !== 1 ? 's' : ''
-            }</div>
+            } <span style="color: #FFD700">[${modeText}]</span></div>
                 <div style="font-size: 12px; color: ${
                     pointCount >= minPoints ? '#90EE90' : '#FFD700'
                 }">${status}</div>
+                <div style="font-size: 11px; color: #FFD700">Right-click points to delete • Drag to move</div>
             `;
         } else if (drawingType === 'line' || drawingType === 'linestring') {
             const minPoints = 2;
@@ -706,13 +984,52 @@ class MapGeoObjectManager {
                     : `Need ${minPoints - pointCount} more point${
                           minPoints - pointCount > 1 ? 's' : ''
                       }`;
+
+            const modeText = this.editMode ? 'EDIT MODE' : 'CREATE MODE';
+
             counter.innerHTML = `
                 <div><strong>Line:</strong> ${pointCount} point${
                 pointCount !== 1 ? 's' : ''
-            }</div>
+            } <span style="color: #FFD700">[${modeText}]</span></div>
                 <div style="font-size: 12px; color: ${
                     pointCount >= minPoints ? '#90EE90' : '#FFD700'
                 }">${status}</div>
+                <div style="font-size: 11px; color: #FFD700">Right-click points to delete • Drag to move</div>
+            `;
+        } else if (drawingType === 'point' && this.editMode) {
+            counter.innerHTML = `
+                <div><strong>Point:</strong> <span style="color: #FFD700">[EDIT MODE]</span></div>
+                <div style="font-size: 12px; color: #90EE90">Drag orange marker to move</div>
+            `;
+        } else if (drawingType === 'circle' && this.editMode) {
+            counter.innerHTML = `
+                <div><strong>Circle:</strong> <span style="color: #FFD700">[EDIT MODE]</span></div>
+                <div style="font-size: 12px; color: #90EE90">Drag yellow center or purple radius</div>
+            `;
+        } else if (drawingType === 'circle') {
+            // Circle creation mode
+            const hasCenter = this.tempCircleCenter !== null;
+            const hasRadius = this.editPointMarkers.length > 1;
+
+            let status = '';
+            if (!hasCenter) {
+                status = 'Click to set center';
+            } else if (!hasRadius) {
+                status = 'Click to set radius';
+            } else {
+                status = 'Ready to create!';
+            }
+
+            counter.innerHTML = `
+                <div><strong>Circle:</strong> <span style="color: #FFD700">[CREATE MODE]</span></div>
+                <div style="font-size: 12px; color: ${
+                    hasCenter && hasRadius ? '#90EE90' : '#FFD700'
+                }">${status}</div>
+                ${
+                    hasCenter
+                        ? '<div style="font-size: 11px; color: #FFD700">Drag markers to adjust • Click map to reposition</div>'
+                        : ''
+                }
             `;
         }
     }
@@ -805,26 +1122,51 @@ class MapGeoObjectManager {
         }
 
         const layer = layerInfo.layer;
+        let popupElement = null;
 
-        const editButton = layer
-            .getPopup()
-            .getElement()
-            .querySelector('.edit-from-popup');
-        const deleteButton = layer
-            .getPopup()
-            .getElement()
-            .querySelector('.delete-from-popup');
-
-        if (editButton) {
-            editButton.addEventListener('click', () => {
-                this.editGeoObject(object);
+        // Handle LayerGroups differently
+        if (layer instanceof L.LayerGroup) {
+            // Find the first layer with a popup
+            layer.eachLayer((sublayer) => {
+                if (sublayer.getPopup && sublayer.getPopup()) {
+                    popupElement = sublayer.getPopup().getElement();
+                    return false; // Break early
+                }
             });
+        } else {
+            // Regular layer
+            if (layer.getPopup && layer.getPopup()) {
+                popupElement = layer.getPopup().getElement();
+            }
         }
 
-        if (deleteButton) {
-            deleteButton.addEventListener('click', () => {
+        if (!popupElement) {
+            return;
+        }
+
+        // Use event delegation and check if listeners are already attached
+        const editButton = popupElement.querySelector('.edit-from-popup');
+        const deleteButton = popupElement.querySelector('.delete-from-popup');
+
+        if (editButton && !editButton.hasAttribute('data-listener-attached')) {
+            editButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editGeoObject(object);
+            });
+            editButton.setAttribute('data-listener-attached', 'true');
+        }
+
+        if (
+            deleteButton &&
+            !deleteButton.hasAttribute('data-listener-attached')
+        ) {
+            deleteButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.deleteGeoObject(object);
             });
+            deleteButton.setAttribute('data-listener-attached', 'true');
         }
     }
 
@@ -892,6 +1234,417 @@ class MapGeoObjectManager {
                 .catch((error) => {
                     alert('Error deleting object. Please try again.');
                 });
+        }
+    }
+
+    /**
+     * Load existing geometry for editing mode
+     */
+    loadExistingGeometryForEdit(geoJson, type) {
+        if (!geoJson || !type) return;
+
+        this.editMode = true;
+        this.clearEditPointMarkers();
+
+        const normalizedType = type.toLowerCase();
+
+        if (
+            normalizedType === 'polygon' &&
+            geoJson.type === 'Polygon' &&
+            geoJson.coordinates &&
+            geoJson.coordinates[0]
+        ) {
+            // Load polygon points for editing
+            const coordinates = geoJson.coordinates[0];
+            this.tempPoints = [];
+
+            // Convert coordinates to LatLng objects (skip last duplicate point)
+            for (let i = 0; i < coordinates.length - 1; i++) {
+                const coord = coordinates[i];
+                const latlng = L.latLng(coord[1], coord[0]);
+                this.tempPoints.push(latlng);
+
+                // Create editable point marker
+                this.createEditPointMarker(latlng, i);
+            }
+
+            // Update visual representation
+            this.updateEditPolygonVisual();
+        } else if (
+            normalizedType === 'line' &&
+            geoJson.type === 'LineString' &&
+            geoJson.coordinates
+        ) {
+            // Load line points for editing
+            this.tempPoints = [];
+
+            for (let i = 0; i < geoJson.coordinates.length; i++) {
+                const coord = geoJson.coordinates[i];
+                const latlng = L.latLng(coord[1], coord[0]);
+                this.tempPoints.push(latlng);
+
+                // Create editable point marker
+                this.createEditPointMarker(latlng, i);
+            }
+
+            // Update visual representation
+            this.updateEditLineVisual();
+        } else if (
+            normalizedType === 'point' &&
+            geoJson.type === 'Point' &&
+            geoJson.coordinates
+        ) {
+            // Load point for editing
+            const coord = geoJson.coordinates;
+            const latlng = L.latLng(coord[1], coord[0]);
+            this.tempPoints = [latlng];
+
+            // Create editable point marker for the point
+            this.createEditPointMarker(latlng, 0, 'point');
+        } else if (
+            normalizedType === 'circle' &&
+            geoJson.type === 'Circle' &&
+            geoJson.coordinates &&
+            geoJson.radius
+        ) {
+            // Load circle for editing
+            const coord = geoJson.coordinates;
+            const center = L.latLng(coord[1], coord[0]);
+            this.tempCircleCenter = center;
+            this.tempPoints = [center];
+
+            // Create editable center marker
+            this.createEditCircleMarker(center, geoJson.radius);
+
+            // Update visual representation
+            this.updateEditCircleVisual(geoJson.radius);
+        }
+    }
+
+    /**
+     * Create an editable point marker
+     */
+    createEditPointMarker(latlng, index, objectType = null) {
+        const isPoint = objectType === 'point';
+
+        const marker = L.marker(latlng, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl: isPoint
+                    ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png'
+                    : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: isPoint ? [25, 41] : [20, 32],
+                iconAnchor: isPoint ? [12, 41] : [10, 32],
+                popupAnchor: [1, isPoint ? -34 : -28],
+                shadowSize: isPoint ? [41, 41] : [32, 32],
+            }),
+            title: isPoint
+                ? 'Drag to move point location'
+                : `Point ${index + 1} - Drag to move, Right-click to delete`,
+        }).addTo(this.leafletMap);
+
+        // Handle dragging
+        marker.on('dragend', (e) => {
+            const newPos = e.target.getLatLng();
+            this.tempPoints[index] = newPos;
+
+            if (isPoint) {
+                // For point objects, immediately update geometry
+                this.updatePointGeometryCallback(newPos);
+            } else {
+                // For polygon/line objects
+                this.updateEditVisual();
+                this.updateGeometryCallback();
+            }
+        });
+
+        // Handle right-click for deletion (not for single points)
+        if (!isPoint) {
+            marker.on('contextmenu', (e) => {
+                e.originalEvent.preventDefault();
+                this.deleteEditPoint(index);
+            });
+        }
+
+        this.editPointMarkers.push(marker);
+        return marker;
+    }
+
+    /**
+     * Create an editable circle marker (center + radius control)
+     */
+    createEditCircleMarker(center, radius) {
+        // Create center marker
+        const centerMarker = L.marker(center, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl:
+                    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41],
+            }),
+            title: 'Drag to move circle center',
+        }).addTo(this.leafletMap);
+
+        // Create radius control point
+        const radiusLatLng = L.latLng(center.lat, center.lng + radius / 111000); // Approximate longitude offset
+        const radiusMarker = L.marker(radiusLatLng, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl:
+                    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+                shadowUrl:
+                    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [20, 32],
+                iconAnchor: [10, 32],
+                popupAnchor: [1, -28],
+                shadowSize: [32, 32],
+            }),
+            title: 'Drag to adjust circle radius',
+        }).addTo(this.leafletMap);
+
+        // Handle center dragging
+        centerMarker.on('dragend', (e) => {
+            const newCenter = e.target.getLatLng();
+            this.tempCircleCenter = newCenter;
+            this.tempPoints[0] = newCenter;
+
+            // If we already have a radius marker, update circle but keep radius marker position
+            if (this.editPointMarkers.length > 1) {
+                const radiusMarker = this.editPointMarkers[1];
+                const currentRadius = newCenter.distanceTo(
+                    radiusMarker.getLatLng()
+                );
+
+                // Update visual and callback
+                this.updateEditCircleVisual(currentRadius);
+                this.updateCircleGeometryCallback(newCenter, currentRadius);
+
+                // Update counter
+                this.updatePointCounter();
+            }
+        });
+
+        // Handle radius dragging
+        radiusMarker.on('dragend', (e) => {
+            const newRadius = this.tempCircleCenter.distanceTo(
+                e.target.getLatLng()
+            );
+
+            // Update visual and callback
+            this.updateEditCircleVisual(newRadius);
+            this.updateCircleGeometryCallback(this.tempCircleCenter, newRadius);
+        });
+
+        this.editPointMarkers.push(centerMarker);
+        this.editPointMarkers.push(radiusMarker);
+
+        return { centerMarker, radiusMarker };
+    }
+
+    /**
+     * Update visual representation for editing circle
+     */
+    updateEditCircleVisual(radius) {
+        this.clearTempObjects();
+
+        if (this.tempCircleCenter && radius) {
+            this.tempLayer = L.circle(this.tempCircleCenter, {
+                radius: radius,
+                color: 'red',
+                weight: 2,
+                fillColor: 'red',
+                fillOpacity: 0.2,
+                dashArray: '5, 5', // Dashed border to show it's being edited
+                opacity: 0.7,
+            }).addTo(this.leafletMap);
+        }
+    }
+
+    /**
+     * Update geometry callback for point objects
+     */
+    updatePointGeometryCallback(latlng) {
+        if (!this.drawingCallback) return;
+
+        const geoJson = {
+            type: 'Point',
+            coordinates: [latlng.lng, latlng.lat],
+        };
+
+        this.drawingCallback(geoJson);
+
+        // Update point counter display for edit mode
+        if (this.editMode) {
+            this.updatePointCounter();
+        }
+    }
+
+    /**
+     * Update geometry callback for circle objects
+     */
+    updateCircleGeometryCallback(center, radius) {
+        if (!this.drawingCallback) return;
+
+        const geoJson = {
+            type: 'Circle',
+            coordinates: [center.lng, center.lat],
+            radius: radius,
+        };
+
+        this.drawingCallback(geoJson);
+
+        // Update point counter display for edit mode
+        if (this.editMode) {
+            this.updatePointCounter();
+        }
+    }
+
+    /**
+     * Delete a point from editing
+     */
+    deleteEditPoint(index) {
+        const drawingType = this.drawingType
+            ? this.drawingType.toLowerCase()
+            : '';
+        const minPoints = drawingType === 'polygon' ? 3 : 2;
+
+        if (this.tempPoints.length <= minPoints) {
+            alert(
+                `Cannot delete point. Minimum ${minPoints} points required for ${drawingType}.`
+            );
+            return;
+        }
+
+        // Remove the point and marker
+        this.tempPoints.splice(index, 1);
+
+        // Remove and recreate all markers to update indices
+        this.recreateEditPointMarkers();
+
+        // Update visual representation
+        this.updateEditVisual();
+        this.updateGeometryCallback();
+    }
+
+    /**
+     * Recreate all edit point markers with correct indices
+     */
+    recreateEditPointMarkers() {
+        // Clear existing markers
+        this.clearEditPointMarkers();
+
+        // Recreate markers with updated indices
+        this.tempPoints.forEach((latlng, index) => {
+            this.createEditPointMarker(latlng, index);
+        });
+    }
+
+    /**
+     * Clear edit point markers
+     */
+    clearEditPointMarkers() {
+        this.editPointMarkers.forEach((marker) => {
+            this.leafletMap.removeLayer(marker);
+        });
+        this.editPointMarkers = [];
+    }
+
+    /**
+     * Update visual representation for editing polygon
+     */
+    updateEditPolygonVisual() {
+        this.clearTempObjects();
+
+        if (this.tempPoints.length >= 2) {
+            this.tempLayer = L.polygon(this.tempPoints, {
+                color: 'blue',
+                weight: 2,
+                fillOpacity: 0.3,
+                dashArray: '5, 5', // Dashed to show it's being edited
+            }).addTo(this.leafletMap);
+        }
+    }
+
+    /**
+     * Update visual representation for editing line
+     */
+    updateEditLineVisual() {
+        this.clearTempObjects();
+
+        if (this.tempPoints.length >= 2) {
+            this.tempLayer = L.polyline(this.tempPoints, {
+                color: 'green',
+                weight: 3,
+                dashArray: '5, 5', // Dashed to show it's being edited
+            }).addTo(this.leafletMap);
+        }
+    }
+
+    /**
+     * Update visual representation based on current drawing type
+     */
+    updateEditVisual() {
+        const drawingType = this.drawingType
+            ? this.drawingType.toLowerCase()
+            : '';
+
+        if (drawingType === 'polygon') {
+            this.updateEditPolygonVisual();
+        } else if (drawingType === 'line' || drawingType === 'linestring') {
+            this.updateEditLineVisual();
+        }
+    }
+
+    /**
+     * Update geometry callback for edit mode
+     */
+    updateGeometryCallback() {
+        if (!this.drawingCallback) return;
+
+        const drawingType = this.drawingType
+            ? this.drawingType.toLowerCase()
+            : '';
+
+        if (drawingType === 'polygon' && this.tempPoints.length >= 3) {
+            // Create GeoJSON for polygon
+            const coordinates = [
+                this.tempPoints.map((point) => [point.lng, point.lat]),
+            ];
+            // Close the polygon
+            coordinates[0].push([
+                this.tempPoints[0].lng,
+                this.tempPoints[0].lat,
+            ]);
+
+            const geoJson = {
+                type: 'Polygon',
+                coordinates: coordinates,
+            };
+
+            this.drawingCallback(geoJson);
+        } else if (
+            (drawingType === 'line' || drawingType === 'linestring') &&
+            this.tempPoints.length >= 2
+        ) {
+            // Create GeoJSON for line
+            const coordinates = this.tempPoints.map((point) => [
+                point.lng,
+                point.lat,
+            ]);
+
+            const geoJson = {
+                type: 'LineString',
+                coordinates: coordinates,
+            };
+
+            this.drawingCallback(geoJson);
         }
     }
 }

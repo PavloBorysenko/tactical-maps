@@ -83,6 +83,15 @@ class GeoObjectType extends AbstractType
                     'class' => 'form-control geo-object-ttl'
                 ]
             ])
+            ->add('iconUrl', TextType::class, [
+                'label' => 'Custom Icon',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control geo-object-icon-url',
+                    'readonly' => true,
+                    'placeholder' => 'Select an icon or leave empty for default'
+                ]
+            ])
             ->add('geometryType', ChoiceType::class, [
                 'label' => 'Type',
                 'required' => true,

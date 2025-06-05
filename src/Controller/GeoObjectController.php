@@ -78,7 +78,8 @@ class GeoObjectController extends AbstractController
                         'ttl' => (int)($geoObjectData['ttl'] ?? 0),
                         'geoJson' => $geoObjectData['geometry'] ?? '',
                         'hash' => $geoObjectData['hash'] ?? '',
-                        'mapId' => $geoObjectData['mapId'] ?? null
+                        'mapId' => $geoObjectData['mapId'] ?? null,
+                        'iconUrl' => $geoObjectData['iconUrl'] ?? null
                     ];
                 } else {
                     // Alternative way to get data
@@ -89,7 +90,8 @@ class GeoObjectController extends AbstractController
                         'ttl' => (int)$request->request->get('ttl', 0),
                         'geoJson' => $request->request->get('geometry', ''),
                         'hash' => $request->request->get('hash', ''),
-                        'mapId' => $request->request->get('mapId')
+                        'mapId' => $request->request->get('mapId'),
+                        'iconUrl' => $request->request->get('iconUrl')
                     ];
                 }
             }
@@ -143,7 +145,8 @@ class GeoObjectController extends AbstractController
                     'ttl' => (int)($geoObjectData['ttl'] ?? 0),
                     'geoJson' => $geoObjectData['geometry'] ?? '',
                     'hash' => $geoObjectData['hash'] ?? '',
-                    'mapId' => $geoObjectData['mapId'] ?? null
+                    'mapId' => $geoObjectData['mapId'] ?? null,
+                    'iconUrl' => $geoObjectData['iconUrl'] ?? null
                 ];
             } else {
                 // Alternative way to get data
@@ -154,7 +157,8 @@ class GeoObjectController extends AbstractController
                     'ttl' => (int)$request->request->get('ttl', 0),
                     'geoJson' => $request->request->get('geometry', ''),
                     'hash' => $request->request->get('hash', ''),
-                    'mapId' => $request->request->get('mapId')
+                    'mapId' => $request->request->get('mapId'),
+                    'iconUrl' => $request->request->get('iconUrl')
                 ];
             }
         }

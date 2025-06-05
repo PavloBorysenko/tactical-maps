@@ -37,9 +37,15 @@ function initGeoObjectForm(mapInstance) {
     const updateBtn = document.getElementById('btn-update-geo');
     const cancelBtn = document.getElementById('btn-cancel-geo');
 
+    // Icon selector elements
+    const iconUrlInput = document.querySelector('.geo-object-icon-url');
+    const iconGrid = document.getElementById('icon-grid');
+    const clearIconBtn = document.getElementById('clear-icon-btn');
+
     let currentMode = 'create'; // 'create' or 'edit'
     let currentObjectId = null;
     let drawingMode = false;
+    let availableIcons = [];
 
     // Get a reference to the map (should be available from a global object)
     const map = window.tacticalMap || null;
@@ -72,6 +78,14 @@ function initGeoObjectForm(mapInstance) {
         setCreateMode();
         disableDrawingMode();
     });
+
+    // Handle icon clear button
+    if (clearIconBtn) {
+        clearIconBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            clearIconSelection();
+        });
+    }
 
     // Handle form submission (create or update)
     form.addEventListener('submit', function (e) {
@@ -162,6 +176,7 @@ function initGeoObjectForm(mapInstance) {
             geoJson: geoJsonData, // Send as object, not string
             hash: document.querySelector('.geo-object-hash').value,
             mapId: mapIdInput.value,
+            iconUrl: iconUrlInput ? iconUrlInput.value : null,
         };
 
         // Determine the URL and method depending on the mode
@@ -276,17 +291,42 @@ function initGeoObjectForm(mapInstance) {
                         mapIdInput.value = data.object.mapId;
                     }
 
+                    // Set icon if available
+                    if (data.object.iconUrl) {
+                        selectIcon(data.object.iconUrl);
+                    } else {
+                        clearIconSelection();
+                    }
+
                     // Update type help text
                     updateTypeHelp(data.object.type);
 
                     // Set edit mode
                     setEditMode(objectId);
 
+                    // Enable drawing mode for all object types in edit mode
+                    if (data.object.type) {
+                        enableDrawingMode(data.object.type);
+
+                        // Pre-populate geometry from existing data for all types
+                        if (
+                            map &&
+                            map.geoObjectManager &&
+                            data.object.geoJson
+                        ) {
+                            map.geoObjectManager.loadExistingGeometryForEdit(
+                                data.object.geoJson,
+                                data.object.type
+                            );
+                        }
+                    }
+
                     // Display the object on the map (if the function exists)
                     if (map && map.showGeoJsonObject) {
                         map.showGeoJsonObject(
                             data.object.geoJson,
-                            data.object.type
+                            data.object.type,
+                            data.object // Pass full object data for custom icons
                         );
                     }
                 } else {
@@ -319,6 +359,18 @@ function initGeoObjectForm(mapInstance) {
         if (map && map.clearTempObjects) {
             map.clearTempObjects();
         }
+
+        // Clear edit markers if they exist
+        if (
+            map &&
+            map.geoObjectManager &&
+            map.geoObjectManager.clearEditPointMarkers
+        ) {
+            map.geoObjectManager.clearEditPointMarkers();
+        }
+
+        // Clear icon selection
+        clearIconSelection();
     }
 
     /**
@@ -370,21 +422,29 @@ function initGeoObjectForm(mapInstance) {
         const helpText = document.getElementById('geo-type-help');
         if (!helpText) return;
 
+        // Check if we're in edit mode
+        const isEditMode = currentMode === 'edit';
+
         switch (type) {
             case 'Point':
-                helpText.textContent = 'Click on the map to place a point.';
+                helpText.textContent = isEditMode
+                    ? 'Click on the map to change point location.'
+                    : 'Click on the map to place a point.';
                 break;
             case 'Polygon':
-                helpText.innerHTML =
-                    'Click on the map to add polygon points (minimum 3 required).<br><strong>Then click "Create" button to finish the polygon.</strong>';
+                helpText.innerHTML = isEditMode
+                    ? 'EDIT MODE: Click to add new points. <strong>Right-click existing points to delete them.</strong><br>Click "Update" when finished editing.'
+                    : 'Click on the map to add polygon points (minimum 3 required).<br><strong>Drag points to move • Right-click to delete • Click "Create" to finish.</strong>';
                 break;
             case 'Line':
-                helpText.innerHTML =
-                    'Click on the map to add line points (minimum 2 required).<br><strong>Then click "Create" button to finish the line.</strong>';
+                helpText.innerHTML = isEditMode
+                    ? 'EDIT MODE: Click to add new points. <strong>Right-click existing points to delete them.</strong><br>Click "Update" when finished editing.'
+                    : 'Click on the map to add line points (minimum 2 required).<br><strong>Drag points to move • Right-click to delete • Click "Create" to finish.</strong>';
                 break;
             case 'Circle':
-                helpText.textContent =
-                    'First click sets the center, second click sets the radius.';
+                helpText.textContent = isEditMode
+                    ? 'Click to change center or adjust radius. Click "Update" when satisfied.'
+                    : 'First click sets center, second click sets radius. Drag yellow center or purple radius markers to adjust. Click "Create" when satisfied.';
                 break;
             default:
                 helpText.textContent =
@@ -548,17 +608,44 @@ function initGeoObjectForm(mapInstance) {
                         const layer = layerInfo.layer;
 
                         // Focus on the object
-                        if (layer.getLatLng) {
-                            // For points
-                            map.getLeafletMap().setView(layer.getLatLng(), 16);
-                        } else if (layer.getBounds) {
-                            // For polygons, circles, lines
-                            map.getLeafletMap().fitBounds(layer.getBounds());
-                        }
+                        if (layer instanceof L.LayerGroup) {
+                            // For LayerGroups, fit bounds of the group
+                            if (layer.getBounds) {
+                                map.getLeafletMap().fitBounds(
+                                    layer.getBounds()
+                                );
+                            }
+                            // Open popup on the first layer that has one
+                            let popupOpened = false;
+                            layer.eachLayer((sublayer) => {
+                                if (
+                                    !popupOpened &&
+                                    sublayer.getPopup &&
+                                    sublayer.getPopup()
+                                ) {
+                                    sublayer.openPopup();
+                                    popupOpened = true;
+                                }
+                            });
+                        } else {
+                            // Original logic for single layers
+                            if (layer.getLatLng) {
+                                // For points
+                                map.getLeafletMap().setView(
+                                    layer.getLatLng(),
+                                    16
+                                );
+                            } else if (layer.getBounds) {
+                                // For polygons, circles, lines
+                                map.getLeafletMap().fitBounds(
+                                    layer.getBounds()
+                                );
+                            }
 
-                        // Open popup if it exists
-                        if (layer.getPopup) {
-                            layer.openPopup();
+                            // Open popup if it exists
+                            if (layer.getPopup && layer.getPopup()) {
+                                layer.openPopup();
+                            }
                         }
                     }
                 }
@@ -696,4 +783,89 @@ function initGeoObjectForm(mapInstance) {
 
     // Load initial objects list
     refreshGeoObjects();
+
+    // Load custom icons from server
+    fetch('/api/icons')
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                availableIcons = data.icons;
+                renderIconGrid();
+            } else {
+                iconGrid.innerHTML =
+                    '<div class="text-muted">No custom icons available</div>';
+            }
+        })
+        .catch((error) => {
+            console.error('Error loading icons:', error);
+            iconGrid.innerHTML =
+                '<div class="text-danger">Error loading icons</div>';
+        });
+
+    /**
+     * Render icon grid
+     */
+    function renderIconGrid() {
+        if (!iconGrid || !availableIcons) return;
+
+        if (availableIcons.length === 0) {
+            iconGrid.innerHTML =
+                '<div class="text-muted">No custom icons available. Add PNG, JPG, or SVG files to /public/assets/icons/custom/</div>';
+            return;
+        }
+
+        iconGrid.innerHTML = '';
+
+        availableIcons.forEach((icon) => {
+            const iconItem = document.createElement('div');
+            iconItem.className = 'icon-item';
+            iconItem.setAttribute('data-icon-url', icon.url);
+            iconItem.title = `Click to select ${icon.name}`;
+
+            iconItem.innerHTML = `
+                <img src="${icon.url}" alt="${icon.name}" onerror="this.style.display='none'">
+                <div class="icon-name">${icon.name}</div>
+            `;
+
+            iconItem.addEventListener('click', () => {
+                selectIcon(icon.url);
+            });
+
+            iconGrid.appendChild(iconItem);
+        });
+    }
+
+    /**
+     * Select an icon
+     */
+    function selectIcon(iconUrl) {
+        if (!iconUrlInput) return;
+
+        // Update input field
+        iconUrlInput.value = iconUrl;
+
+        // Update visual selection
+        document.querySelectorAll('.icon-item').forEach((item) => {
+            item.classList.remove('selected');
+        });
+
+        const selectedItem = document.querySelector(
+            `[data-icon-url="${iconUrl}"]`
+        );
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+    }
+
+    /**
+     * Clear icon selection
+     */
+    function clearIconSelection() {
+        if (!iconUrlInput) return;
+
+        iconUrlInput.value = '';
+        document.querySelectorAll('.icon-item').forEach((item) => {
+            item.classList.remove('selected');
+        });
+    }
 }

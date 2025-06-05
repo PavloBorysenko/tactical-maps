@@ -54,6 +54,27 @@
             </div>
         </div>
         
+        <!-- Custom Icon Selection -->
+        <div class="row mb-3">
+            <div class="col">
+                <div class="form-group">
+                    {{ form_label(form.iconUrl) }}
+                    {{ form_widget(form.iconUrl) }}
+                    <div class="icon-selector mt-2" id="icon-selector">
+                        <div class="d-flex align-items-center mb-2">
+                            <small class="text-muted me-2">Available icons:</small>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-icon-btn">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                        <div class="icon-grid" id="icon-grid">
+                            <div class="text-muted">Loading icons...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Hidden fields -->
         {{ form_widget(form.geometry) }}
         {{ form_widget(form.hash) }}

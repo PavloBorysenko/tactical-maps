@@ -88,6 +88,11 @@ class GeoObjectService
             $geoObject->setTtl($data['ttl'] ?? 0);
             $geoObject->setMap($map); // Set the map
             
+            // Set icon URL if provided
+            if (isset($data['iconUrl']) && !empty($data['iconUrl'])) {
+                $geoObject->setIconUrl($data['iconUrl']);
+            }
+            
             // Process GeoJSON
             $geoJsonData = is_string($data['geoJson']) ? json_decode($data['geoJson'], true) : $data['geoJson'];
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -151,6 +156,11 @@ class GeoObjectService
             
             if (isset($data['type'])) {
                 $geoObject->setGeometryType($data['type']);
+            }
+            
+            // Update icon URL if provided
+            if (isset($data['iconUrl'])) {
+                $geoObject->setIconUrl($data['iconUrl']);
             }
             
             // Update hash, if it is provided
@@ -364,6 +374,7 @@ class GeoObjectService
             'type' => $geoObject->getGeometryType(),
             'geoJson' => $geoObject->getGeometry(),
             'ttl' => $geoObject->getTtl(),
+            'iconUrl' => $geoObject->getIconUrl(),
         ];
         
         if ($includeMapId) {
