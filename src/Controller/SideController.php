@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin/sides')]
@@ -81,5 +82,37 @@ class SideController extends AbstractController
         }
 
         return $this->redirectToRoute('side_index');
+    }
+
+    /**
+     * API endpoint to get all sides
+     */
+    #[Route('/api/list', name: 'side_api_list', methods: ['GET'])]
+    public function apiList(SideRepository $sideRepository): JsonResponse
+    {
+        try {
+            $sides = $sideRepository->findAll();
+            
+            $result = [];
+            foreach ($sides as $side) {
+                $result[] = [
+                    'id' => $side->getId(),
+                    'name' => $side->getName(),
+                    'color' => $side->getColor(),
+                    'description' => $side->getDescription()
+                ];
+            }
+            
+            return $this->json([
+                'success' => true,
+                'sides' => $result
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Error fetching sides: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 } 

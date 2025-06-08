@@ -76,7 +76,7 @@ class GeoObject
     #[ORM\JoinColumn(nullable: false)]
     private ?Map $map = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'geoObjects')]
     private ?Side $side = null;
 
     #[ORM\Column(type: 'datetime_immutable')]

@@ -35,6 +35,19 @@
             </div>
         </div>
         
+        <!-- Side selection -->
+        <div class="row mb-3">
+            <div class="col">
+                <div class="form-group">
+                    {{ form_label(form.side) }}
+                    {{ form_widget(form.side) }}
+                    <small class="form-text text-muted">
+                        Optional: Select which side this object belongs to.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
         <!-- TTL and type selection -->
         <div class="row mb-3">
             <div class="col-md-6">

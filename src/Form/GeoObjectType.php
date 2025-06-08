@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\GeoObject;
 use App\Entity\Map;
+use App\Entity\Side;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -27,113 +28,166 @@ class GeoObjectType extends AbstractType
         }
         
         // Hidden field for MapId
-        $builder->add('mapId', HiddenType::class, [
-            'mapped' => false,
-            'attr' => [
-                'class' => 'geo-object-map-id'
+        $builder->add(
+            'mapId',
+            HiddenType::class,
+            [
+                'mapped' => false,
+                'attr' => [
+                    'class' => 'geo-object-map-id'
+                ]
             ]
-        ]);
+        );
         
         // Main fields
         $builder
-            ->add('name', TextType::class, [
-                'label' => 'Title',
-                'required' => true,
-                'constraints' => [
-                    new NotBlank([
-                        'message' => 'Please enter a title'
-                    ])
-                ],
-                'attr' => [
-                    'class' => 'form-control geo-object-title',
-                    'placeholder' => 'Enter title'
+            ->add(
+                'name',
+                TextType::class,
+                [
+                    'label' => 'Title',
+                    'required' => true,
+                    'constraints' => [
+                        new NotBlank(
+                            [
+                                'message' => 'Please enter a title'
+                            ]
+                        )
+                    ],
+                    'attr' => [
+                        'class' => 'form-control geo-object-title',
+                        'placeholder' => 'Enter title'
+                    ]
                 ]
-            ])
-            ->add('description', TextareaType::class, [
-                'label' => 'Description',
-                'required' => false,
-                'attr' => [
-                    'class' => 'form-control geo-object-description',
-                    'placeholder' => 'Enter description (optional)',
-                    'rows' => 3
+            )
+            ->add(
+                'description',
+                TextareaType::class,
+                [
+                    'label' => 'Description',
+                    'required' => false,
+                    'attr' => [
+                        'class' => 'form-control geo-object-description',
+                        'placeholder' => 'Enter description (optional)',
+                        'rows' => 3
+                    ]
                 ]
-            ])
-            ->add('ttl', ChoiceType::class, [
-                'label' => 'Time To Live',
-                'required' => true,
-                'choices' => [
-                    '30 seconds' => 30,
-                    '1 minute' => 60,
-                    '2 minutes' => 120,
-                    '3 minutes' => 180,
-                    '5 minutes' => 300,
-                    '10 minutes' => 600,
-                    '15 minutes' => 900,
-                    '20 minutes' => 1200,
-                    '30 minutes' => 1800,
-                    '1 hour' => 3600,
-                    '1 hour 20 minutes' => 4800,
-                    '1 hour 30 minutes' => 5400,
-                    '2 hours' => 7200,
-                    '3 hours' => 10800,
-                    '4 hours' => 14400,
-                    'Unlimited' => 0,
-                ],
-                'attr' => [
-                    'class' => 'form-control geo-object-ttl'
+            )
+            ->add(
+                'side',
+                EntityType::class,
+                [
+                    'class' => Side::class,
+                    'choice_label' => 'name',
+                    'choice_value' => 'id',
+                    'label' => 'Side',
+                    'required' => false,
+                    'placeholder' => 'Select side (optional)',
+                    'attr' => [
+                        'class' => 'form-control geo-object-side'
+                    ]
                 ]
-            ])
-            ->add('iconUrl', TextType::class, [
-                'label' => 'Custom Icon',
-                'required' => false,
-                'attr' => [
-                    'class' => 'form-control geo-object-icon-url',
-                    'readonly' => true,
-                    'placeholder' => 'Select an icon or leave empty for default'
+            )
+            ->add(
+                'ttl',
+                ChoiceType::class,
+                [
+                    'label' => 'Time To Live',
+                    'required' => true,
+                    'choices' => [
+                        '30 seconds' => 30,
+                        '1 minute' => 60,
+                        '2 minutes' => 120,
+                        '3 minutes' => 180,
+                        '5 minutes' => 300,
+                        '10 minutes' => 600,
+                        '15 minutes' => 900,
+                        '20 minutes' => 1200,
+                        '30 minutes' => 1800,
+                        '1 hour' => 3600,
+                        '1 hour 20 minutes' => 4800,
+                        '1 hour 30 minutes' => 5400,
+                        '2 hours' => 7200,
+                        '3 hours' => 10800,
+                        '4 hours' => 14400,
+                        'Unlimited' => 0,
+                    ],
+                    'attr' => [
+                        'class' => 'form-control geo-object-ttl'
+                    ]
                 ]
-            ])
-            ->add('geometryType', ChoiceType::class, [
-                'label' => 'Type',
-                'required' => true,
-                'placeholder' => 'Select type',
-                'choices' => [
-                    'Point' => 'Point',
-                    'Polygon' => 'Polygon',
-                    'Line' => 'Line',
-                    'Circle' => 'Circle'
-                ],
-                'constraints' => [
-                    new NotBlank([
-                        'message' => 'Please select a type'
-                    ])
-                ],
-                'attr' => [
-                    'class' => 'form-control geo-object-type',
-                    'data-toggle' => 'geo-type-select'
+            )
+            ->add(
+                'iconUrl',
+                TextType::class,
+                [
+                    'label' => 'Custom Icon',
+                    'required' => false,
+                    'attr' => [
+                        'class' => 'form-control geo-object-icon-url',
+                        'readonly' => true,
+                        'placeholder' => 'Select an icon or leave empty for default'
+                    ]
                 ]
-            ])
-            ->add('geometry', HiddenType::class, [
-                'attr' => [
-                    'class' => 'geo-object-geojson'
+            )
+            ->add(
+                'geometryType',
+                ChoiceType::class,
+                [
+                    'label' => 'Type',
+                    'required' => true,
+                    'placeholder' => 'Select type',
+                    'choices' => [
+                        'Point' => 'Point',
+                        'Polygon' => 'Polygon',
+                        'Line' => 'Line',
+                        'Circle' => 'Circle'
+                    ],
+                    'constraints' => [
+                        new NotBlank(
+                            [
+                                'message' => 'Please select a type'
+                            ]
+                        )
+                    ],
+                    'attr' => [
+                        'class' => 'form-control geo-object-type',
+                        'data-toggle' => 'geo-type-select'
+                    ]
                 ]
-            ])
-            ->add('hash', HiddenType::class, [
-                'required' => false,
-                'attr' => [
-                    'class' => 'geo-object-hash'
+            )
+            ->add(
+                'geometry',
+                HiddenType::class,
+                [
+                    'attr' => [
+                        'class' => 'geo-object-geojson'
+                    ]
                 ]
-            ]);
+            )
+            ->add(
+                'hash',
+                HiddenType::class,
+                [
+                    'required' => false,
+                    'attr' => [
+                        'class' => 'geo-object-hash'
+                    ]
+                ]
+            );
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults([
-            'data_class' => GeoObject::class,
-            'is_edit' => false,
-            'csrf_protection' => true,
-            'csrf_field_name' => '_token',
-            'csrf_token_id' => 'geo_object_form',
-        ]);
+        $resolver->setDefaults(
+            [
+                'data_class' => GeoObject::class,
+                'is_edit' => false,
+                'csrf_protection' => true,
+                'csrf_field_name' => '_token',
+                'csrf_token_id' => 'geo_object_form',
+            ]
+        );
     }
     
     public function getBlockPrefix(): string

@@ -28,6 +28,10 @@ class MapGeoObjectManager {
         // Edit mode data
         this.editMode = false;
         this.editPointMarkers = []; // Markers for editable points
+
+        // Side filtering
+        this.visibleSides = new Set(); // Empty set means all sides are visible
+        this.sideFilterControl = null;
     }
 
     /**
@@ -53,6 +57,9 @@ class MapGeoObjectManager {
             .then((data) => {
                 if (data.success) {
                     this.renderGeoObjects(data.objects);
+
+                    // Create legend for sides
+                    this.createSidesLegend(data.objects);
 
                     // Also update the objects list in the sidebar
                     if (
@@ -191,8 +198,26 @@ class MapGeoObjectManager {
      * Create a popup content for a geo object
      */
     createPopupContent(object) {
-        let content = `<div class="geo-popup" data-object-id="${object.id}">
-            <h5>${object.title || 'Unnamed object'}</h5>`;
+        let content = `<div class="geo-popup" data-object-id="${object.id}">`;
+
+        // Add side information prominently at the top if available
+        if (object.side && object.side.name) {
+            content += `<div class="side-info mb-2">
+                <span class="badge side-badge" style="
+                    background-color: ${object.side.color || '#6c757d'}; 
+                    color: white;
+                    font-size: 0.9em;
+                    padding: 0.4em 0.8em;
+                    border-radius: 0.25rem;
+                    font-weight: 600;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                ">
+                    ${object.side.name}
+                </span>
+            </div>`;
+        }
+
+        content += `<h5>${object.title || 'Unnamed object'}</h5>`;
 
         if (object.description) {
             content += `<p>${object.description}</p>`;
@@ -204,33 +229,33 @@ class MapGeoObjectManager {
             if (object.ttl >= 3600) {
                 const hours = Math.floor(object.ttl / 3600);
                 const minutes = Math.floor((object.ttl % 3600) / 60);
-                ttlDisplay = `${hours} hour${hours !== 1 ? 's' : ''}`;
-                if (minutes > 0) {
-                    ttlDisplay += ` ${minutes} min`;
-                }
+                ttlDisplay =
+                    hours + 'h' + (minutes > 0 ? ' ' + minutes + 'm' : '');
             } else if (object.ttl >= 60) {
-                ttlDisplay = `${Math.floor(object.ttl / 60)} min`;
+                const minutes = Math.floor(object.ttl / 60);
+                ttlDisplay = minutes + 'm';
             } else {
-                ttlDisplay = `${object.ttl} sec`;
+                ttlDisplay = object.ttl + 's';
             }
 
-            content += `<small class="text-muted">Expires in: ${ttlDisplay}</small>`;
-        } else {
-            content += `<small class="text-muted">No expiration</small>`;
+            content += `<div class="ttl-info">
+                <small class="text-muted">
+                    <i class="fas fa-clock"></i> TTL: ${ttlDisplay}
+                </small>
+            </div>`;
         }
 
-        content += `<div class="mt-2">
-            <button class="btn btn-sm btn-outline-primary edit-from-popup" data-id="${object.id}" id="edit-${object.id}">
-                <i class="fas fa-edit"></i> Edit
-            </button>
-            <button class="btn btn-sm btn-outline-danger delete-from-popup" data-id="${object.id}" id="delete-${object.id}">
-                <i class="fas fa-trash"></i> Delete
-            </button>
+        content += `
+            <div class="popup-actions mt-2">
+                <button class="btn btn-sm btn-primary popup-edit-btn" data-object-id="${object.id}">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger popup-delete-btn" data-object-id="${object.id}">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
         </div>`;
 
-        content += '</div>';
-
-        // For simplicity, return the HTML string instead of a function
         return content;
     }
 
@@ -256,6 +281,27 @@ class MapGeoObjectManager {
             return L.marker(latlng, { icon: customIcon });
         }
 
+        // Create colored marker based on side
+        if (objectData && objectData.side && objectData.side.color) {
+            const sideColor = objectData.side.color;
+            const coloredIcon = L.divIcon({
+                className: 'colored-marker',
+                html: `<div style="
+                    background-color: ${sideColor};
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10],
+                popupAnchor: [0, -10],
+            });
+
+            return L.marker(latlng, { icon: coloredIcon });
+        }
+
         // Use default marker
         return L.marker(latlng);
     }
@@ -276,13 +322,21 @@ class MapGeoObjectManager {
         const points = geoJson.coordinates[0].map((coord) =>
             L.latLng(coord[1], coord[0])
         );
+
+        // Use side color if available
+        const sideColor =
+            objectData && objectData.side && objectData.side.color
+                ? objectData.side.color
+                : 'blue';
+
         const polygon = L.polygon(points, {
-            color: 'blue',
+            color: sideColor,
             weight: 2,
             fillOpacity: 0.3,
+            fillColor: sideColor,
         });
 
-        // Add custom icon if available
+        // Add custom icon or colored marker if available
         if (objectData && objectData.iconUrl) {
             // Calculate polygon center
             const bounds = polygon.getBounds();
@@ -299,6 +353,30 @@ class MapGeoObjectManager {
 
             // Create a layer group with polygon and icon
             return L.layerGroup([polygon, iconMarker]);
+        } else if (objectData && objectData.side && objectData.side.color) {
+            // Add colored marker at center
+            const bounds = polygon.getBounds();
+            const center = bounds.getCenter();
+
+            const coloredIcon = L.divIcon({
+                className: 'colored-marker',
+                html: `<div style="
+                    background-color: ${sideColor};
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8],
+                popupAnchor: [0, -8],
+            });
+
+            const centerMarker = L.marker(center, { icon: coloredIcon });
+
+            // Create a layer group with polygon and center marker
+            return L.layerGroup([polygon, centerMarker]);
         }
 
         return polygon;
@@ -318,14 +396,22 @@ class MapGeoObjectManager {
         }
 
         const center = L.latLng(geoJson.coordinates[1], geoJson.coordinates[0]);
+
+        // Use side color if available
+        const sideColor =
+            objectData && objectData.side && objectData.side.color
+                ? objectData.side.color
+                : 'red';
+
         const circle = L.circle(center, {
             radius: geoJson.radius,
-            color: 'red',
+            color: sideColor,
             weight: 2,
             fillOpacity: 0.2,
+            fillColor: sideColor,
         });
 
-        // Add custom icon if available
+        // Add custom icon or colored marker if available
         if (objectData && objectData.iconUrl) {
             const customIcon = L.icon({
                 iconUrl: objectData.iconUrl,
@@ -338,6 +424,27 @@ class MapGeoObjectManager {
 
             // Create a layer group with circle and icon
             return L.layerGroup([circle, iconMarker]);
+        } else if (objectData && objectData.side && objectData.side.color) {
+            // Add colored marker at center
+            const coloredIcon = L.divIcon({
+                className: 'colored-marker',
+                html: `<div style="
+                    background-color: ${sideColor};
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8],
+                popupAnchor: [0, -8],
+            });
+
+            const centerMarker = L.marker(center, { icon: coloredIcon });
+
+            // Create a layer group with circle and center marker
+            return L.layerGroup([circle, centerMarker]);
         }
 
         return circle;
@@ -354,12 +461,19 @@ class MapGeoObjectManager {
         const points = geoJson.coordinates.map((coord) =>
             L.latLng(coord[1], coord[0])
         );
+
+        // Use side color if available
+        const sideColor =
+            objectData && objectData.side && objectData.side.color
+                ? objectData.side.color
+                : 'green';
+
         const line = L.polyline(points, {
-            color: 'green',
+            color: sideColor,
             weight: 3,
         });
 
-        // Add custom icon if available
+        // Add custom icon or colored marker if available
         if (objectData && objectData.iconUrl) {
             // Calculate middle point of the line
             const middleIndex = Math.floor(points.length / 2);
@@ -376,6 +490,30 @@ class MapGeoObjectManager {
 
             // Create a layer group with line and icon
             return L.layerGroup([line, iconMarker]);
+        } else if (objectData && objectData.side && objectData.side.color) {
+            // Add colored marker at middle
+            const middleIndex = Math.floor(points.length / 2);
+            const center = points[middleIndex];
+
+            const coloredIcon = L.divIcon({
+                className: 'colored-marker',
+                html: `<div style="
+                    background-color: ${sideColor};
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8],
+                popupAnchor: [0, -8],
+            });
+
+            const centerMarker = L.marker(center, { icon: coloredIcon });
+
+            // Create a layer group with line and center marker
+            return L.layerGroup([line, centerMarker]);
         }
 
         return line;
@@ -1645,6 +1783,141 @@ class MapGeoObjectManager {
             };
 
             this.drawingCallback(geoJson);
+        }
+    }
+
+    /**
+     * Create a legend showing all sides present on the map
+     */
+    createSidesLegend(objects) {
+        // Remove existing legend
+        this.removeSidesLegend();
+
+        // Collect unique sides from objects
+        const sides = new Map();
+        objects.forEach((object) => {
+            if (object.side && object.side.id) {
+                sides.set(object.side.id, object.side);
+            }
+        });
+
+        // Only create legend if there are sides to display
+        if (sides.size === 0) {
+            return;
+        }
+
+        // Create legend control with filtering functionality
+        const legendControl = L.control({ position: 'topright' });
+
+        legendControl.onAdd = () => {
+            const div = L.DomUtil.create('div', 'sides-legend');
+            div.innerHTML = '<h4>Sides <small>(click to filter)</small></h4>';
+
+            sides.forEach((side) => {
+                const sideItem = L.DomUtil.create(
+                    'div',
+                    'legend-item legend-item-clickable',
+                    div
+                );
+                sideItem.setAttribute('data-side-id', side.id);
+                sideItem.innerHTML = `
+                    <div class="legend-color" style="
+                        background-color: ${side.color || '#666'};
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        display: inline-block;
+                        margin-right: 8px;
+                        border: 2px solid white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                    "></div>
+                    <span>${side.name}</span>
+                `;
+
+                // Add click handler for filtering
+                L.DomEvent.on(sideItem, 'click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    this.toggleSideVisibility(side.id);
+                    this.updateLegendItemAppearance(sideItem, side.id);
+                });
+
+                // Prevent map interaction when clicking on legend
+                L.DomEvent.disableClickPropagation(sideItem);
+            });
+
+            return div;
+        };
+
+        this.legendControl = legendControl;
+        legendControl.addTo(this.leafletMap);
+    }
+
+    /**
+     * Toggle visibility of objects for a specific side
+     */
+    toggleSideVisibility(sideId) {
+        if (this.visibleSides.has(sideId)) {
+            this.visibleSides.delete(sideId);
+        } else {
+            this.visibleSides.add(sideId);
+        }
+
+        // Update visibility of all objects
+        this.updateObjectsVisibility();
+    }
+
+    /**
+     * Update visibility of all objects based on side filters
+     */
+    updateObjectsVisibility() {
+        Object.values(this.geoObjectLayers).forEach((item) => {
+            const object = item.data;
+            const layer = item.layer;
+
+            if (!layer) return;
+
+            // If no sides are filtered (empty set), show all objects
+            // If sides are filtered, only show objects of visible sides or objects without sides
+            const shouldShow =
+                this.visibleSides.size === 0 ||
+                !object.side ||
+                this.visibleSides.has(object.side.id);
+
+            if (shouldShow) {
+                if (!this.leafletMap.hasLayer(layer)) {
+                    layer.addTo(this.leafletMap);
+                }
+            } else {
+                if (this.leafletMap.hasLayer(layer)) {
+                    this.leafletMap.removeLayer(layer);
+                }
+            }
+        });
+    }
+
+    /**
+     * Update the appearance of legend item based on visibility state
+     */
+    updateLegendItemAppearance(item, sideId) {
+        const isVisible =
+            this.visibleSides.size === 0 || this.visibleSides.has(sideId);
+
+        if (isVisible) {
+            item.style.opacity = '1';
+            item.classList.remove('legend-item-hidden');
+        } else {
+            item.style.opacity = '0.5';
+            item.classList.add('legend-item-hidden');
+        }
+    }
+
+    /**
+     * Remove sides legend from the map
+     */
+    removeSidesLegend() {
+        if (this.legendControl) {
+            this.leafletMap.removeControl(this.legendControl);
+            this.legendControl = null;
         }
     }
 }

@@ -39,6 +39,18 @@
     margin-top: 1rem;
 }
 
+/* Side information styling */
+.side-info {
+    margin-top: 0.25rem;
+}
+
+.side-info .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
 /* Popup styling */
 .geo-popup {
     min-width: 200px;
@@ -51,6 +63,15 @@
 
 .geo-popup p {
     margin-bottom: 0.75rem;
+}
+
+.geo-popup .side-info {
+    margin-bottom: 0.5rem;
+}
+
+.geo-popup .side-info .badge {
+    font-size: 0.8rem;
+    padding: 0.3em 0.6em;
 }
 
 /* Help text styling */
@@ -87,4 +108,83 @@
 
 .drawing-mode-indicator.line {
     color: #198754;
+}
+
+/* Sides Legend Styling */
+.sides-legend {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    min-width: 150px;
+    margin: 10px;
+}
+
+.sides-legend h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+}
+
+.sides-legend h4 small {
+    font-weight: normal;
+    color: #666;
+    font-size: 10px;
+}
+
+.sides-legend .legend-item {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+    font-size: 12px;
+    color: #555;
+}
+
+.sides-legend .legend-item-clickable {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.sides-legend .legend-item-clickable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateX(2px);
+}
+
+.sides-legend .legend-item-hidden {
+    opacity: 0.5;
+}
+
+.sides-legend .legend-color {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.sides-legend .legend-item-clickable:hover .legend-color {
+    transform: scale(1.1);
+}
+
+.sides-legend span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Colored markers on map */
+.colored-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.colored-marker div {
+    transition: transform 0.2s ease;
+}
+
+.colored-marker:hover div {
+    transform: scale(1.1);
 }

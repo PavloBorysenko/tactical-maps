@@ -20,6 +20,7 @@ function initGeoObjectForm(mapInstance) {
     const geoJsonInput = document.querySelector('.geo-object-geojson');
     const titleInput = document.querySelector('.geo-object-title');
     const mapIdInput = document.querySelector('.geo-object-map-id');
+    const sideSelect = document.querySelector('.geo-object-side');
 
     // Ensure mapId is set correctly
     if (mapIdInput) {
@@ -177,6 +178,7 @@ function initGeoObjectForm(mapInstance) {
             hash: document.querySelector('.geo-object-hash').value,
             mapId: mapIdInput.value,
             iconUrl: iconUrlInput ? iconUrlInput.value : null,
+            sideId: sideSelect ? sideSelect.value : null,
         };
 
         // Determine the URL and method depending on the mode
@@ -289,6 +291,13 @@ function initGeoObjectForm(mapInstance) {
                     // Set map ID
                     if (mapIdInput && data.object.mapId) {
                         mapIdInput.value = data.object.mapId;
+                    }
+
+                    // Set side if available
+                    if (sideSelect && data.object.sideId) {
+                        sideSelect.value = data.object.sideId;
+                    } else if (sideSelect) {
+                        sideSelect.value = '';
                     }
 
                     // Set icon if available
@@ -558,12 +567,25 @@ function initGeoObjectForm(mapInstance) {
             }
         }
 
+        // Format side display
+        let sideDisplay = '';
+        if (object.side && object.side.name) {
+            sideDisplay = `<div class="side-info mt-1">
+                <span class="badge" style="background-color: ${
+                    object.side.color || '#6c757d'
+                }; color: white;">
+                    ${object.side.name}
+                </span>
+            </div>`;
+        }
+
         div.innerHTML = `
             <div class="d-flex align-items-center">
                 <i class="${iconClass} me-2 geo-type-icon"></i>
                 <div>
                     <h5 class="mb-1">${object.title}</h5>
                     <small class="text-muted">${ttlDisplay}</small>
+                    ${sideDisplay}
                 </div>
             </div>
             <div class="btn-group">

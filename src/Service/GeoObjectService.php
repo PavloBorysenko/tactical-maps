@@ -4,8 +4,10 @@ namespace App\Service;
 
 use App\Entity\GeoObject;
 use App\Entity\Map;
+use App\Entity\Side;
 use App\Repository\GeoObjectRepository;
 use App\Repository\MapRepository;
+use App\Repository\SideRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -14,15 +16,18 @@ class GeoObjectService
     private EntityManagerInterface $entityManager;
     private GeoObjectRepository $geoObjectRepository;
     private MapRepository $mapRepository;
+    private SideRepository $sideRepository;
     
     public function __construct(
         EntityManagerInterface $entityManager,
         GeoObjectRepository $geoObjectRepository,
-        MapRepository $mapRepository
+        MapRepository $mapRepository,
+        SideRepository $sideRepository
     ) {
         $this->entityManager = $entityManager;
         $this->geoObjectRepository = $geoObjectRepository;
         $this->mapRepository = $mapRepository;
+        $this->sideRepository = $sideRepository;
     }
     
     /**
@@ -87,6 +92,14 @@ class GeoObjectService
             $geoObject->setGeometryType($data['type']);
             $geoObject->setTtl($data['ttl'] ?? 0);
             $geoObject->setMap($map); // Set the map
+            
+            // Set side if provided
+            if (isset($data['sideId']) && !empty($data['sideId'])) {
+                $side = $this->sideRepository->find($data['sideId']);
+                if ($side) {
+                    $geoObject->setSide($side);
+                }
+            }
             
             // Set icon URL if provided
             if (isset($data['iconUrl']) && !empty($data['iconUrl'])) {
@@ -156,6 +169,19 @@ class GeoObjectService
             
             if (isset($data['type'])) {
                 $geoObject->setGeometryType($data['type']);
+            }
+            
+            // Update side if provided
+            if (isset($data['sideId'])) {
+                if (!empty($data['sideId'])) {
+                    $side = $this->sideRepository->find($data['sideId']);
+                    if ($side) {
+                        $geoObject->setSide($side);
+                    }
+                } else {
+                    // Clear side if empty value is provided
+                    $geoObject->setSide(null);
+                }
             }
             
             // Update icon URL if provided
@@ -375,7 +401,20 @@ class GeoObjectService
             'geoJson' => $geoObject->getGeometry(),
             'ttl' => $geoObject->getTtl(),
             'iconUrl' => $geoObject->getIconUrl(),
+            'side' => null,
+            'sideId' => null,
         ];
+        
+        // Add side information if available
+        if ($geoObject->getSide()) {
+            $side = $geoObject->getSide();
+            $data['side'] = [
+                'id' => $side->getId(),
+                'name' => $side->getName(),
+                'color' => $side->getColor()
+            ];
+            $data['sideId'] = $side->getId();
+        }
         
         if ($includeMapId) {
             $data['mapId'] = $geoObject->getMap()->getId();

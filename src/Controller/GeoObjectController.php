@@ -79,7 +79,8 @@ class GeoObjectController extends AbstractController
                         'geoJson' => $geoObjectData['geometry'] ?? '',
                         'hash' => $geoObjectData['hash'] ?? '',
                         'mapId' => $geoObjectData['mapId'] ?? null,
-                        'iconUrl' => $geoObjectData['iconUrl'] ?? null
+                        'iconUrl' => $geoObjectData['iconUrl'] ?? null,
+                        'sideId' => $geoObjectData['side'] ?? null
                     ];
                 } else {
                     // Alternative way to get data
@@ -91,7 +92,8 @@ class GeoObjectController extends AbstractController
                         'geoJson' => $request->request->get('geometry', ''),
                         'hash' => $request->request->get('hash', ''),
                         'mapId' => $request->request->get('mapId'),
-                        'iconUrl' => $request->request->get('iconUrl')
+                        'iconUrl' => $request->request->get('iconUrl'),
+                        'sideId' => $request->request->get('side')
                     ];
                 }
             }
@@ -146,7 +148,8 @@ class GeoObjectController extends AbstractController
                     'geoJson' => $geoObjectData['geometry'] ?? '',
                     'hash' => $geoObjectData['hash'] ?? '',
                     'mapId' => $geoObjectData['mapId'] ?? null,
-                    'iconUrl' => $geoObjectData['iconUrl'] ?? null
+                    'iconUrl' => $geoObjectData['iconUrl'] ?? null,
+                    'sideId' => $geoObjectData['side'] ?? null
                 ];
             } else {
                 // Alternative way to get data
@@ -158,7 +161,8 @@ class GeoObjectController extends AbstractController
                     'geoJson' => $request->request->get('geometry', ''),
                     'hash' => $request->request->get('hash', ''),
                     'mapId' => $request->request->get('mapId'),
-                    'iconUrl' => $request->request->get('iconUrl')
+                    'iconUrl' => $request->request->get('iconUrl'),
+                    'sideId' => $request->request->get('side')
                 ];
             }
         }
