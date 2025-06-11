@@ -14,7 +14,7 @@
             border: 1px solid #ddd;
         }
         
-        /* Убедитесь, что родительские элементы не ограничивают размер */
+        /* Ensure parent elements don't restrict size */
         .map-container {
             height: 70vh;
             margin-bottom: 2rem;
@@ -90,10 +90,10 @@
 {% block javascripts %}
     {{ parent() }}
     
-    {# Важно: сначала загружаем Leaflet, если он не загружен в родительском шаблоне #}
+    {# Important: First load Leaflet if not loaded in parent template #}
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     
-    {# Затем загружаем остальные скрипты #}
+    {# Then load other scripts #}
     {{ encore_entry_script_tags('map_viewer') }}
     {{ encore_entry_script_tags('geo_object_form') }}
     
@@ -101,14 +101,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Map container element:', document.getElementById('map-container'));
             
-            // Проверяем, загружен ли Leaflet
+            // Check if Leaflet is loaded
             if (typeof L !== 'undefined') {
                 console.log('Leaflet is loaded');
             } else {
                 console.error('Leaflet is not loaded properly!');
             }
             
-            // Дополнительная проверка инициализации карты
+            // Additional check for map initialization
             setTimeout(function() {
                 if (!window.tacticalMap) {
                     console.warn('tacticalMap is not available after timeout');
@@ -117,8 +117,8 @@
                 }
             }, 2000);
             
-            // Инициализация удаления/редактирования...
-            // ... остальной код ...
+            // Initialize deletion/editing...
+            // ... rest of the code ...
         });
     </script>
 {% endblock %} 

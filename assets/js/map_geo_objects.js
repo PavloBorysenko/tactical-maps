@@ -93,7 +93,7 @@ class MapGeoObjectManager {
 
         this.geoObjectLayers = {};
 
-        // FORCE REMOVE ALL GEO OBJECTS - брute force approach
+        // FORCE REMOVE ALL GEO OBJECTS - brute force approach
         this.leafletMap.eachLayer((layer) => {
             // Remove everything except the tile layer
             if (
@@ -1251,11 +1251,13 @@ class MapGeoObjectManager {
     attachPopupEventListeners(object) {
         // Check if the object exists in geoObjectLayers
         if (!this.geoObjectLayers[object.id]) {
+            console.warn('Object not found in geoObjectLayers:', object.id);
             return;
         }
 
         const layerInfo = this.geoObjectLayers[object.id];
         if (!layerInfo || !layerInfo.layer) {
+            console.warn('Layer info not found for object:', object.id);
             return;
         }
 
@@ -1279,32 +1281,44 @@ class MapGeoObjectManager {
         }
 
         if (!popupElement) {
+            console.warn('Popup element not found for object:', object.id);
             return;
         }
 
         // Use event delegation and check if listeners are already attached
-        const editButton = popupElement.querySelector('.edit-from-popup');
-        const deleteButton = popupElement.querySelector('.delete-from-popup');
+        const popupEditButton = popupElement.querySelector('.popup-edit-btn');
+        const popupDeleteButton =
+            popupElement.querySelector('.popup-delete-btn');
 
-        if (editButton && !editButton.hasAttribute('data-listener-attached')) {
-            editButton.addEventListener('click', (e) => {
+        if (
+            popupEditButton &&
+            !popupEditButton.hasAttribute('data-listener-attached')
+        ) {
+            popupEditButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Edit button clicked for object:', object.id);
                 this.editGeoObject(object);
             });
-            editButton.setAttribute('data-listener-attached', 'true');
+            popupEditButton.setAttribute('data-listener-attached', 'true');
+            console.log('Edit button listener attached for object:', object.id);
         }
 
         if (
-            deleteButton &&
-            !deleteButton.hasAttribute('data-listener-attached')
+            popupDeleteButton &&
+            !popupDeleteButton.hasAttribute('data-listener-attached')
         ) {
-            deleteButton.addEventListener('click', (e) => {
+            popupDeleteButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Delete button clicked for object:', object.id);
                 this.deleteGeoObject(object);
             });
-            deleteButton.setAttribute('data-listener-attached', 'true');
+            popupDeleteButton.setAttribute('data-listener-attached', 'true');
+            console.log(
+                'Delete button listener attached for object:',
+                object.id
+            );
         }
     }
 

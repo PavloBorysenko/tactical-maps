@@ -75,10 +75,29 @@ class SideController extends AbstractController
     public function delete(Request $request, Side $side, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$side->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($side);
-            $entityManager->flush();
-            
-            $this->addFlash('success', 'Side deleted successfully');
+            try {
+                // Check if there are geo objects associated with this side
+                $geoObjectsCount = $entityManager->createQuery(
+                    'SELECT COUNT(g.id) FROM App\Entity\GeoObject g WHERE g.side = :side'
+                )->setParameter('side', $side)->getSingleScalarResult();
+
+                if ($geoObjectsCount > 0) {
+                    $this->addFlash('warning', 
+                        sprintf('Cannot delete side "%s" because it has %d associated geo objects. Please remove or reassign these objects first.', 
+                        $side->getName(), $geoObjectsCount)
+                    );
+                    return $this->redirectToRoute('side_index');
+                }
+
+                $entityManager->remove($side);
+                $entityManager->flush();
+                
+                $this->addFlash('success', sprintf('Side "%s" deleted successfully', $side->getName()));
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error deleting side: ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Invalid CSRF token. Please try again.');
         }
 
         return $this->redirectToRoute('side_index');
@@ -114,5 +133,33 @@ class SideController extends AbstractController
                 'message' => 'Error fetching sides: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Force delete a side by setting all associated geo objects' side to null
+     */
+    #[Route('/{id}/force-delete', name: 'side_force_delete', methods: ['POST'])]
+    public function forceDelete(Request $request, Side $side, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('force_delete'.$side->getId(), $request->request->get('_token'))) {
+            try {
+                // First, set all associated geo objects' side to null
+                $entityManager->createQuery(
+                    'UPDATE App\Entity\GeoObject g SET g.side = NULL WHERE g.side = :side'
+                )->setParameter('side', $side)->execute();
+
+                // Then delete the side
+                $entityManager->remove($side);
+                $entityManager->flush();
+                
+                $this->addFlash('success', sprintf('Side "%s" deleted successfully. Associated geo objects were unassigned.', $side->getName()));
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error deleting side: ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Invalid CSRF token. Please try again.');
+        }
+
+        return $this->redirectToRoute('side_index');
     }
 } 

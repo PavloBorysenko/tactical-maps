@@ -8,6 +8,9 @@
 // any CSS you import will output into a single css file (app.css in this case)
 import './styles/app.scss';
 
+// Import Font Awesome icons
+import '@fortawesome/fontawesome-free/css/all.css';
+
 import 'bootstrap';
 
 // Import Leaflet and fix default icons path

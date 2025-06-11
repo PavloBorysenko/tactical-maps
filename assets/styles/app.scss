@@ -1,15 +1,20 @@
 // Import Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
+// Import Leaflet CSS
 @import '~leaflet/dist/leaflet.css';
 
-// Global background for all pages
+// Global base styles
+@import '~bootstrap/scss/bootstrap';
+
+/* Custom background */
 body {
-    background-color: #b7ad84; /* резервный цвет */
+    background-color: #b7ad84; /* fallback color */
     background-image: url('../images/vector-topographic.avif');
-    background-repeat: repeat; /* повторять плитку */
+    background-repeat: repeat; /* repeat tile */
     background-size: auto;
-    background-attachment: fixed; /* фон остается на месте при скролле */
+    background-attachment: fixed; /* background stays in place when scrolling */
+    min-height: 100vh;
     font-family: 'Roboto', sans-serif;
 }
 
