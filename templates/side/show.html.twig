@@ -3,59 +3,248 @@
 {% block title %}Side: {{ side.name }}{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1>Side: {{ side.name }}</h1>
-
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <th>ID</th>
-                                    <td>{{ side.id }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Name</th>
-                                    <td>{{ side.name }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Color</th>
-                                    <td>
-                                        <span class="badge px-3 py-2" style="background-color: {{ side.color }}">{{ side.color }}</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Description</th>
-                                    <td>{{ side.description }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10 col-xl-8">
+                <!-- Header Section -->
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 64px; height: 64px; background: linear-gradient(135deg, {{ side.color }}, {{ side.color }}88);">
+                            <i class="fas fa-flag text-white fa-2x"></i>
+                        </div>
                     </div>
-                    
-                    <div class="col-md-6">
-                        <h4>Associated GeoObjects</h4>
-                        {% if side.geoObjects|length > 0 %}
-                            <ul class="list-group">
-                                {% for obj in side.geoObjects %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        {{ obj.name }}
-                                        <span class="badge bg-primary rounded-pill">{{ obj.geometryType }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="text-muted">No objects associated with this side.</p>
-                        {% endif %}
+                    <div class="flex-grow-1">
+                        <h1 class="h2 mb-1 text-dark fw-bold">{{ side.name }}</h1>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-palette me-1"></i>
+                            Side Details & Configuration
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('side_edit', {'id': side.id}) }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Side
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Side Information Card -->
+                    <div class="col-12 col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white border-bottom-0 pt-4 pb-3">
+                                <h5 class="card-title mb-0 text-dark fw-semibold">
+                                    <i class="fas fa-info-circle text-primary me-2"></i>
+                                    Side Information
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- ID and Basic Info -->
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <div class="bg-light rounded p-3 text-center">
+                                            <div class="text-muted small mb-1">Side ID</div>
+                                            <div class="h4 mb-0 text-dark">#{{ side.id }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-light rounded p-3 text-center">
+                                            <div class="text-muted small mb-1">Objects Count</div>
+                                            <div class="h4 mb-0 text-dark">{{ side.geoObjects|length }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Name -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold text-muted small">SIDE NAME</label>
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="h5 mb-0">{{ side.name }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Color -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold text-muted small">COLOR SCHEME</label>
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="d-flex align-items-center">
+                                            <div class="color-preview me-3" 
+                                                 style="width: 40px; height: 40px; background-color: {{ side.color }}; border-radius: 8px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                                            <div>
+                                                <div class="fw-semibold">{{ side.color }}</div>
+                                                <div class="text-muted small">Hex Color Code</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-muted small">DESCRIPTION</label>
+                                    <div class="p-3 bg-light rounded">
+                                        {% if side.description %}
+                                            <div class="text-dark">{{ side.description }}</div>
+                                        {% else %}
+                                            <div class="text-muted fst-italic">No description provided</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Associated Objects Card -->
+                    <div class="col-12 col-lg-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white border-bottom-0 pt-4 pb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0 text-dark fw-semibold">
+                                        <i class="fas fa-map-marker-alt text-success me-2"></i>
+                                        Associated Objects
+                                    </h5>
+                                    <span class="badge bg-primary">{{ side.geoObjects|length }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if side.geoObjects|length > 0 %}
+                                    <div class="geo-objects-list">
+                                        {% for obj in side.geoObjects %}
+                                            <div class="geo-object-item mb-3 p-3 border rounded bg-white shadow-sm">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1 fw-semibold">{{ obj.name }}</h6>
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <i class="fas fa-
+                                                                {%- if obj.geometryType == 'Point' -%}map-pin
+                                                                {%- elseif obj.geometryType == 'LineString' -%}route
+                                                                {%- elseif obj.geometryType == 'Polygon' -%}draw-polygon
+                                                                {%- else -%}map-marker-alt
+                                                                {%- endif -%} 
+                                                                text-{{ obj.geometryType == 'Point' ? 'danger' : (obj.geometryType == 'LineString' ? 'warning' : 'info') }} me-2"></i>
+                                                            <span class="badge bg-light text-dark">{{ obj.geometryType }}</span>
+                                                        </div>
+                                                        {% if obj.description %}
+                                                            <p class="text-muted small mb-0">
+                                                                {{ obj.description|length > 60 ? obj.description|slice(0, 60) ~ '...' : obj.description }}
+                                                            </p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <div class="object-color-indicator" 
+                                                             style="width: 20px; height: 20px; background-color: {{ side.color }}; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <div class="mb-3">
+                                            <i class="fas fa-map-marker-alt fa-3x text-muted"></i>
+                                        </div>
+                                        <h6 class="text-muted mb-2">No Objects Associated</h6>
+                                        <p class="text-muted small mb-0">
+                                            This side currently has no geo objects associated with it.
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body py-3">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a href="{{ path('side_index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>
+                                        Back to List
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                                    <a href="{{ path('side_edit', {'id': side.id}) }}" class="btn btn-primary">
+                                        <i class="fas fa-edit me-2"></i>
+                                        Edit Side
+                                    </a>
+                                    {{ include('side/_delete_form.html.twig') }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card-footer">
-                <a href="{{ path('side_index') }}" class="btn btn-secondary">Back to list</a>
-                <a href="{{ path('side_edit', {'id': side.id}) }}" class="btn btn-warning">Edit</a>
-                {{ include('side/_delete_form.html.twig') }}
-            </div>
         </div>
     </div>
+
+    <style>
+        .card {
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .geo-object-item {
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .geo-object-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        }
+        
+        .color-preview {
+            transition: all 0.3s ease;
+        }
+        
+        .color-preview:hover {
+            transform: scale(1.1);
+        }
+        
+        .object-color-indicator {
+            transition: all 0.3s ease;
+        }
+        
+        .object-color-indicator:hover {
+            transform: scale(1.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .d-flex.align-items-center > div:last-child {
+                margin-top: 1rem;
+            }
+            
+            .d-flex.gap-2 {
+                flex-direction: column;
+            }
+            
+            .d-flex.gap-2 .btn {
+                width: 100%;
+            }
+        }
+    </style>
 {% endblock %} 
