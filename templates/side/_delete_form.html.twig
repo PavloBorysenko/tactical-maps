@@ -1,25 +1,31 @@
 {% set geo_objects_count = side.geoObjects.count %}
 
 {% if geo_objects_count > 0 %}
-    <div class="btn-group">
-        <button type="button" class="btn btn-sm btn-outline-warning" disabled title="Cannot delete: {{ geo_objects_count }} linked objects">
-            <i class="fas fa-exclamation-triangle me-1"></i>
-            {{ geo_objects_count }} linked objects
-        </button>
-        <form method="post" action="{{ path('side_force_delete', {'id': side.id}) }}" onsubmit="return confirm('Are you sure you want to delete this side? All associated objects ({{ geo_objects_count }}) will be unassigned from it.');" class="d-inline">
+    <div class="d-flex gap-2">
+        <form method="post" action="{{ path('side_force_delete', {'id': side.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('force_delete' ~ side.id) }}">
-            <button class="btn btn-sm btn-danger" title="Force delete and unassign {{ geo_objects_count }} objects">
-                <i class="fas fa-trash-alt me-1"></i>
+            <button class="btn btn-danger btn-sm" title="Force delete and unassign {{ geo_objects_count }} objects">
+                <i class="fas fa-exclamation-triangle me-1"></i>
                 Force Delete
             </button>
         </form>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Cancel
+        </button>
     </div>
 {% else %}
-    <form method="post" action="{{ path('side_delete', {'id': side.id}) }}" onsubmit="return confirm('Are you sure you want to delete this side?');" class="d-inline">
-        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ side.id) }}">
-        <button class="btn btn-sm btn-outline-danger">
-            <i class="fas fa-trash-alt me-1"></i>
-            Delete
+    <div class="d-flex gap-2">
+        <form method="post" action="{{ path('side_delete', {'id': side.id}) }}" class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ side.id) }}">
+            <button class="btn btn-danger btn-sm">
+                <i class="fas fa-trash-alt me-1"></i>
+                Delete
+            </button>
+        </form>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Cancel
         </button>
-    </form>
+    </div>
 {% endif %} 

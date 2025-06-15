@@ -7,12 +7,29 @@
 
 // any CSS you import will output into a single css file (app.css in this case)
 import './styles/app.scss';
+import './styles/sides.css';
 
 // Import Font Awesome icons
 import '@fortawesome/fontawesome-free/css/all.css';
 
-import 'bootstrap';
+// Import Bootstrap components
+import { Modal, Tooltip } from 'bootstrap';
 
 // Import Leaflet and fix default icons path
 import L from 'leaflet';
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
+
+// Initialize Bootstrap components when DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize all modals
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach((modal) => {
+        new Modal(modal);
+    });
+
+    // Initialize all tooltips
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach((tooltip) => {
+        new Tooltip(tooltip);
+    });
+});

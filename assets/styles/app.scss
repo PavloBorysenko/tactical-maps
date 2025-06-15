@@ -7,6 +7,11 @@
 // Global base styles
 @import '~bootstrap/scss/bootstrap';
 
+/* CSS Variables */
+:root {
+    --military-olive-bg: rgba(183, 173, 132, 0.95);
+}
+
 /* Custom background */
 body {
     background-color: #b7ad84; /* fallback color */
@@ -18,7 +23,7 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
-// Improve readability with white/transparent backgrounds for content containers
+// Improve readability with light military olive backgrounds for content containers
 .container,
 .container-fluid,
 .container-sm,
@@ -26,7 +31,7 @@ body {
 .container-lg,
 .container-xl,
 .container-xxl {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: var(--military-olive-bg);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
@@ -78,9 +83,15 @@ table {
 
 // Navigation and headers that need background
 .navbar,
-.nav,
-.breadcrumb {
+.nav {
     background-color: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.breadcrumb {
+    background-color: var(--military-olive-bg) !important;
     border-radius: 8px;
     margin-bottom: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
