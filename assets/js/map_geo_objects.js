@@ -29,9 +29,10 @@ class MapGeoObjectManager {
         this.editMode = false;
         this.editPointMarkers = []; // Markers for editable points
 
-        // Side filtering
-        this.visibleSides = new Set(); // Empty set means all sides are visible
+        // Side filtering - stores hidden sides instead of visible ones
+        this.hiddenSides = new Set(); // Contains IDs of hidden sides
         this.sideFilterControl = null;
+        this.allObjects = []; // Store all objects for sidebar filtering
     }
 
     /**
@@ -56,18 +57,16 @@ class MapGeoObjectManager {
             })
             .then((data) => {
                 if (data.success) {
-                    this.renderGeoObjects(data.objects);
+                    this.allObjects = data.objects; // Store all objects
 
-                    // Create legend for sides
+                    // Create legend for sides BEFORE rendering objects
                     this.createSidesLegend(data.objects);
 
+                    // Render objects (now with filtering applied)
+                    this.renderGeoObjects(data.objects);
+
                     // Also update the objects list in the sidebar
-                    if (
-                        window.geoObjectForm &&
-                        window.geoObjectForm.updateObjectsList
-                    ) {
-                        window.geoObjectForm.updateObjectsList(data.objects);
-                    }
+                    this.updateSidebarObjectsList();
                 }
             })
             .catch((error) => {
@@ -185,8 +184,15 @@ class MapGeoObjectManager {
                         });
                     }
 
-                    // Add to map
-                    layer.addTo(this.leafletMap);
+                    // Check filtering before adding to map
+                    const shouldShow =
+                        !object.side || !this.hiddenSides.has(object.side.id);
+
+                    if (shouldShow) {
+                        // Add to map only if not filtered out
+                        layer.addTo(this.leafletMap);
+                    }
+                    // Don't add to map if object should be hidden
                 }
             } catch (error) {
                 // Silent error handling
@@ -1251,13 +1257,11 @@ class MapGeoObjectManager {
     attachPopupEventListeners(object) {
         // Check if the object exists in geoObjectLayers
         if (!this.geoObjectLayers[object.id]) {
-            console.warn('Object not found in geoObjectLayers:', object.id);
             return;
         }
 
         const layerInfo = this.geoObjectLayers[object.id];
         if (!layerInfo || !layerInfo.layer) {
-            console.warn('Layer info not found for object:', object.id);
             return;
         }
 
@@ -1281,7 +1285,6 @@ class MapGeoObjectManager {
         }
 
         if (!popupElement) {
-            console.warn('Popup element not found for object:', object.id);
             return;
         }
 
@@ -1297,11 +1300,9 @@ class MapGeoObjectManager {
             popupEditButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Edit button clicked for object:', object.id);
                 this.editGeoObject(object);
             });
             popupEditButton.setAttribute('data-listener-attached', 'true');
-            console.log('Edit button listener attached for object:', object.id);
         }
 
         if (
@@ -1311,14 +1312,9 @@ class MapGeoObjectManager {
             popupDeleteButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Delete button clicked for object:', object.id);
                 this.deleteGeoObject(object);
             });
             popupDeleteButton.setAttribute('data-listener-attached', 'true');
-            console.log(
-                'Delete button listener attached for object:',
-                object.id
-            );
         }
     }
 
@@ -1801,7 +1797,7 @@ class MapGeoObjectManager {
     }
 
     /**
-     * Create a legend showing all sides present on the map
+     * Create a legend showing all sides present on the map with checkboxes
      */
     createSidesLegend(objects) {
         // Remove existing legend
@@ -1820,39 +1816,47 @@ class MapGeoObjectManager {
             return;
         }
 
-        // Create legend control with filtering functionality
+        // Create legend control with checkbox filtering
         const legendControl = L.control({ position: 'topright' });
 
         legendControl.onAdd = () => {
             const div = L.DomUtil.create('div', 'sides-legend');
-            div.innerHTML = '<h4>Sides <small>(click to filter)</small></h4>';
+            div.innerHTML = '<h4>Sides <small>(uncheck to hide)</small></h4>';
 
             sides.forEach((side) => {
                 const sideItem = L.DomUtil.create(
                     'div',
-                    'legend-item legend-item-clickable',
+                    'legend-item legend-item-checkbox',
                     div
                 );
                 sideItem.setAttribute('data-side-id', side.id);
+
+                // Create HTML with checkbox
                 sideItem.innerHTML = `
-                    <div class="legend-color" style="
-                        background-color: ${side.color || '#666'};
-                        width: 16px;
-                        height: 16px;
-                        border-radius: 50%;
-                        display: inline-block;
-                        margin-right: 8px;
-                        border: 2px solid white;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                    "></div>
-                    <span>${side.name}</span>
+                    <label class="legend-checkbox-label">
+                        <input type="checkbox" 
+                               class="legend-checkbox" 
+                               data-side-id="${side.id}" 
+                               checked>
+                        <div class="legend-color" style="
+                            background-color: ${side.color || '#666'};
+                            width: 16px;
+                            height: 16px;
+                            border-radius: 50%;
+                            display: inline-block;
+                            margin-right: 8px;
+                            border: 2px solid white;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                        "></div>
+                        <span>${side.name}</span>
+                    </label>
                 `;
 
-                // Add click handler for filtering
-                L.DomEvent.on(sideItem, 'click', (e) => {
+                // Add checkbox event handler
+                const checkbox = sideItem.querySelector('.legend-checkbox');
+                L.DomEvent.on(checkbox, 'change', (e) => {
                     L.DomEvent.stopPropagation(e);
-                    this.toggleSideVisibility(side.id);
-                    this.updateLegendItemAppearance(sideItem, side.id);
+                    this.toggleSideVisibility(side.id, e.target.checked);
                 });
 
                 // Prevent map interaction when clicking on legend
@@ -1867,17 +1871,22 @@ class MapGeoObjectManager {
     }
 
     /**
-     * Toggle visibility of objects for a specific side
+     * Toggle visibility of objects for a specific side based on checkbox state
      */
-    toggleSideVisibility(sideId) {
-        if (this.visibleSides.has(sideId)) {
-            this.visibleSides.delete(sideId);
+    toggleSideVisibility(sideId, isVisible) {
+        if (isVisible) {
+            // Remove side from hidden list
+            this.hiddenSides.delete(sideId);
         } else {
-            this.visibleSides.add(sideId);
+            // Add side to hidden list
+            this.hiddenSides.add(sideId);
         }
 
-        // Update visibility of all objects
+        // Update visibility of all objects on map
         this.updateObjectsVisibility();
+
+        // Update sidebar objects list
+        this.updateSidebarObjectsList();
     }
 
     /**
@@ -1890,12 +1899,9 @@ class MapGeoObjectManager {
 
             if (!layer) return;
 
-            // If no sides are filtered (empty set), show all objects
-            // If sides are filtered, only show objects of visible sides or objects without sides
+            // Show object if its side is not hidden or if it has no side
             const shouldShow =
-                this.visibleSides.size === 0 ||
-                !object.side ||
-                this.visibleSides.has(object.side.id);
+                !object.side || !this.hiddenSides.has(object.side.id);
 
             if (shouldShow) {
                 if (!this.leafletMap.hasLayer(layer)) {
@@ -1910,18 +1916,17 @@ class MapGeoObjectManager {
     }
 
     /**
-     * Update the appearance of legend item based on visibility state
+     * Update the sidebar objects list based on current side filters
      */
-    updateLegendItemAppearance(item, sideId) {
-        const isVisible =
-            this.visibleSides.size === 0 || this.visibleSides.has(sideId);
+    updateSidebarObjectsList() {
+        if (window.geoObjectForm && window.geoObjectForm.updateObjectsList) {
+            // Filter objects by hidden sides
+            const visibleObjects = this.allObjects.filter((object) => {
+                // Show object if its side is not hidden or if it has no side
+                return !object.side || !this.hiddenSides.has(object.side.id);
+            });
 
-        if (isVisible) {
-            item.style.opacity = '1';
-            item.classList.remove('legend-item-hidden');
-        } else {
-            item.style.opacity = '0.5';
-            item.classList.add('legend-item-hidden');
+            window.geoObjectForm.updateObjectsList(visibleObjects);
         }
     }
 

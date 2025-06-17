@@ -545,10 +545,20 @@ function initGeoObjectForm(mapInstance) {
 
         // Get icon based on type
         let iconClass = 'fas fa-map';
-        if (object.type === 'Point') iconClass = 'fas fa-map-marker-alt';
-        else if (object.type === 'Polygon') iconClass = 'fas fa-draw-polygon';
-        else if (object.type === 'Circle') iconClass = 'fas fa-circle';
-        else if (object.type === 'Line') iconClass = 'fas fa-route';
+        let iconColor = '#6c757d';
+        if (object.type === 'Point') {
+            iconClass = 'fas fa-map-marker-alt';
+            iconColor = '#dc3545';
+        } else if (object.type === 'Polygon') {
+            iconClass = 'fas fa-draw-polygon';
+            iconColor = '#28a745';
+        } else if (object.type === 'Circle') {
+            iconClass = 'fas fa-circle';
+            iconColor = '#007bff';
+        } else if (object.type === 'Line') {
+            iconClass = 'fas fa-route';
+            iconColor = '#ffc107';
+        }
 
         // Format TTL display
         let ttlDisplay = 'Unlimited time';
@@ -579,9 +589,27 @@ function initGeoObjectForm(mapInstance) {
             </div>`;
         }
 
+        // Create icon display (custom icon or type-based fallback)
+        let iconDisplay = '';
+        if (object.iconUrl) {
+            iconDisplay = `
+                <div class="geo-object-icon me-3">
+                    <img src="${object.iconUrl}" 
+                         alt="Object icon" 
+                         class="geo-custom-icon"
+                         style="width: 32px; height: 32px; object-fit: contain;">
+                </div>`;
+        } else {
+            iconDisplay = `
+                <div class="geo-object-icon me-3">
+                    <i class="${iconClass} geo-type-icon-large" style="font-size: 24px; color: ${iconColor};"></i>
+                </div>`;
+        }
+
         div.innerHTML = `
             <div class="d-flex align-items-center">
-                <i class="${iconClass} me-2 geo-type-icon"></i>
+                ${iconDisplay}
+                <i class="${iconClass} me-2 geo-type-icon small" style="font-size: 12px; opacity: 0.7; color: #6c757d;"></i>
                 <div>
                     <h5 class="mb-1">${object.title}</h5>
                     <small class="text-muted">${ttlDisplay}</small>

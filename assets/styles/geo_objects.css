@@ -9,10 +9,40 @@
     background-color: rgba(0, 0, 0, 0.03);
 }
 
+/* Geo object icon container */
+.geo-object-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: rgba(248, 249, 250, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+/* Custom icon image styling */
+.geo-custom-icon {
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Large type-based icons for fallback */
+.geo-type-icon-large {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .geo-type-icon {
     width: 24px;
     text-align: center;
     font-size: 1.2rem;
+}
+
+/* Small type indicators */
+.geo-type-icon.small {
+    opacity: 0.7;
+    color: #6c757d !important;
 }
 
 /* Type-specific icons */
@@ -144,35 +174,52 @@
     color: #555;
 }
 
-.sides-legend .legend-item-clickable {
+.sides-legend .legend-item-checkbox {
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
     transition: all 0.2s ease;
 }
 
-.sides-legend .legend-item-clickable:hover {
+.sides-legend .legend-item-checkbox:hover {
     background-color: rgba(0, 0, 0, 0.05);
-    transform: translateX(2px);
 }
 
-.sides-legend .legend-item-hidden {
-    opacity: 0.5;
+.sides-legend .legend-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+    font-size: 12px;
+    color: #555;
+    width: 100%;
+}
+
+.sides-legend .legend-checkbox {
+    margin-right: 6px;
+    cursor: pointer;
+    accent-color: #007bff;
 }
 
 .sides-legend .legend-color {
     flex-shrink: 0;
-    transition: transform 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
-.sides-legend .legend-item-clickable:hover .legend-color {
-    transform: scale(1.1);
+.sides-legend .legend-checkbox:not(:checked) + .legend-color {
+    opacity: 0.4;
+}
+
+.sides-legend .legend-checkbox:not(:checked) ~ span {
+    opacity: 0.6;
+    text-decoration: line-through;
 }
 
 .sides-legend span {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: opacity 0.2s ease;
 }
 
 /* Colored markers on map */
