@@ -235,3 +235,150 @@ table {
     word-break: break-word;
     line-height: 1.2;
 }
+
+/* Leaflet Layer Control Styles */
+.leaflet-control-layers {
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    padding: 10px !important;
+    min-width: 180px !important;
+    transition: all 0.3s ease !important;
+}
+
+.leaflet-control-layers-expanded {
+    padding: 15px !important;
+    min-width: 200px !important;
+}
+
+/* Стили для кнопки сворачивания/разворачивания */
+.leaflet-control-layers-toggle {
+    background-image: none !important;
+    background-color: #f8f9fa !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 6px !important;
+    border: 2px solid #dee2e6 !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.leaflet-control-layers-toggle:hover {
+    background-color: #e9ecef !important;
+    border-color: #007bff !important;
+    transform: scale(1.05) !important;
+}
+
+.leaflet-control-layers-toggle:before {
+    content: '🗺️';
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.2s ease !important;
+}
+
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle:before {
+    transform: rotate(180deg) !important;
+}
+
+/* Анимация появления списка слоев */
+.leaflet-control-layers-list {
+    margin-top: 10px !important;
+    opacity: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+}
+
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+    opacity: 1 !important;
+    max-height: 300px !important;
+}
+
+.leaflet-control-layers-base {
+    margin-bottom: 8px !important;
+}
+
+.leaflet-control-layers-base label {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 8px 4px !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.leaflet-control-layers-base label:hover {
+    color: #007bff !important;
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.leaflet-control-layers-base input[type='radio'] {
+    margin-right: 10px !important;
+    transform: scale(1.1) !important;
+    accent-color: #007bff !important;
+}
+
+.leaflet-control-layers-separator {
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    margin: 10px 0 !important;
+}
+
+/* Layer Control Header - только для развернутого состояния */
+.leaflet-control-layers-expanded:before {
+    content: 'Map Layers';
+    display: block;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+    text-align: center;
+}
+
+/* Compact mode indicator */
+.leaflet-control-layers:not(.leaflet-control-layers-expanded):after {
+    content: 'Layers';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .leaflet-control-layers {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 1001 !important;
+        min-width: 160px !important;
+    }
+
+    .leaflet-control-layers-expanded {
+        padding: 12px !important;
+        min-width: 180px !important;
+    }
+
+    .leaflet-control-layers-base label {
+        font-size: 13px !important;
+        padding: 6px 3px !important;
+    }
+
+    .leaflet-control-layers-toggle {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}

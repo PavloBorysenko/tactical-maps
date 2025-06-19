@@ -1,5 +1,6 @@
 // Import Leaflet
 import L from 'leaflet';
+import MapLayers from './mapLayers';
 
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
 /**
@@ -33,6 +34,8 @@ export default class MapEditor {
 
         this.map = null;
         this.marker = null;
+        this.baseLayers = {};
+        this.layerControl = null;
 
         // Initialize map when DOM is ready
         if (document.readyState === 'loading') {
@@ -70,17 +73,15 @@ export default class MapEditor {
         );
 
         // Create map with initial values
-        this.map = L.map(this.containerId).setView(
-            [initialLat, initialLng],
-            initialZoom
-        );
+        this.map = L.map(this.containerId, {
+            center: [initialLat, initialLng],
+            zoom: initialZoom,
+        });
 
-        // Add tile layer
-        L.tileLayer(this.options.tileLayerUrl, {
-            maxZoom: this.options.maxZoom,
-            attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(this.map);
+        // Initialize map with layers using the centralized module
+        const layersData = MapLayers.initializeMapWithLayers(this.map);
+        this.baseLayers = layersData.baseLayers;
+        this.layerControl = layersData.layerControl;
 
         // Add draggable marker at center
         this.marker = L.marker([initialLat, initialLng], {

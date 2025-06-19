@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import MapGeoObjectManager from './map_geo_objects';
+import MapLayers from './mapLayers';
 
 // Fix Leaflet default icons path
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
@@ -25,6 +26,10 @@ class TacticalMapViewer {
         if (!this.container) {
             return;
         }
+
+        // Initialize layers
+        this.baseLayers = {};
+        this.layerControl = null;
 
         // Important! First initialize the map
         this.initMap();
@@ -69,11 +74,10 @@ class TacticalMapViewer {
                 zoomControl: true,
             });
 
-            // Add OpenStreetMap tile layer
-            L.tileLayer(this.options.tileUrl, {
-                attribution: this.options.attribution,
-                maxZoom: this.options.maxZoom,
-            }).addTo(this.map);
+            // Initialize map with layers using the centralized module
+            const layersData = MapLayers.initializeMapWithLayers(this.map);
+            this.baseLayers = layersData.baseLayers;
+            this.layerControl = layersData.layerControl;
 
             // Forcefully update the map size after initialization
             setTimeout(() => {
