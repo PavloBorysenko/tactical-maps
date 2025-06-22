@@ -382,3 +382,273 @@ table {
         height: 32px !important;
     }
 }
+
+/* Map Toolbar Styles */
+.map-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    backdrop-filter: blur(5px);
+}
+
+/* Toolbar Button */
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #333;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    filter: grayscale(100%);
+}
+
+.toolbar-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: scale(1.1);
+    filter: grayscale(0%);
+}
+
+.toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+/* Toggle Wrapper */
+.toolbar-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.toolbar-toggle-wrapper:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Checkbox */
+.toolbar-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #333;
+    cursor: pointer;
+}
+
+/* Label - только иконка, без текста */
+.toolbar-label {
+    font-size: 18px;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+    filter: grayscale(100%);
+    transition: all 0.2s ease;
+}
+
+.toolbar-toggle-wrapper:hover .toolbar-label {
+    filter: grayscale(0%);
+    transform: scale(1.1);
+}
+
+/* Active state for toggles */
+.toolbar-checkbox:checked + .toolbar-label {
+    filter: grayscale(0%);
+    transform: scale(1.1);
+}
+
+.toolbar-checkbox:checked {
+    outline: 1px solid #333;
+    outline-offset: 1px;
+}
+
+/* Coordinate Popup */
+.coordinate-popup .leaflet-popup-content-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.coordinate-content {
+    padding: 8px;
+    text-align: center;
+}
+
+.coord-values {
+    margin: 8px 0;
+    padding: 8px;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.coord-values div {
+    margin: 4px 0;
+}
+
+.copy-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.copy-btn:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animation for successful copy */
+.copy-btn.copied {
+    background: #007bff !important;
+    transform: scale(1.1);
+    animation: copySuccess 0.6s ease;
+}
+
+@keyframes copySuccess {
+    0% {
+        background: #28a745;
+        transform: scale(1);
+    }
+    50% {
+        background: #007bff;
+        transform: scale(1.15);
+        box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+    }
+    100% {
+        background: #007bff;
+        transform: scale(1.1);
+    }
+}
+
+/* Pulse animation for copy feedback */
+.copy-btn.copying {
+    animation: copyPulse 0.3s ease;
+}
+
+@keyframes copyPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Distance Popup */
+.distance-popup .leaflet-popup-content-wrapper {
+    background: rgba(255, 107, 53, 0.25) !important;
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 107, 53, 0.4);
+    padding: 0 !important;
+    min-width: auto !important;
+}
+
+.distance-popup .leaflet-popup-content {
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    min-height: auto !important;
+    white-space: nowrap;
+}
+
+.distance-content {
+    padding: 0;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.distance-value {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.distance-point-number {
+    font-size: 10px;
+    opacity: 0.9;
+    margin: 0;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Remove popup tip for distance popups */
+.distance-popup .leaflet-popup-tip-container {
+    display: none;
+}
+
+/* Mobile responsive for toolbar */
+@media (max-width: 768px) {
+    .map-toolbar {
+        top: 60px;
+        left: 10px;
+        min-width: 140px;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .toolbar-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .toolbar-label {
+        font-size: 13px;
+    }
+
+    .toolbar-toggle-wrapper {
+        padding: 6px;
+    }
+}
+
+/* Animation for toolbar appearance */
+@keyframes toolbarFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.map-toolbar {
+    animation: toolbarFadeIn 0.3s ease-out;
+}

@@ -1,6 +1,7 @@
 // Import Leaflet
 import L from 'leaflet';
 import MapLayers from './mapLayers';
+import MapToolbar from './mapToolbar';
 
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
 /**
@@ -36,6 +37,7 @@ export default class MapEditor {
         this.marker = null;
         this.baseLayers = {};
         this.layerControl = null;
+        this.toolbar = null;
 
         // Initialize map when DOM is ready
         if (document.readyState === 'loading') {
@@ -83,6 +85,9 @@ export default class MapEditor {
         this.baseLayers = layersData.baseLayers;
         this.layerControl = layersData.layerControl;
 
+        // Initialize toolbar
+        this.initToolbar(initialLat, initialLng, initialZoom);
+
         // Add draggable marker at center
         this.marker = L.marker([initialLat, initialLng], {
             draggable: true,
@@ -99,6 +104,19 @@ export default class MapEditor {
         setTimeout(() => {
             this.map.invalidateSize();
         }, 100);
+    }
+
+    /**
+     * Initialize map toolbar
+     */
+    initToolbar(centerLat, centerLng, zoom) {
+        const mapData = {
+            centerLat: centerLat,
+            centerLng: centerLng,
+            zoom: zoom,
+        };
+
+        this.toolbar = new MapToolbar(this.map, mapData);
     }
 
     /**

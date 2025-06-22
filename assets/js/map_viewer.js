@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import MapGeoObjectManager from './map_geo_objects';
 import MapLayers from './mapLayers';
+import MapToolbar from './mapToolbar';
 
 // Fix Leaflet default icons path
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
@@ -30,6 +31,7 @@ class TacticalMapViewer {
         // Initialize layers
         this.baseLayers = {};
         this.layerControl = null;
+        this.toolbar = null;
 
         // Important! First initialize the map
         this.initMap();
@@ -79,6 +81,9 @@ class TacticalMapViewer {
             this.baseLayers = layersData.baseLayers;
             this.layerControl = layersData.layerControl;
 
+            // Initialize toolbar
+            this.initToolbar(centerLat, centerLng, zoom);
+
             // Forcefully update the map size after initialization
             setTimeout(() => {
                 this.map.invalidateSize();
@@ -107,6 +112,19 @@ class TacticalMapViewer {
         } catch (error) {
             // Silent error handling
         }
+    }
+
+    /**
+     * Initialize map toolbar
+     */
+    initToolbar(centerLat, centerLng, zoom) {
+        const mapData = {
+            centerLat: centerLat,
+            centerLng: centerLng,
+            zoom: zoom,
+        };
+
+        this.toolbar = new MapToolbar(this.map, mapData);
     }
 
     /**
