@@ -30,7 +30,10 @@ export default class MapToolbar {
      */
     createToolbar() {
         // Create toolbar container
-        this.toolbar = L.DomUtil.create('div', 'map-toolbar');
+        this.toolbar = L.DomUtil.create(
+            'div',
+            'map-toolbar map-toolbar-horizontal'
+        );
 
         // Create buttons
         this.createCenterButton();
@@ -47,12 +50,15 @@ export default class MapToolbar {
     createCenterButton() {
         const centerBtn = L.DomUtil.create(
             'button',
-            'toolbar-btn center-btn',
+            'toolbar-btn center-btn toolbar-icon-center',
             this.toolbar
         );
-        centerBtn.innerHTML = '⌖';
+        centerBtn.innerHTML = ''; // Удаляем символ, будем использовать CSS
         centerBtn.title = 'Center Map';
         centerBtn.type = 'button';
+
+        // Try to load custom icon
+        this.loadCustomIcon(centerBtn, 'center');
 
         L.DomEvent.on(centerBtn, 'click', (e) => {
             L.DomEvent.stopPropagation(e);
@@ -80,12 +86,15 @@ export default class MapToolbar {
 
         const coordLabel = L.DomUtil.create(
             'label',
-            'toolbar-label',
+            'toolbar-label toolbar-icon-coordinates',
             coordWrapper
         );
         coordLabel.htmlFor = 'coord-toggle';
-        coordLabel.innerHTML = '✚';
+        coordLabel.innerHTML = ''; // Удаляем символ, будем использовать CSS
         coordLabel.title = 'Coordinates Mode';
+
+        // Try to load custom icon
+        this.loadCustomIcon(coordLabel, 'coordinates');
 
         L.DomEvent.on(coordCheckbox, 'change', (e) => {
             L.DomEvent.stopPropagation(e);
@@ -113,17 +122,54 @@ export default class MapToolbar {
 
         const distLabel = L.DomUtil.create(
             'label',
-            'toolbar-label',
+            'toolbar-label toolbar-icon-distance',
             distWrapper
         );
         distLabel.htmlFor = 'distance-toggle';
-        distLabel.innerHTML = '↔';
+        distLabel.innerHTML = ''; // Удаляем символ, будем использовать CSS
         distLabel.title = 'Distance Measurement';
+
+        // Try to load custom icon
+        this.loadCustomIcon(distLabel, 'distance');
 
         L.DomEvent.on(distCheckbox, 'change', (e) => {
             L.DomEvent.stopPropagation(e);
             this.toggleDistanceMode(e.target.checked);
         });
+    }
+
+    /**
+     * Try to load custom icon for element
+     * @param {HTMLElement} element - Element to set background image
+     * @param {string} iconName - Name of the icon (center, coordinates, distance)
+     */
+    loadCustomIcon(element, iconName) {
+        const iconPaths = [
+            `/build/images/toolbar-icons/${iconName}.svg`,
+            `/build/images/toolbar-icons/${iconName}.png`,
+            `/build/images/toolbar-icons/${iconName}.jpg`,
+        ];
+
+        // Try each path
+        const tryLoadImage = (pathIndex = 0) => {
+            if (pathIndex >= iconPaths.length) {
+                // No custom icon found, use CSS fallback
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => {
+                // Image loaded successfully, set as background
+                element.style.backgroundImage = `url('${iconPaths[pathIndex]}')`;
+            };
+            img.onerror = () => {
+                // Try next path
+                tryLoadImage(pathIndex + 1);
+            };
+            img.src = iconPaths[pathIndex];
+        };
+
+        tryLoadImage();
     }
 
     /**

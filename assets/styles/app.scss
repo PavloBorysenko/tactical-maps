@@ -400,6 +400,33 @@ table {
     backdrop-filter: blur(5px);
 }
 
+/* Horizontal Toolbar - Top Center */
+.map-toolbar-horizontal {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.36);
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 4px 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    height: 36px;
+}
+
+.map-toolbar-horizontal:hover {
+    background: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: translateX(-50%) translateY(-2px);
+}
+
 /* Toolbar Button */
 .toolbar-btn {
     background: transparent;
@@ -651,4 +678,179 @@ table {
 
 .map-toolbar {
     animation: toolbarFadeIn 0.3s ease-out;
+}
+
+/* Horizontal Toolbar Toggle Wrapper */
+.map-toolbar-horizontal .toolbar-toggle-wrapper {
+    background: rgba(255, 255, 255, 0.36);
+    border-radius: 16px;
+    padding: 4px 8px;
+    gap: 6px;
+    transition: all 0.3s ease;
+    height: 28px;
+    display: flex;
+    align-items: center;
+}
+
+.map-toolbar-horizontal .toolbar-toggle-wrapper:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+/* Horizontal Toolbar Button */
+.map-toolbar-horizontal .toolbar-btn {
+    background: rgba(255, 255, 255, 0.36);
+    border: none;
+    border-radius: 50%;
+    color: #333;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    filter: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-toolbar-horizontal .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.map-toolbar-horizontal .toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+/* Active state for toggles */
+.toolbar-checkbox:checked + .toolbar-label {
+    filter: grayscale(0%);
+    transform: scale(1.1);
+}
+
+.toolbar-checkbox:checked {
+    outline: 1px solid #333;
+    outline-offset: 1px;
+}
+
+/* Horizontal Toolbar Checkbox */
+.map-toolbar-horizontal .toolbar-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #007bff;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.map-toolbar-horizontal .toolbar-checkbox:checked {
+    outline: 2px solid #007bff;
+    outline-offset: 1px;
+}
+
+/* Horizontal Toolbar Label */
+.map-toolbar-horizontal .toolbar-label {
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+    filter: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.map-toolbar-horizontal .toolbar-toggle-wrapper:hover .toolbar-label {
+    color: #007bff;
+    transform: none;
+}
+
+.map-toolbar-horizontal .toolbar-checkbox:checked + .toolbar-label {
+    color: #007bff;
+    transform: none;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .map-toolbar-horizontal {
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 10px;
+        gap: 6px;
+        height: 32px;
+    }
+
+    .map-toolbar-horizontal .toolbar-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    .map-toolbar-horizontal .toolbar-toggle-wrapper {
+        padding: 3px 6px;
+        gap: 4px;
+        height: 24px;
+    }
+
+    .map-toolbar-horizontal .toolbar-checkbox {
+        width: 14px;
+        height: 14px;
+    }
+
+    .map-toolbar-horizontal .toolbar-label {
+        font-size: 12px;
+    }
+}
+
+/* Toolbar Icons - CSS Background Images */
+.toolbar-icon-center,
+.toolbar-icon-coordinates,
+.toolbar-icon-distance {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Default symbols - always show */
+.toolbar-icon-center::before {
+    content: '⌖';
+    font-size: inherit;
+    color: inherit;
+    vertical-align: middle;
+}
+
+.toolbar-icon-coordinates::before {
+    content: '✚';
+    font-size: inherit;
+    color: inherit;
+}
+
+.toolbar-icon-distance::before {
+    content: '↔';
+    font-size: inherit;
+    color: inherit;
+}
+
+/* Hide symbols when background image is loaded */
+.toolbar-icon-center[style*='background-image']::before,
+.toolbar-icon-coordinates[style*='background-image']::before,
+.toolbar-icon-distance[style*='background-image']::before {
+    display: none;
+}
+
+/* Mobile responsive for icons */
+@media (max-width: 768px) {
+    .toolbar-icon-center,
+    .toolbar-icon-coordinates,
+    .toolbar-icon-distance {
+        min-width: 16px;
+        min-height: 16px;
+    }
 }

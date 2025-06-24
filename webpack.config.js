@@ -71,6 +71,10 @@ Encore
         from: './assets/images',
         to: 'images/custom-marker/[name].[ext]',
     })
+    .copyFiles({
+        from: './assets/images/toolbar-icons',
+        to: 'images/toolbar-icons/[name].[ext]',
+    })
     .addStyleEntry('geo_objects', './assets/styles/geo_objects.css');
 // uncomment if you use TypeScript
 //.enableTypeScriptLoader()
