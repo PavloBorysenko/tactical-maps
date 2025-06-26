@@ -807,7 +807,8 @@ table {
 /* Toolbar Icons - CSS Background Images */
 .toolbar-icon-center,
 .toolbar-icon-coordinates,
-.toolbar-icon-distance {
+.toolbar-icon-distance,
+.toolbar-icon-layer {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -838,10 +839,17 @@ table {
     color: inherit;
 }
 
+.toolbar-icon-layer::before {
+    content: '🗺️';
+    font-size: 16px;
+    vertical-align: middle;
+}
+
 /* Hide symbols when background image is loaded */
 .toolbar-icon-center[style*='background-image']::before,
 .toolbar-icon-coordinates[style*='background-image']::before,
-.toolbar-icon-distance[style*='background-image']::before {
+.toolbar-icon-distance[style*='background-image']::before,
+.toolbar-icon-layer[style*='background-image']::before {
     display: none;
 }
 
@@ -849,8 +857,179 @@ table {
 @media (max-width: 768px) {
     .toolbar-icon-center,
     .toolbar-icon-coordinates,
-    .toolbar-icon-distance {
+    .toolbar-icon-distance,
+    .toolbar-icon-layer {
         min-width: 16px;
         min-height: 16px;
     }
+}
+
+/* Layer Selector Styles */
+.toolbar-layer-selector-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+/* Layer Button Styles */
+.layer-btn {
+    border-radius: 6px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    filter: none !important;
+    background: transparent !important;
+    position: relative;
+}
+
+/* Background only when no custom icon is loaded */
+.layer-btn:not([style*='background-image']) {
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.layer-btn:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transform: scale(1.1) !important;
+}
+
+/* Background on hover only when no custom icon is loaded */
+.layer-btn:not([style*='background-image']):hover {
+    background: rgba(255, 255, 255, 1) !important;
+}
+
+.layer-btn.active {
+    color: white !important;
+    transform: scale(1.1) !important;
+}
+
+/* Active background only when no custom icon is loaded */
+.layer-btn:not([style*='background-image']).active {
+    background: rgba(0, 123, 255, 0.9) !important;
+}
+
+/* Layer Dropdown Menu */
+.toolbar-layer-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1001;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    min-width: 150px;
+    margin-top: 4px;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Layer Dropdown Items */
+.toolbar-layer-dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-layer-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.toolbar-layer-dropdown-item:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.toolbar-layer-dropdown-item.active {
+    background: rgba(0, 123, 255, 0.15);
+    color: #007bff;
+    font-weight: 500;
+    position: relative;
+}
+
+.toolbar-layer-dropdown-item.active::after {
+    content: '✓';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #007bff;
+}
+
+/* Layer Icon Styles */
+.toolbar-icon-layer {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Default symbol for layer icon */
+.toolbar-icon-layer::before {
+    content: '🗺️';
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+/* Hide symbol when background image is loaded */
+.toolbar-icon-layer[style*='background-image']::before {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .toolbar-layer-dropdown {
+        min-width: 120px;
+        right: 0;
+        left: auto;
+    }
+
+    .toolbar-layer-dropdown-item {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .layer-btn {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .toolbar-icon-layer::before {
+        font-size: 14px;
+    }
+}
+
+/* Layer Icon with !important */
+.toolbar-icon-layer[style*='background-image'] {
+    background-image: url('../images/toolbar-icons/layer.png') !important;
+}
+
+/* Alternative - force layer icon */
+.layer-btn.toolbar-icon-layer {
+    background-image: url('../images/toolbar-icons/layer.png') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
 }

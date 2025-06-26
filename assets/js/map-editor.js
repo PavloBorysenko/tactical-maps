@@ -116,7 +116,13 @@ export default class MapEditor {
             zoom: zoom,
         };
 
-        this.toolbar = new MapToolbar(this.map, mapData);
+        // Pass baseLayers and layerControl to toolbar
+        this.toolbar = new MapToolbar(
+            this.map,
+            mapData,
+            this.baseLayers,
+            this.layerControl
+        );
     }
 
     /**

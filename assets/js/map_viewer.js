@@ -81,7 +81,7 @@ class TacticalMapViewer {
             this.baseLayers = layersData.baseLayers;
             this.layerControl = layersData.layerControl;
 
-            // Initialize toolbar
+            // Initialize toolbar with layers
             this.initToolbar(centerLat, centerLng, zoom);
 
             // Forcefully update the map size after initialization
@@ -124,7 +124,13 @@ class TacticalMapViewer {
             zoom: zoom,
         };
 
-        this.toolbar = new MapToolbar(this.map, mapData);
+        // Pass baseLayers and layerControl to toolbar
+        this.toolbar = new MapToolbar(
+            this.map,
+            mapData,
+            this.baseLayers,
+            this.layerControl
+        );
     }
 
     /**

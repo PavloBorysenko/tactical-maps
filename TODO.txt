@@ -1,0 +1,6 @@
+move map layer to toolbar
+refactor js
+add login for admin
+add user or observer
+publish project
+add  cd/ci

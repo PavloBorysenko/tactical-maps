@@ -4,15 +4,30 @@ import L from 'leaflet';
  * Map Toolbar - Additional tools for map interaction
  */
 export default class MapToolbar {
-    constructor(map, mapData = {}) {
+    constructor(map, mapData = {}, baseLayers = null, layerControl = null) {
         this.map = map;
         this.mapData = mapData; // Данные карты (центр, зум и т.д.)
+        this.baseLayers = baseLayers; // Базовые слои карты
+        this.layerControl = layerControl; // Контроль слоев Leaflet
         this.toolbar = null;
         this.coordinatesMode = false;
         this.distanceMode = false;
         this.distanceMarkers = [];
         this.distancePolyline = null;
         this.coordinateTooltip = null;
+        this.currentLayer = null;
+
+        // Find current active layer
+        if (this.baseLayers) {
+            const layerNames = Object.keys(this.baseLayers);
+            this.map.eachLayer((layer) => {
+                layerNames.forEach((name) => {
+                    if (this.baseLayers[name] === layer) {
+                        this.currentLayer = layer;
+                    }
+                });
+            });
+        }
 
         this.init();
     }
@@ -37,11 +52,20 @@ export default class MapToolbar {
 
         // Create buttons
         this.createCenterButton();
+        this.createLayerSelector();
         this.createCoordinatesToggle();
         this.createDistanceToggle();
 
         // Add to map
         this.map.getContainer().appendChild(this.toolbar);
+
+        // Hide default layer control if it exists
+        if (this.layerControl) {
+            const layerControlElement = this.layerControl.getContainer();
+            if (layerControlElement) {
+                layerControlElement.style.display = 'none';
+            }
+        }
     }
 
     /**
@@ -64,6 +88,165 @@ export default class MapToolbar {
             L.DomEvent.stopPropagation(e);
             this.centerMap();
         });
+    }
+
+    /**
+     * Create layer selector
+     */
+    createLayerSelector() {
+        if (!this.baseLayers) return;
+
+        const layerWrapper = L.DomUtil.create(
+            'div',
+            'toolbar-layer-selector-wrapper',
+            this.toolbar
+        );
+
+        // Create button with icon
+        const layerButton = L.DomUtil.create(
+            'button',
+            'toolbar-btn layer-btn toolbar-icon-layer',
+            layerWrapper
+        );
+        layerButton.innerHTML = ''; // Icon will be set via CSS
+        layerButton.title = 'Select Map Layer';
+        layerButton.type = 'button';
+
+        // Try to load custom icon
+        this.loadCustomIcon(layerButton, 'layer');
+
+        // Create dropdown menu
+        const dropdownMenu = L.DomUtil.create(
+            'div',
+            'toolbar-layer-dropdown',
+            layerWrapper
+        );
+        dropdownMenu.style.display = 'none';
+
+        // Get layer names and current layer
+        const layerNames = Object.keys(this.baseLayers);
+        let currentLayerName = 'Satellite'; // Default layer from mapLayers.js
+
+        // Find current active layer
+        this.map.eachLayer((layer) => {
+            layerNames.forEach((name) => {
+                if (this.baseLayers[name] === layer) {
+                    currentLayerName = name;
+                }
+            });
+        });
+
+        // Create dropdown items for each layer
+        layerNames.forEach((layerName) => {
+            const dropdownItem = L.DomUtil.create(
+                'div',
+                'toolbar-layer-dropdown-item',
+                dropdownMenu
+            );
+            dropdownItem.textContent = layerName;
+            dropdownItem.dataset.layer = layerName;
+
+            if (layerName === currentLayerName) {
+                dropdownItem.classList.add('active');
+            }
+
+            // Handle layer selection
+            L.DomEvent.on(dropdownItem, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                this.changeLayer(layerName);
+                this.updateActiveLayerInDropdown(layerName);
+                this.hideLayerDropdown();
+            });
+        });
+
+        // Handle button click to toggle dropdown
+        L.DomEvent.on(layerButton, 'click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            this.toggleLayerDropdown();
+        });
+
+        // Store references
+        this.layerButton = layerButton;
+        this.layerDropdown = dropdownMenu;
+
+        // Prevent map interaction when using selector
+        L.DomEvent.disableClickPropagation(layerWrapper);
+        L.DomEvent.disableScrollPropagation(layerWrapper);
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            this.hideLayerDropdown();
+        });
+    }
+
+    /**
+     * Toggle layer dropdown visibility
+     */
+    toggleLayerDropdown() {
+        if (!this.layerDropdown) return;
+
+        const isVisible = this.layerDropdown.style.display !== 'none';
+        if (isVisible) {
+            this.hideLayerDropdown();
+        } else {
+            this.showLayerDropdown();
+        }
+    }
+
+    /**
+     * Show layer dropdown
+     */
+    showLayerDropdown() {
+        if (!this.layerDropdown) return;
+
+        this.layerDropdown.style.display = 'block';
+        this.layerButton.classList.add('active');
+    }
+
+    /**
+     * Hide layer dropdown
+     */
+    hideLayerDropdown() {
+        if (!this.layerDropdown) return;
+
+        this.layerDropdown.style.display = 'none';
+        this.layerButton.classList.remove('active');
+    }
+
+    /**
+     * Update active layer in dropdown
+     */
+    updateActiveLayerInDropdown(activeLayerName) {
+        if (!this.layerDropdown) return;
+
+        const items = this.layerDropdown.getElementsByClassName(
+            'toolbar-layer-dropdown-item'
+        );
+        Array.from(items).forEach((item) => {
+            item.classList.remove('active');
+            if (item.dataset.layer === activeLayerName) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    /**
+     * Change map layer
+     */
+    changeLayer(layerName) {
+        if (!this.baseLayers || !this.baseLayers[layerName]) return;
+
+        // Remove current layer
+        if (this.currentLayer) {
+            this.map.removeLayer(this.currentLayer);
+        }
+
+        // Add new layer
+        this.currentLayer = this.baseLayers[layerName];
+        this.map.addLayer(this.currentLayer);
+
+        // Move layer to back so geo objects stay on top
+        this.currentLayer.bringToBack();
     }
 
     /**
@@ -486,6 +669,11 @@ export default class MapToolbar {
 
         this.clearDistanceMeasurement();
         this.hideCoordinateTooltip();
+        this.hideLayerDropdown();
         this.map.getContainer().style.cursor = '';
+
+        // Clear references
+        this.layerButton = null;
+        this.layerDropdown = null;
     }
 }
