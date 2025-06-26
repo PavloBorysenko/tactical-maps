@@ -77,7 +77,7 @@ export default class MapLayers {
      * @returns {string} Default layer name
      */
     static getDefaultLayerName() {
-        return 'Street Map';
+        return 'Satellite';
     }
 
     /**
