@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Map: {{ map.title }}{% endblock %}
+{% block title %}{{ map.title }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
-    {{ encore_entry_link_tags('map_viewer') }}
+    {{ encore_entry_link_tags('mapViewer') }}
     {{ encore_entry_link_tags('geo_objects') }}
     <style>
         #map-container {
@@ -94,8 +94,8 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     
     {# Then load other scripts #}
-    {{ encore_entry_script_tags('map_viewer') }}
-    {{ encore_entry_script_tags('geo_object_form') }}
+    {{ encore_entry_script_tags('mapViewer') }}
+    {{ encore_entry_script_tags('geoObjectForm') }}
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {

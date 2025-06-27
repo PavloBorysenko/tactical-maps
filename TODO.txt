@@ -1,6 +1,9 @@
-move map layer to toolbar
-refactor js
+refactor css
+add ttl funcion
 add login for admin
+change template
 add user or observer
+refactor php
+create tests
 publish project
 add  cd/ci

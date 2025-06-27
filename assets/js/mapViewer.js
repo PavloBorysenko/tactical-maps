@@ -1,4 +1,4 @@
-import MapGeoObjectManager from './map_geo_objects';
+import MapGeoObjectManager from './mapGeoObjects';
 import BaseMapComponent from './baseMapComponent';
 
 /**

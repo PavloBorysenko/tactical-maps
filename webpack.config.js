@@ -22,9 +22,9 @@ Encore
      */
     .addEntry('app', './assets/app.js')
     .addEntry('home', './assets/js/home.js')
-    .addEntry('map-editor', './assets/js/map-editor.js')
-    .addEntry('map_viewer', './assets/js/map_viewer.js')
-    .addEntry('geo_object_form', './assets/js/geo_object_form.js')
+    .addEntry('mapEditor', './assets/js/mapEditor.js')
+    .addEntry('mapViewer', './assets/js/mapViewer.js')
+    .addEntry('geoObjectForm', './assets/js/geoObjectForm.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

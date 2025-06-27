@@ -1,19 +1,20 @@
 // Import Leaflet
 import L from 'leaflet';
-import MapLayers from './mapLayers';
-import MapToolbar from './mapToolbar';
+import BaseMapComponent from './baseMapComponent';
 
-L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
 /**
  * Map Editor - Handles Leaflet map for creating and editing maps
+ * Extends BaseMapComponent for map editing functionality
  */
-export default class MapEditor {
+export default class MapEditor extends BaseMapComponent {
     /**
      * Initialize the map editor
      * @param {string} containerId - ID of the map container element
      * @param {Object} options - Configuration options
      */
     constructor(containerId, options = {}) {
+        super();
+
         this.containerId = containerId;
         this.options = Object.assign(
             {
@@ -48,7 +49,7 @@ export default class MapEditor {
     }
 
     /**
-     * Initialize the map
+     * Initialize the map editor
      */
     init() {
         // Get container element
@@ -60,69 +61,80 @@ export default class MapEditor {
             return;
         }
 
-        // Get initial values from form fields
-        const initialLat = this.getValueFromField(
-            this.options.latFieldId,
-            this.options.initialLat
-        );
-        const initialLng = this.getValueFromField(
-            this.options.lngFieldId,
-            this.options.initialLng
-        );
-        const initialZoom = this.getValueFromField(
-            this.options.zoomFieldId,
-            this.options.initialZoom
-        );
+        try {
+            // Get initial coordinates from form fields
+            const coordinates = this.getInitialCoordinates();
 
-        // Create map with initial values
-        this.map = L.map(this.containerId, {
-            center: [initialLat, initialLng],
-            zoom: initialZoom,
-        });
+            // Initialize map
+            this.initializeLeafletMap(container, coordinates);
 
-        // Initialize map with layers using the centralized module
-        const layersData = MapLayers.initializeMapWithLayers(this.map);
-        this.baseLayers = layersData.baseLayers;
-        this.layerControl = layersData.layerControl;
+            // Initialize toolbar
+            const mapData = {
+                centerLat: coordinates.lat,
+                centerLng: coordinates.lng,
+                zoom: coordinates.zoom,
+            };
+            this.initializeToolbar(mapData);
 
-        // Initialize toolbar
-        this.initToolbar(initialLat, initialLng, initialZoom);
+            // Setup editor-specific functionality
+            this.setupMapEditor(coordinates);
 
+            // Force map size update
+            this.invalidateMapSizeAfterDelay();
+        } catch (error) {
+            console.error('Error initializing map editor:', error);
+        }
+    }
+
+    /**
+     * Get initial coordinates from form fields
+     * @returns {Object} Coordinates {lat, lng, zoom}
+     */
+    getInitialCoordinates() {
+        return {
+            lat: this.getValueFromField(
+                this.options.latFieldId,
+                this.options.initialLat
+            ),
+            lng: this.getValueFromField(
+                this.options.lngFieldId,
+                this.options.initialLng
+            ),
+            zoom: this.getValueFromField(
+                this.options.zoomFieldId,
+                this.options.initialZoom
+            ),
+        };
+    }
+
+    /**
+     * Setup map editor specific functionality
+     * @param {Object} coordinates - Initial coordinates
+     */
+    setupMapEditor(coordinates) {
         // Add draggable marker at center
-        this.marker = L.marker([initialLat, initialLng], {
-            draggable: true,
-            icon: this.options.centerIcon,
-        }).addTo(this.map);
+        this.addCenterMarker(coordinates);
 
         // Set up event listeners
         this.setupEventListeners();
 
         // Update form fields with initial values
-        this.updateFormFields(initialLat, initialLng, initialZoom);
-
-        // Force a map resize after a short delay
-        setTimeout(() => {
-            this.map.invalidateSize();
-        }, 100);
+        this.updateFormFields(
+            coordinates.lat,
+            coordinates.lng,
+            coordinates.zoom
+        );
     }
 
     /**
-     * Initialize map toolbar
+     * Add draggable center marker
+     * @param {Object} coordinates - Marker coordinates
      */
-    initToolbar(centerLat, centerLng, zoom) {
-        const mapData = {
-            centerLat: centerLat,
-            centerLng: centerLng,
-            zoom: zoom,
-        };
-
-        // Pass baseLayers and layerControl to toolbar
-        this.toolbar = new MapToolbar(
-            this.map,
-            mapData,
-            this.baseLayers,
-            this.layerControl
-        );
+    addCenterMarker(coordinates) {
+        this.marker = L.marker([coordinates.lat, coordinates.lng], {
+            draggable: true,
+            icon: this.options.centerIcon,
+        }).addTo(this.map);
     }
 
     /**
@@ -215,6 +227,18 @@ export default class MapEditor {
             element.textContent = text;
         }
     }
+
+    /**
+     * Destroy map editor and cleanup
+     */
+    destroy() {
+        if (this.marker) {
+            this.map.removeLayer(this.marker);
+            this.marker = null;
+        }
+
+        super.destroy();
+    }
 }
 
 // Initialize map editor
@@ -230,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const centerIcon = L.icon({
         iconUrl: '/build/images/custom-marker/frame.webp',
-
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -16],

@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Create New Map{% endblock %}
+{% block title %}New Map{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
-    {{ encore_entry_link_tags('map-editor') }}
+    {{ encore_entry_link_tags('mapEditor') }}
 {% endblock %}
 
 {% block body %}
@@ -93,5 +93,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {{ encore_entry_script_tags('map-editor') }}
+    {{ encore_entry_script_tags('mapEditor') }}
 {% endblock %} 

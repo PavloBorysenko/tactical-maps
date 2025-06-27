@@ -1255,67 +1255,58 @@ class MapGeoObjectManager {
      * Attach popup event listeners to a geo object
      */
     attachPopupEventListeners(object) {
-        // Check if the object exists in geoObjectLayers
-        if (!this.geoObjectLayers[object.id]) {
-            return;
-        }
-
-        const layerInfo = this.geoObjectLayers[object.id];
-        if (!layerInfo || !layerInfo.layer) {
-            return;
-        }
-
-        const layer = layerInfo.layer;
-        let popupElement = null;
-
-        // Handle LayerGroups differently
-        if (layer instanceof L.LayerGroup) {
-            // Find the first layer with a popup
-            layer.eachLayer((sublayer) => {
-                if (sublayer.getPopup && sublayer.getPopup()) {
-                    popupElement = sublayer.getPopup().getElement();
-                    return false; // Break early
-                }
-            });
-        } else {
-            // Regular layer
-            if (layer.getPopup && layer.getPopup()) {
-                popupElement = layer.getPopup().getElement();
+        // Wait for popup to be rendered in DOM
+        setTimeout(() => {
+            const popupElement = document.querySelector(
+                '.leaflet-popup-content'
+            );
+            if (!popupElement) {
+                console.warn('Popup element not found for object:', object.id);
+                return;
             }
-        }
 
-        if (!popupElement) {
-            return;
-        }
+            console.log('Attaching popup listeners for object:', object.id);
 
-        // Use event delegation and check if listeners are already attached
-        const popupEditButton = popupElement.querySelector('.popup-edit-btn');
-        const popupDeleteButton =
-            popupElement.querySelector('.popup-delete-btn');
+            // Use event delegation and check if listeners are already attached
+            const popupEditButton =
+                popupElement.querySelector('.popup-edit-btn');
+            const popupDeleteButton =
+                popupElement.querySelector('.popup-delete-btn');
 
-        if (
-            popupEditButton &&
-            !popupEditButton.hasAttribute('data-listener-attached')
-        ) {
-            popupEditButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.editGeoObject(object);
-            });
-            popupEditButton.setAttribute('data-listener-attached', 'true');
-        }
+            console.log('Found edit button:', !!popupEditButton);
+            console.log('Found delete button:', !!popupDeleteButton);
 
-        if (
-            popupDeleteButton &&
-            !popupDeleteButton.hasAttribute('data-listener-attached')
-        ) {
-            popupDeleteButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.deleteGeoObject(object);
-            });
-            popupDeleteButton.setAttribute('data-listener-attached', 'true');
-        }
+            if (
+                popupEditButton &&
+                !popupEditButton.hasAttribute('data-listener-attached')
+            ) {
+                console.log('Attaching edit button listener');
+                popupEditButton.addEventListener('click', (e) => {
+                    console.log('Edit button clicked for object:', object.id);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.editGeoObject(object);
+                });
+                popupEditButton.setAttribute('data-listener-attached', 'true');
+            }
+
+            if (
+                popupDeleteButton &&
+                !popupDeleteButton.hasAttribute('data-listener-attached')
+            ) {
+                console.log('Attaching delete button listener');
+                popupDeleteButton.addEventListener('click', (e) => {
+                    console.log('Delete button clicked for object:', object.id);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.deleteGeoObject(object);
+                });
+                popupDeleteButton.setAttribute(
+                    'data-listener-attached',
+                    'true'
+                );
+            }
+        }, 50);
     }
 
     /**
@@ -1328,6 +1319,18 @@ class MapGeoObjectManager {
         // Call the global form function to set edit mode
         if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
             window.geoObjectForm.setEditMode(object.id);
+        } else {
+            // If geoObjectForm is not ready yet, wait a bit and try again
+            setTimeout(() => {
+                if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
+                    window.geoObjectForm.setEditMode(object.id);
+                } else {
+                    console.error('geoObjectForm is not available for editing');
+                    alert(
+                        'Form is not ready for editing. Please try again in a moment.'
+                    );
+                }
+            }, 100);
         }
     }
 
@@ -1345,9 +1348,17 @@ class MapGeoObjectManager {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
             })
-                .then((response) => response.json())
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`
+                        );
+                    }
+                    return response.json();
+                })
                 .then((data) => {
                     if (data.success) {
                         // Get mapId for refresh
@@ -1371,8 +1382,9 @@ class MapGeoObjectManager {
                             }
                         }
 
-                        alert('Object deleted successfully');
+                        console.log('Object deleted successfully');
                     } else {
+                        console.error('Delete failed:', data.message);
                         alert(
                             'Error deleting object: ' +
                                 (data.message || 'Unknown error')
@@ -1380,6 +1392,7 @@ class MapGeoObjectManager {
                     }
                 })
                 .catch((error) => {
+                    console.error('Error deleting object:', error);
                     alert('Error deleting object. Please try again.');
                 });
         }
