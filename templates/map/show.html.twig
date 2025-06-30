@@ -6,38 +6,7 @@
     {{ parent() }}
     {{ encore_entry_link_tags('mapViewer') }}
     {{ encore_entry_link_tags('geo_objects') }}
-    <style>
-        #map-container {
-            height: 70vh;
-            width: 100%;
-            margin-bottom: 2rem;
-            border: 1px solid #ddd;
-        }
-        
-        /* Ensure parent elements don't restrict size */
-        .map-container {
-            height: 70vh;
-            margin-bottom: 2rem;
-        }
-        
-        .geo-objects-sidebar {
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        
-        .geo-type-icon {
-            font-size: 1.2rem;
-            width: 25px;
-            text-align: center;
-        }
-        
-        .geo-objects-list {
-            max-height: 40vh;
-            overflow-y: auto;
-            margin-bottom: 2rem;
-        }
-    </style>
+    {{ encore_entry_link_tags('map') }}
 {% endblock %}
 
 {% block body %}
@@ -90,35 +59,7 @@
 {% block javascripts %}
     {{ parent() }}
     
-    {# Important: First load Leaflet if not loaded in parent template #}
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    
-    {# Then load other scripts #}
+    {# Load scripts through Webpack Encore #}
     {{ encore_entry_script_tags('mapViewer') }}
     {{ encore_entry_script_tags('geoObjectForm') }}
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Map container element:', document.getElementById('map-container'));
-            
-            // Check if Leaflet is loaded
-            if (typeof L !== 'undefined') {
-                console.log('Leaflet is loaded');
-            } else {
-                console.error('Leaflet is not loaded properly!');
-            }
-            
-            // Additional check for map initialization
-            setTimeout(function() {
-                if (!window.tacticalMap) {
-                    console.warn('tacticalMap is not available after timeout');
-                } else {
-                    console.log('tacticalMap is available after timeout');
-                }
-            }, 2000);
-            
-            // Initialize deletion/editing...
-            // ... rest of the code ...
-        });
-    </script>
 {% endblock %} 

@@ -17,35 +17,34 @@
                                     {% if object.iconUrl %}
                                         <img src="{{ object.iconUrl }}" 
                                              alt="Object icon" 
-                                             class="geo-custom-icon"
-                                             style="width: 32px; height: 32px; object-fit: contain;">
+                                             class="geo-custom-icon">
                                     {% else %}
                                         {# Default type-based icons as fallback #}
                                         {% if object.type == 'point' %}
-                                            <i class="fas fa-map-marker-alt geo-type-icon-large" style="font-size: 24px; color: #dc3545;"></i>
+                                            <i class="fas fa-map-marker-alt geo-type-icon-large point"></i>
                                         {% elseif object.type == 'polygon' %}
-                                            <i class="fas fa-draw-polygon geo-type-icon-large" style="font-size: 24px; color: #28a745;"></i>
+                                            <i class="fas fa-draw-polygon geo-type-icon-large polygon"></i>
                                         {% elseif object.type == 'circle' %}
-                                            <i class="fas fa-circle geo-type-icon-large" style="font-size: 24px; color: #007bff;"></i>
+                                            <i class="fas fa-circle geo-type-icon-large circle"></i>
                                         {% elseif object.type == 'line' %}
-                                            <i class="fas fa-route geo-type-icon-large" style="font-size: 24px; color: #ffc107;"></i>
+                                            <i class="fas fa-route geo-type-icon-large line"></i>
                                         {% else %}
-                                            <i class="fas fa-map geo-type-icon-large" style="font-size: 24px; color: #6c757d;"></i>
+                                            <i class="fas fa-map geo-type-icon-large default"></i>
                                         {% endif %}
                                     {% endif %}
                                 </div>
                                 
                                 {# Small type indicator alongside main icon #}
                                 {% if object.type == 'point' %}
-                                    <i class="fas fa-map-marker-alt me-2 geo-type-icon small" style="font-size: 12px;"></i>
+                                    <i class="fas fa-map-marker-alt me-2 geo-type-icon small"></i>
                                 {% elseif object.type == 'polygon' %}
-                                    <i class="fas fa-draw-polygon me-2 geo-type-icon small" style="font-size: 12px;"></i>
+                                    <i class="fas fa-draw-polygon me-2 geo-type-icon small"></i>
                                 {% elseif object.type == 'circle' %}
-                                    <i class="fas fa-circle me-2 geo-type-icon small" style="font-size: 12px;"></i>
+                                    <i class="fas fa-circle me-2 geo-type-icon small"></i>
                                 {% elseif object.type == 'line' %}
-                                    <i class="fas fa-route me-2 geo-type-icon small" style="font-size: 12px;"></i>
+                                    <i class="fas fa-route me-2 geo-type-icon small"></i>
                                 {% else %}
-                                    <i class="fas fa-map me-2 geo-type-icon small" style="font-size: 12px;"></i>
+                                    <i class="fas fa-map me-2 geo-type-icon small"></i>
                                 {% endif %}
                                 
                                 <div>

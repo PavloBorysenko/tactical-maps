@@ -1,0 +1,39 @@
+/* Map Styles */
+
+/* Map container */
+#map-container {
+    height: 70vh;
+    width: 100%;
+    margin-bottom: 2rem;
+    border: 1px solid #ddd;
+}
+
+/* Ensure parent elements don't restrict size */
+.map-container {
+    height: 70vh;
+    margin-bottom: 2rem;
+}
+
+/* Geo objects sidebar */
+.geo-objects-sidebar {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.geo-type-icon {
+    font-size: 1.2rem;
+    width: 25px;
+    text-align: center;
+}
+
+.geo-objects-list {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin-bottom: 2rem;
+}
+
+/* Inline form styles */
+.inline-form {
+    display: inline-block;
+}

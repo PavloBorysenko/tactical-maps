@@ -3,7 +3,9 @@
 {% block title %}Edit Map{% endblock %}
 
 {% block stylesheets %}
+    {{ parent() }}
     {{ encore_entry_link_tags('mapEditor') }}
+    {{ encore_entry_link_tags('map') }}
 {% endblock %}
 
 {% block body %}
@@ -74,4 +76,5 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('mapEditor') }}
+    {{ encore_entry_script_tags('confirmDelete') }}
 {% endblock %} 

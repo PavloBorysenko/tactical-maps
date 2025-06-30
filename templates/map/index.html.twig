@@ -2,6 +2,11 @@
 
 {% block title %}Maps List{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('confirmDelete') }}
+{% endblock %}
+
 {% block body %}
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -38,7 +43,7 @@
                             <td>
                                 <a href="{{ path('map_show', {'id': map.id}) }}" class="btn btn-sm btn-info">Show</a>
                                 <a href="{{ path('map_edit', {'id': map.id}) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form method="post" action="{{ path('map_delete', {'id': map.id}) }}" onsubmit="return confirm('Are you sure you want to delete this map?');" style="display: inline-block;">
+                                <form method="post" action="{{ path('map_delete', {'id': map.id}) }}" class="inline-form confirm-delete-form" data-confirm-message="Are you sure you want to delete this map?">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ map.id) }}">
                                     <button class="btn btn-sm btn-danger">Delete</button>
                                 </form>

@@ -4,7 +4,9 @@ This directory contains refactored map components for the tactical-maps project.
 
 ## File Structure
 
-### baseMapComponent.js
+### Core Components
+
+#### baseMapComponent.js
 
 **Base class** for all map components. Contains common functionality:
 
@@ -14,7 +16,7 @@ This directory contains refactored map components for the tactical-maps project.
 -   Extracting coordinates from HTML attributes
 -   Cleanup and destruction methods
 
-### mapViewer.js
+#### mapViewer.js
 
 **Map viewer component** for displaying and interacting with tactical maps:
 
@@ -24,7 +26,7 @@ This directory contains refactored map components for the tactical-maps project.
 -   Cursor management
 -   Globally available as `window.tacticalMap`
 
-### mapEditor.js
+#### mapEditor.js
 
 **Map editor component** for creating and editing maps:
 
@@ -33,7 +35,9 @@ This directory contains refactored map components for the tactical-maps project.
 -   Synchronizes map coordinates with form
 -   Updates form fields when map changes
 
-### mapLayers.js
+### Supporting Components
+
+#### mapLayers.js
 
 **Map layers manager**:
 
@@ -41,7 +45,7 @@ This directory contains refactored map components for the tactical-maps project.
 -   Sets default layer (Satellite)
 -   Initializes map with layers
 
-### mapToolbar.js
+#### mapToolbar.js
 
 **Map toolbar**:
 
@@ -50,7 +54,7 @@ This directory contains refactored map components for the tactical-maps project.
 -   Coordinate mode
 -   Distance measurement tools
 
-### mapGeoObjects.js
+#### mapGeoObjects.js
 
 **Geo-objects map manager**:
 
@@ -60,7 +64,7 @@ This directory contains refactored map components for the tactical-maps project.
 -   Edit/delete functionality for popup buttons
 -   Side filtering with legend control
 
-### geoObjectForm.js
+#### geoObjectForm.js
 
 **Geo-objects form**:
 
@@ -69,11 +73,44 @@ This directory contains refactored map components for the tactical-maps project.
 -   Map integration
 -   Global window.geoObjectForm registration
 
-### home.js
+### Utility Components
+
+#### confirmDelete.js
+
+**Delete confirmation utility**:
+
+-   Universal confirmation dialog for delete operations
+-   Uses CSS classes for event binding (`.confirm-delete-form`)
+-   Custom confirmation messages via `data-confirm-message` attribute
+-   Replaces inline `onsubmit` JavaScript handlers
+
+#### home.js
 
 **Home page scripts**:
 
 -   Basic home page functionality
+
+### Legacy Files
+
+#### map_viewer.js
+
+**Legacy file** - appears to be an older version of mapViewer.js. Consider removing if not in use.
+
+## CSS Architecture
+
+The project also includes organized CSS files in `/assets/styles/`:
+
+### Core Styles
+
+-   **app.scss** - Main SCSS file with Bootstrap integration
+-   **app.css** - Compiled CSS output
+
+### Component-Specific Styles
+
+-   **map.css** - Map container and sidebar styles
+-   **geo_objects.css** - Geo-objects list, icons, and popups
+-   **sides.css** - Military-themed styling for sides/factions
+-   **home.css** - Home page specific styles
 
 ## Refactoring Benefits
 
@@ -81,19 +118,28 @@ This directory contains refactored map components for the tactical-maps project.
 
 Common code extracted to `BaseMapComponent`, eliminating duplication
 
-### 2. **Inheritance**
+### 2. **Clean Templates**
+
+-   Removed inline CSS and JavaScript from Twig templates
+-   All styles moved to dedicated CSS files
+-   All JavaScript moved to separate JS files
+-   Better separation of concerns
+
+### 3. **Inheritance**
 
 Clear class hierarchy with shared methods in the base class
-
-### 3. **Readability**
-
-Code became more structured and understandable
 
 ### 4. **Maintainability**
 
 Easier to add new map components and maintain existing ones
 
-### 5. **Testability**
+### 5. **Performance**
+
+-   CSS and JS files are cached by browser
+-   Cleaner HTML output
+-   Better CSP (Content Security Policy) compliance
+
+### 6. **Testability**
 
 Individual methods are easier to test in isolation
 
@@ -125,6 +171,28 @@ class MyMapComponent extends BaseMapComponent {
         });
     }
 }
+```
+
+### Using confirmDelete utility
+
+**HTML:**
+
+```html
+<form
+    class="confirm-delete-form"
+    data-confirm-message="Are you sure you want to delete this map?"
+>
+    <!-- form content -->
+</form>
+```
+
+**Template:**
+
+```twig
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('confirmDelete') }}
+{% endblock %}
 ```
 
 ### BaseMapComponent Methods
@@ -164,7 +232,7 @@ Configuration in `mapLayers.js`:
 
 Configuration in `mapToolbar.js`:
 
--   Icons loaded from `/assets/images/toolbar-icons/`
+-   Icons loaded from `/build/images/toolbar-icons/`
 -   Custom icon support with emoji fallback
 -   Responsive design for mobile devices
 
@@ -217,20 +285,76 @@ All JavaScript files follow **camelCase** naming convention for consistency and 
 -   ✅ `mapToolbar.js`
 -   ✅ `mapGeoObjects.js`
 -   ✅ `geoObjectForm.js`
+-   ✅ `confirmDelete.js`
 -   ✅ `home.js`
 
 ## Webpack Integration
 
 All components are properly configured in `webpack.config.js` with entry points:
 
+### JavaScript Entries
+
 ```javascript
+.addEntry('app', './assets/app.js')
+.addEntry('home', './assets/js/home.js')
 .addEntry('mapEditor', './assets/js/mapEditor.js')
 .addEntry('mapViewer', './assets/js/mapViewer.js')
 .addEntry('geoObjectForm', './assets/js/geoObjectForm.js')
+.addEntry('confirmDelete', './assets/js/confirmDelete.js')
+```
+
+### CSS Entries
+
+```javascript
+.addStyleEntry('geo_objects', './assets/styles/geo_objects.css')
+.addStyleEntry('map', './assets/styles/map.css')
+```
+
+## Template Integration
+
+### Best Practices
+
+**CSS Loading:**
+
+```twig
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('mapViewer') }}
+    {{ encore_entry_link_tags('geo_objects') }}
+    {{ encore_entry_link_tags('map') }}
+{% endblock %}
+```
+
+**JavaScript Loading:**
+
+```twig
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('mapViewer') }}
+    {{ encore_entry_script_tags('geoObjectForm') }}
+    {{ encore_entry_script_tags('confirmDelete') }}
+{% endblock %}
 ```
 
 ## Dependencies
 
--   **Leaflet.js** - Core mapping library
+-   **Leaflet.js** - Core mapping library (installed via npm)
 -   **Bootstrap** - UI styling
 -   **Symfony Webpack Encore** - Asset management
+
+## Migration Notes
+
+### Removed Practices
+
+-   ❌ No more inline `<style>` blocks in templates
+-   ❌ No more inline `<script>` blocks in templates
+-   ❌ No more `onsubmit="..."` attributes
+-   ❌ No more CDN dependencies in templates
+
+### New Practices
+
+-   ✅ All CSS in dedicated files
+-   ✅ All JavaScript in separate modules
+-   ✅ Event delegation via CSS classes
+-   ✅ Proper dependency management via npm
+-   ✅ Consistent template structure

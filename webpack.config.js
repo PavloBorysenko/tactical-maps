@@ -25,6 +25,7 @@ Encore
     .addEntry('mapEditor', './assets/js/mapEditor.js')
     .addEntry('mapViewer', './assets/js/mapViewer.js')
     .addEntry('geoObjectForm', './assets/js/geoObjectForm.js')
+    .addEntry('confirmDelete', './assets/js/confirmDelete.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
@@ -75,7 +76,8 @@ Encore
         from: './assets/images/toolbar-icons',
         to: 'images/toolbar-icons/[name].[ext]',
     })
-    .addStyleEntry('geo_objects', './assets/styles/geo_objects.css');
+    .addStyleEntry('geo_objects', './assets/styles/geo_objects.css')
+    .addStyleEntry('map', './assets/styles/map.css');
 // uncomment if you use TypeScript
 //.enableTypeScriptLoader()
 

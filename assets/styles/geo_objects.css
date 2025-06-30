@@ -26,11 +26,35 @@
 .geo-custom-icon {
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 /* Large type-based icons for fallback */
 .geo-type-icon-large {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-size: 24px;
+}
+
+.geo-type-icon-large.point {
+    color: #dc3545;
+}
+
+.geo-type-icon-large.polygon {
+    color: #28a745;
+}
+
+.geo-type-icon-large.circle {
+    color: #007bff;
+}
+
+.geo-type-icon-large.line {
+    color: #ffc107;
+}
+
+.geo-type-icon-large.default {
+    color: #6c757d;
 }
 
 .geo-type-icon {
@@ -43,6 +67,7 @@
 .geo-type-icon.small {
     opacity: 0.7;
     color: #6c757d !important;
+    font-size: 12px;
 }
 
 /* Type-specific icons */
