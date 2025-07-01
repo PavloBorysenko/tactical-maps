@@ -1033,3 +1033,78 @@ table {
     background-repeat: no-repeat !important;
     background-position: center !important;
 }
+
+/* Soft Delete Button Styles */
+.btn-outline-danger {
+    --bs-btn-color: #dc3545;
+    --bs-btn-border-color: rgba(220, 53, 69, 0.5);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(220, 53, 69, 0.8);
+    --bs-btn-hover-border-color: rgba(220, 53, 69, 0.8);
+    --bs-btn-focus-shadow-rgb: 220, 53, 69;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #dc3545;
+    --bs-btn-active-border-color: #dc3545;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.btn-outline-danger:active {
+    transform: translateY(0);
+}
+
+/* Inline Form Styles */
+.inline-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+/* Мягкие стили для кнопок Delete в inline формах */
+.inline-form .btn-outline-danger,
+.confirm-delete-form .btn-outline-danger {
+    --bs-btn-color: #6c757d;
+    --bs-btn-border-color: rgba(108, 117, 125, 0.3);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(220, 53, 69, 0.7);
+    --bs-btn-hover-border-color: rgba(220, 53, 69, 0.7);
+    --bs-btn-focus-shadow-rgb: 108, 117, 125;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #dc3545;
+    --bs-btn-active-border-color: #dc3545;
+    background-color: transparent;
+    border-color: rgba(108, 117, 125, 0.3);
+    color: #6c757d;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.inline-form .btn-outline-danger:hover,
+.confirm-delete-form .btn-outline-danger:hover {
+    color: #fff;
+    background-color: rgba(220, 53, 69, 0.7);
+    border-color: rgba(220, 53, 69, 0.7);
+    transform: none;
+    box-shadow: 0 1px 3px rgba(220, 53, 69, 0.1);
+}
+
+.inline-form .btn-outline-danger:focus,
+.confirm-delete-form .btn-outline-danger:focus {
+    color: #fff;
+    background-color: rgba(220, 53, 69, 0.8);
+    border-color: rgba(220, 53, 69, 0.8);
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.inline-form .btn-outline-danger:active,
+.confirm-delete-form .btn-outline-danger:active {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+    transform: none;
+}

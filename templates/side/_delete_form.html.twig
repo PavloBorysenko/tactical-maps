@@ -4,7 +4,7 @@
     <div class="d-flex gap-2">
         <form method="post" action="{{ path('side_force_delete', {'id': side.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('force_delete' ~ side.id) }}">
-            <button class="btn btn-danger btn-sm" title="Force delete and unassign {{ geo_objects_count }} objects">
+            <button class="btn btn-outline-danger btn-sm" title="Force delete and unassign {{ geo_objects_count }} objects">
                 <i class="fas fa-exclamation-triangle me-1"></i>
                 Force Delete
             </button>
@@ -18,7 +18,7 @@
     <div class="d-flex gap-2">
         <form method="post" action="{{ path('side_delete', {'id': side.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ side.id) }}">
-            <button class="btn btn-danger btn-sm">
+            <button class="btn btn-outline-danger btn-sm">
                 <i class="fas fa-trash-alt me-1"></i>
                 Delete
             </button>

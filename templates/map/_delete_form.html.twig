@@ -1,4 +1,4 @@
 <form method="post" action="{{ path('map_delete', {'id': map.id}) }}" class="confirm-delete-form" data-confirm-message="Are you sure you want to delete this map?">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ map.id) }}">
-    <button class="btn btn-danger">Delete Map</button>
+    <button class="btn btn-outline-danger">Delete Map</button>
 </form> 
