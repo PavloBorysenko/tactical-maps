@@ -1,0 +1,305 @@
+// ========================================
+// FORMS COMPONENT
+// ========================================
+
+// Form Controls
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--military-text);
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-fast);
+
+    &:focus {
+        @include form-control-focus;
+    }
+
+    &:disabled,
+    &[readonly] {
+        background-color: var(--military-lighter);
+        opacity: 1;
+    }
+}
+
+// Form Control Sizing
+.form-control-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.875rem;
+    border-radius: var(--border-radius-sm);
+}
+
+.form-control-lg {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 1.125rem;
+    border-radius: var(--border-radius-lg);
+}
+
+// Form Groups
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-floating {
+    position: relative;
+
+    > .form-control {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+
+        &:focus,
+        &:not(:placeholder-shown) {
+            padding-top: 1.625rem;
+            padding-bottom: 0.625rem;
+        }
+    }
+
+    > label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        padding: 1rem 0.75rem;
+        pointer-events: none;
+        border: 1px solid transparent;
+        transform-origin: 0 0;
+        transition: var(--transition-fast);
+        @include form-floating-label;
+    }
+
+    > .form-control:focus ~ label,
+    > .form-control:not(:placeholder-shown) ~ label {
+        opacity: 1;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+}
+
+// Form Labels
+.form-label {
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--military-text);
+}
+
+// Form Text (Help Text)
+.form-text {
+    margin-top: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--military-accent);
+}
+
+// Color Input
+.form-control-color {
+    border: 2px solid #e9ecef;
+    transition: var(--transition-slow);
+    border-radius: var(--border-radius-lg);
+    height: 3rem;
+
+    &:focus {
+        border-color: var(--input-focus-border);
+        box-shadow: var(--input-focus-shadow);
+    }
+}
+
+// Select Controls
+.form-select {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm) 2.25rem var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--military-text);
+    background-color: #fff;
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-fast);
+    appearance: none;
+
+    &:focus {
+        @include form-control-focus;
+    }
+
+    &:disabled {
+        background-color: var(--military-lighter);
+    }
+}
+
+// Checkboxes and Radios
+.form-check {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5em;
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-check-input {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.25em;
+    margin-left: -1.5em;
+    vertical-align: top;
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    appearance: none;
+    color-adjust: exact;
+
+    &:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    &:focus {
+        border-color: var(--input-focus-border);
+        outline: 0;
+        box-shadow: var(--input-focus-shadow);
+    }
+
+    &[type='checkbox'] {
+        border-radius: var(--border-radius-sm);
+    }
+
+    &[type='radio'] {
+        border-radius: 50%;
+    }
+}
+
+.form-check-label {
+    color: var(--military-text);
+    cursor: pointer;
+}
+
+// Form Icon Styles
+.form-icon {
+    @include icon-size(xl);
+    @include flex-center;
+    border-radius: var(--border-radius-round);
+    background-color: var(--military-lighter);
+    border: 1px solid var(--military-medium);
+}
+
+// Validation States
+.is-valid {
+    .form-control,
+    .form-select {
+        border-color: var(--success-color);
+
+        &:focus {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+    }
+}
+
+.is-invalid {
+    .form-control,
+    .form-select {
+        border-color: var(--danger-color);
+
+        &:focus {
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        }
+    }
+}
+
+.valid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--success-color);
+
+    .is-valid & {
+        display: block;
+    }
+}
+
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--danger-color);
+
+    .is-invalid & {
+        display: block;
+    }
+}
+
+// Input Groups
+.input-group {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+
+    > .form-control,
+    > .form-select {
+        position: relative;
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+    }
+
+    > .form-control:not(:last-child),
+    > .form-select:not(:last-child) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    > .form-control:not(:first-child),
+    > .form-select:not(:first-child) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--military-text);
+    text-align: center;
+    white-space: nowrap;
+    background-color: var(--military-lighter);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-md);
+}
+
+// Form Container Styles
+form,
+.form-container {
+    background-color: var(--background-overlay);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-light);
+}
+
+// Responsive Form Adjustments
+@include media-breakpoint-down(md) {
+    .form-floating > .form-control {
+        height: calc(3rem + 2px);
+        padding: 0.875rem 0.75rem;
+    }
+
+    .form-floating > label {
+        padding: 0.875rem 0.75rem;
+    }
+
+    form,
+    .form-container {
+        padding: var(--spacing-lg);
+    }
+}

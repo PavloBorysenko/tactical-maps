@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialZoom = parseInt(mapContainer.dataset.zoom || 13);
 
     const centerIcon = L.icon({
-        iconUrl: '/build/images/custom-marker/frame.webp',
+        iconUrl: '/build/images/frame.webp',
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -16],

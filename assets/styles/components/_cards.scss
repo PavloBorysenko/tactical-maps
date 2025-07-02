@@ -1,0 +1,216 @@
+// ========================================
+// CARDS COMPONENT
+// ========================================
+
+.card {
+    @include card-style();
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-clip: border-box;
+}
+
+.card-body {
+    flex: 1 1 auto;
+    padding: var(--spacing-lg);
+    background-color: inherit;
+}
+
+.card-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: 0;
+    background-color: var(--military-lighter);
+    border-bottom: 1px solid var(--border-light);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+
+    &:first-child {
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    }
+}
+
+.card-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--military-lighter);
+    border-top: 1px solid var(--border-light);
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+
+    &:last-child {
+        border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+    }
+}
+
+.card-title {
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--military-text);
+}
+
+.card-subtitle {
+    margin-top: calc(-0.5 * var(--spacing-sm));
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: var(--military-accent);
+}
+
+.card-text {
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Military Theme Cards
+.military-theme .card,
+.side-card {
+    @include military-card();
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-body {
+        background-color: var(--military-light);
+    }
+
+    .card-footer {
+        background-color: var(--military-lighter);
+    }
+}
+
+// Side Color Header for Side Cards
+.side-color-header {
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+    position: relative;
+    height: 80px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            45deg,
+            transparent,
+            rgba(255, 255, 255, 0.1)
+        );
+    }
+}
+
+// Statistics Cards
+.stats-card {
+    @include military-card();
+
+    .card-body {
+        background-color: var(--military-light);
+    }
+
+    &:hover {
+        border-color: var(--military-accent);
+    }
+}
+
+// Side Color Indicators
+.side-color-icon {
+    @include icon-size(xl);
+    border-radius: var(--border-radius-round);
+    border: 2px solid white;
+    box-shadow: var(--shadow-light);
+    display: inline-block;
+}
+
+.side-color-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--border-radius-lg);
+    border: 2px solid white;
+    box-shadow: var(--shadow-light);
+    display: inline-block;
+}
+
+.side-color-small {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-lg);
+    border: 2px solid white;
+    box-shadow: var(--shadow-light);
+    display: inline-block;
+}
+
+.side-color-mini {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    display: inline-block;
+}
+
+// Card Groups
+.card-group {
+    display: flex;
+    flex-flow: row wrap;
+    gap: var(--spacing-lg);
+
+    .card {
+        flex: 1 0 0%;
+        margin-bottom: 0;
+    }
+}
+
+// Card Deck (responsive grid)
+.card-deck {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+// Responsive Adjustments
+@include media-breakpoint-down(md) {
+    .card-body {
+        padding: var(--spacing-md);
+    }
+
+    .card-header,
+    .card-footer {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .card-group {
+        flex-direction: column;
+    }
+
+    .card-deck {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .side-card .d-flex.gap-2 {
+        flex-direction: column;
+        gap: var(--spacing-sm) !important;
+    }
+
+    .side-card .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .container-fluid {
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
+    }
+
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .d-flex.justify-content-between > div:last-child {
+        margin-top: var(--spacing-md);
+    }
+}

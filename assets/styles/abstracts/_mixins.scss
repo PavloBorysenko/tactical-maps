@@ -1,0 +1,228 @@
+// ========================================
+// TACTICAL MAPS - MIXINS
+// ========================================
+
+// Media Queries
+@mixin media-breakpoint-up($name) {
+    $min: map-get($breakpoints, $name);
+    @if $min != 0 {
+        @media (min-width: $min) {
+            @content;
+        }
+    } @else {
+        @content;
+    }
+}
+
+@mixin media-breakpoint-down($name) {
+    $max: map-get($breakpoints, $name) - 1px;
+    @media (max-width: $max) {
+        @content;
+    }
+}
+
+// Button Mixins
+@mixin button-variant(
+    $bg-color,
+    $border-color: $bg-color,
+    $hover-bg: null,
+    $hover-border: null
+) {
+    background-color: $bg-color;
+    border-color: $border-color;
+
+    &:hover {
+        @if $hover-bg {
+            background-color: $hover-bg;
+        } @else {
+            filter: brightness(0.9);
+        }
+
+        @if $hover-border {
+            border-color: $hover-border;
+        } @else {
+            border-color: $border-color;
+        }
+
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+@mixin button-outline-variant($color) {
+    color: $color;
+    border-color: rgba($color, 0.5);
+    background-color: transparent;
+
+    &:hover {
+        color: white;
+        background-color: rgba($color, 0.8);
+        border-color: rgba($color, 0.8);
+    }
+
+    &:focus {
+        box-shadow: 0 0 0 0.2rem rgba($color, 0.25);
+    }
+}
+
+// Card Mixins
+@mixin card-style(
+    $bg: var(--background-overlay),
+    $border: var(--border-light),
+    $shadow: var(--shadow-light)
+) {
+    background-color: $bg;
+    border: 1px solid $border;
+    border-radius: var(--border-radius-lg);
+    box-shadow: $shadow;
+    transition: var(--transition-normal);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+}
+
+// Icon Mixins
+@mixin icon-size($size) {
+    $size-value: map-get($icon-sizes, $size);
+    width: $size-value;
+    height: $size-value;
+    font-size: $size-value;
+}
+
+@mixin geo-icon-color($type) {
+    @if $type == 'point' {
+        color: var(--geo-point-color);
+    } @else if $type == 'polygon' {
+        color: var(--geo-polygon-color);
+    } @else if $type == 'circle' {
+        color: var(--geo-circle-color);
+    } @else if $type == 'line' {
+        color: var(--geo-line-color);
+    } @else {
+        color: var(--geo-default-color);
+    }
+}
+
+// Typography Mixins
+@mixin text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@mixin visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+}
+
+// Layout Mixins
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin absolute-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+// Animation Mixins
+@mixin hover-lift($distance: 2px) {
+    transition: var(--transition-normal);
+
+    &:hover {
+        transform: translateY(-$distance);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+@mixin fade-in($duration: 0.3s) {
+    animation: fadeIn $duration ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Form Mixins
+@mixin form-control-focus {
+    border-color: var(--input-focus-border);
+    box-shadow: var(--input-focus-shadow);
+}
+
+@mixin form-floating-label {
+    opacity: 0.7;
+    font-weight: 500;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+// Military Theme Mixins
+@mixin military-card {
+    background-color: var(--military-light);
+    border: 1px solid var(--military-medium);
+    border-radius: var(--border-radius-xl);
+
+    &:hover {
+        border-color: var(--military-accent);
+        box-shadow: var(--shadow-heavy);
+    }
+}
+
+@mixin military-alert($type: 'info') {
+    border-radius: var(--border-radius-xl);
+
+    @if $type == 'success' {
+        background-color: #f0f5f0;
+        border-color: #c3e6c3;
+        color: #2d5832;
+    } @else if $type == 'danger' {
+        background-color: #f5f0f0;
+        border-color: #e6c3c3;
+        color: #582d2d;
+    } @else if $type == 'warning' {
+        background-color: #f5f4f0;
+        border-color: #e6e0c3;
+        color: #58522d;
+    } @else {
+        background-color: #f0f4f5;
+        border-color: #c3dde6;
+        color: #2d4558;
+    }
+}
+
+// Utility Mixins
+@mixin sr-only {
+    @include visually-hidden;
+}
+
+@mixin clearfix {
+    &::after {
+        content: '';
+        display: table;
+        clear: both;
+    }
+}

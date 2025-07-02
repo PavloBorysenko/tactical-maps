@@ -70,14 +70,14 @@ Encore
     })
     .copyFiles({
         from: './assets/images',
-        to: 'images/custom-marker/[name].[ext]',
+        to: 'images/[name].[ext]',
+        pattern: /\.(png|jpe?g|gif|svg|avif|webp)$/,
     })
     .copyFiles({
         from: './assets/images/toolbar-icons',
         to: 'images/toolbar-icons/[name].[ext]',
-    })
-    .addStyleEntry('geo_objects', './assets/styles/geo_objects.css')
-    .addStyleEntry('map', './assets/styles/map.css');
+    });
+
 // uncomment if you use TypeScript
 //.enableTypeScriptLoader()
 

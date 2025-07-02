@@ -1,0 +1,364 @@
+// ========================================
+// GEO OBJECTS COMPONENT
+// ========================================
+
+// Geo Objects Container
+.geo-objects-container {
+    background-color: var(--background-overlay);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-light);
+
+    h3 {
+        margin-bottom: var(--spacing-md);
+        color: var(--military-text);
+    }
+}
+
+// Geo Objects List
+.geo-objects-list {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin-bottom: var(--spacing-xl);
+    background-color: var(--background-overlay);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-light);
+}
+
+.geo-objects-sidebar {
+    max-height: var(--map-height);
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+// Geo Object Items
+.geo-object-item {
+    transition: background-color var(--transition-normal);
+    border-radius: var(--border-radius-md);
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+}
+
+// Geo Object Icon Container
+.geo-object-icon {
+    @include flex-center;
+    @include icon-size(xl);
+    border-radius: var(--border-radius-md);
+    background-color: rgba(248, 249, 250, 0.8);
+    border: 1px solid var(--border-light);
+    flex-shrink: 0;
+}
+
+// Custom Icon Styling
+.geo-custom-icon {
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    @include icon-size(xl);
+    object-fit: contain;
+}
+
+// Type-based Icons
+.geo-type-icon-large {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-size: 24px;
+
+    &.point {
+        @include geo-icon-color(point);
+    }
+
+    &.polygon {
+        @include geo-icon-color(polygon);
+    }
+
+    &.circle {
+        @include geo-icon-color(circle);
+    }
+
+    &.line {
+        @include geo-icon-color(line);
+    }
+
+    &.default {
+        @include geo-icon-color(default);
+    }
+}
+
+.geo-type-icon {
+    @include icon-size(lg);
+    text-align: center;
+
+    &.small {
+        opacity: 0.7;
+        color: var(--geo-default-color) !important;
+        @include icon-size(xs);
+    }
+
+    &.point {
+        @include geo-icon-color(point);
+    }
+
+    &.polygon {
+        @include geo-icon-color(polygon);
+    }
+
+    &.circle {
+        @include geo-icon-color(circle);
+    }
+
+    &.line {
+        @include geo-icon-color(line);
+    }
+}
+
+// Form Styling
+.geo-object-form-container {
+    border-top: 1px solid var(--border-light);
+    padding-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    background-color: #f8f9fa;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.geo-form-title {
+    color: #495057;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+// Side Information
+.side-info {
+    margin-top: var(--spacing-xs);
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+    }
+}
+
+// Popup Styling
+.geo-popup {
+    min-width: 200px;
+
+    h5 {
+        margin-bottom: var(--spacing-sm);
+        font-weight: 600;
+    }
+
+    p {
+        margin-bottom: 0.75rem;
+    }
+
+    .side-info {
+        margin-bottom: var(--spacing-sm);
+
+        .badge {
+            font-size: 0.8rem;
+            padding: 0.3em 0.6em;
+        }
+    }
+}
+
+// Help Text
+#geo-type-help {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-style: italic;
+    color: var(--military-accent);
+}
+
+// Drawing Mode Indicator
+.drawing-mode-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: var(--border-radius-sm);
+    font-weight: bold;
+    z-index: var(--z-tooltip);
+    box-shadow: var(--shadow-light);
+
+    &.point {
+        @include geo-icon-color(point);
+    }
+
+    &.polygon {
+        @include geo-icon-color(polygon);
+    }
+
+    &.circle {
+        @include geo-icon-color(circle);
+    }
+
+    &.line {
+        @include geo-icon-color(line);
+    }
+}
+
+// Sides Legend
+.sides-legend {
+    background: var(--popup-bg);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-medium);
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    min-width: 150px;
+    margin: 10px;
+
+    h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+
+        small {
+            font-weight: normal;
+            color: #666;
+            font-size: 10px;
+        }
+    }
+
+    .legend-item {
+        @include flex-center;
+        justify-content: flex-start;
+        margin: 4px 0;
+        font-size: 12px;
+        color: #555;
+    }
+
+    .legend-item-checkbox {
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: var(--transition-normal);
+
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    }
+
+    .legend-checkbox-label {
+        @include flex-center;
+        justify-content: flex-start;
+        cursor: pointer;
+        margin: 0;
+        font-size: 12px;
+        color: #555;
+        width: 100%;
+    }
+
+    .legend-checkbox {
+        margin-right: 6px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+
+    .legend-color {
+        flex-shrink: 0;
+        transition: opacity var(--transition-normal);
+    }
+
+    .legend-checkbox:not(:checked) + .legend-color {
+        opacity: 0.4;
+    }
+
+    .legend-checkbox:not(:checked) ~ span {
+        opacity: 0.6;
+        text-decoration: line-through;
+    }
+
+    span {
+        @include text-truncate;
+        transition: opacity var(--transition-normal);
+    }
+}
+
+// Colored Markers on Map
+.colored-marker {
+    div {
+        border-radius: var(--border-radius-round);
+        border: 2px solid white;
+        box-shadow: var(--shadow-light);
+    }
+
+    &:hover div {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-medium);
+    }
+}
+
+// Icon Selector
+.icon-selector {
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    background-color: #fafafa;
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.icon-item {
+    @include flex-center;
+    flex-direction: column;
+    padding: 8px;
+    border: 2px solid transparent;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    background: white;
+    min-height: 70px;
+
+    &:hover {
+        border-color: var(--primary-color);
+        background-color: #f0f8ff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+    }
+
+    &.selected {
+        border-color: var(--success-color);
+        background-color: #f0fff0;
+        box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+    }
+
+    img {
+        @include icon-size(xl);
+        object-fit: contain;
+        margin-bottom: 4px;
+    }
+
+    .icon-name {
+        font-size: 10px;
+        text-align: center;
+        color: #666;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+}
+
+// Point Counter on Map
+.point-counter {
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    border-radius: var(--border-radius-sm) !important;
+    font-size: 14px !important;
+    z-index: var(--z-tooltip) !important;
+    font-family: Arial, sans-serif !important;
+}

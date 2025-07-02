@@ -1,0 +1,571 @@
+// ========================================
+// MAPS COMPONENT
+// ========================================
+
+// Map Containers
+.map-container,
+#map-container {
+    height: var(--map-height);
+    width: 100%;
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--background-overlay);
+}
+
+.map-display {
+    height: 500px;
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--background-overlay);
+}
+
+// Map Coordinates Display
+.map-coordinates {
+    margin-top: 10px;
+    background-color: rgba(248, 249, 250, 0.95);
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid #e9ecef;
+}
+
+.coordinate-display {
+    font-family: var(--font-family-monospace);
+    font-weight: bold;
+}
+
+// Map Toolbar
+.map-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: var(--z-tooltip);
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    backdrop-filter: blur(5px);
+    @include fade-in();
+}
+
+// Horizontal Toolbar - Top Center
+.map-toolbar-horizontal {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-tooltip);
+    background: var(--toolbar-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-light);
+    padding: 4px var(--spacing-md);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+    backdrop-filter: blur(10px);
+    transition: var(--transition-slow);
+    height: 36px;
+
+    &:hover {
+        background: var(--toolbar-bg-hover);
+        box-shadow: var(--shadow-heavy);
+        transform: translateX(-50%) translateY(-2px);
+    }
+}
+
+// Toolbar Buttons
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: #333;
+    font-size: 20px;
+    @include icon-size(lg);
+    cursor: pointer;
+    @include flex-center;
+    transition: var(--transition-normal);
+    filter: grayscale(100%);
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+        filter: grayscale(0%);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// Horizontal Toolbar Buttons
+.map-toolbar-horizontal .toolbar-btn {
+    background: var(--toolbar-bg);
+    border: none;
+    border-radius: var(--border-radius-round);
+    color: #333;
+    font-size: 16px;
+    @include icon-size(xl);
+    cursor: pointer;
+    @include flex-center;
+    transition: var(--transition-slow);
+    filter: none;
+    box-shadow: var(--shadow-light);
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(1.1);
+        box-shadow: var(--shadow-medium);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// Toggle Wrapper
+.toolbar-toggle-wrapper {
+    @include flex-center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background: transparent;
+    border: none;
+    transition: var(--transition-normal);
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+}
+
+.map-toolbar-horizontal .toolbar-toggle-wrapper {
+    background: var(--toolbar-bg);
+    border-radius: 16px;
+    padding: 4px var(--spacing-sm);
+    gap: var(--spacing-sm);
+    transition: var(--transition-slow);
+    height: 28px;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+    }
+}
+
+// Checkbox & Labels
+.toolbar-checkbox {
+    @include icon-size(md);
+    accent-color: #333;
+    cursor: pointer;
+
+    &:checked {
+        outline: 1px solid #333;
+        outline-offset: 1px;
+    }
+}
+
+.map-toolbar-horizontal .toolbar-checkbox {
+    @include icon-size(md);
+    accent-color: var(--primary-color);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+
+    &:checked {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 1px;
+    }
+}
+
+.toolbar-label {
+    font-size: 18px;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+    filter: grayscale(100%);
+    transition: var(--transition-normal);
+
+    .toolbar-toggle-wrapper:hover & {
+        filter: grayscale(0%);
+        transform: scale(1.1);
+    }
+
+    .toolbar-checkbox:checked + & {
+        filter: grayscale(0%);
+        transform: scale(1.1);
+    }
+}
+
+.map-toolbar-horizontal .toolbar-label {
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+    filter: none;
+    transition: var(--transition-slow);
+    font-weight: 500;
+
+    .toolbar-toggle-wrapper:hover & {
+        color: var(--primary-color);
+        transform: none;
+    }
+
+    .toolbar-checkbox:checked + & {
+        color: var(--primary-color);
+        transform: none;
+    }
+}
+
+// Toolbar Icons
+.toolbar-icon-center,
+.toolbar-icon-coordinates,
+.toolbar-icon-distance,
+.toolbar-icon-layer {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    @include flex-center;
+    @include icon-size(md);
+
+    // Default symbols
+    &::before {
+        font-size: inherit;
+        color: inherit;
+        vertical-align: middle;
+    }
+
+    // Hide symbols when background image is loaded
+    &[style*='background-image']::before {
+        display: none;
+    }
+}
+
+.toolbar-icon-center::before {
+    content: '⌖';
+}
+
+.toolbar-icon-coordinates::before {
+    content: '✚';
+}
+
+.toolbar-icon-distance::before {
+    content: '↔';
+}
+
+.toolbar-icon-layer::before {
+    content: '🗺️';
+    font-size: 16px;
+}
+
+// Layer Selector
+.toolbar-layer-selector-wrapper {
+    @include flex-center;
+    position: relative;
+}
+
+.layer-btn {
+    border-radius: var(--border-radius-md) !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: var(--transition-normal) !important;
+    filter: none !important;
+    position: relative;
+
+    &:not([style*='background-image']) {
+        background: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    &:hover {
+        box-shadow: var(--shadow-light) !important;
+        transform: scale(1.1) !important;
+
+        &:not([style*='background-image']) {
+            background: rgba(255, 255, 255, 1) !important;
+        }
+    }
+
+    &.active {
+        color: white !important;
+        transform: scale(1.1) !important;
+
+        &:not([style*='background-image']) {
+            background: rgba(0, 123, 255, 0.9) !important;
+        }
+    }
+}
+
+// Layer Dropdown
+.toolbar-layer-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: var(--z-dropdown);
+    background: var(--popup-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-medium);
+    backdrop-filter: blur(10px);
+    min-width: 150px;
+    margin-top: 4px;
+    overflow: hidden;
+    @include fade-in(0.2s);
+}
+
+.toolbar-layer-dropdown-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    transition: var(--transition-normal);
+    border-bottom: 1px solid var(--border-light);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: rgba(0, 123, 255, 0.1);
+        color: var(--primary-color);
+    }
+
+    &.active {
+        background: rgba(0, 123, 255, 0.15);
+        color: var(--primary-color);
+        font-weight: 500;
+        position: relative;
+
+        &::after {
+            content: '✓';
+            position: absolute;
+            right: var(--spacing-sm);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--primary-color);
+        }
+    }
+}
+
+// Coordinate Popup
+.coordinate-popup .leaflet-popup-content-wrapper {
+    background: var(--popup-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-medium);
+    backdrop-filter: blur(10px);
+}
+
+.coordinate-content {
+    padding: var(--spacing-sm);
+    text-align: center;
+}
+
+.coord-values {
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-sm);
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-family-monospace);
+
+    div {
+        margin: var(--spacing-xs) 0;
+    }
+}
+
+.copy-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition-slow);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        background: darken($color: #28a745, $amount: 8%);
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &.copied {
+        background: var(--primary-color) !important;
+        transform: scale(1.1);
+        animation: copySuccess 0.6s ease;
+    }
+
+    &.copying {
+        animation: copyPulse 0.3s ease;
+    }
+}
+
+@keyframes copySuccess {
+    0% {
+        background: var(--success-color);
+        transform: scale(1);
+    }
+    50% {
+        background: var(--primary-color);
+        transform: scale(1.15);
+        box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+    }
+    100% {
+        background: var(--primary-color);
+        transform: scale(1.1);
+    }
+}
+
+@keyframes copyPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+// Distance Popup
+.distance-popup .leaflet-popup-content-wrapper {
+    background: rgba(255, 107, 53, 0.25) !important;
+    color: white;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 107, 53, 0.4);
+    padding: 0 !important;
+    min-width: auto !important;
+}
+
+.distance-popup .leaflet-popup-content {
+    margin: 0 !important;
+    padding: 4px var(--spacing-sm) !important;
+    min-height: auto !important;
+    white-space: nowrap;
+}
+
+.distance-content {
+    padding: 0;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.distance-value {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.distance-point-number {
+    font-size: 10px;
+    opacity: 0.9;
+    margin: 0;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.distance-popup .leaflet-popup-tip-container {
+    display: none;
+}
+
+// Inline Form Styles
+.inline-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+// Responsive Adjustments
+@include media-breakpoint-down(md) {
+    .map-toolbar {
+        top: 60px;
+        left: 10px;
+        min-width: 140px;
+        padding: 10px;
+        gap: var(--spacing-sm);
+    }
+
+    .map-toolbar-horizontal {
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 10px;
+        gap: var(--spacing-sm);
+        height: 32px;
+    }
+
+    .toolbar-btn {
+        @include icon-size(lg);
+        font-size: 16px;
+    }
+
+    .map-toolbar-horizontal .toolbar-btn {
+        @include icon-size(lg);
+        font-size: 14px;
+    }
+
+    .toolbar-label {
+        font-size: 13px;
+    }
+
+    .map-toolbar-horizontal .toolbar-label {
+        font-size: 12px;
+    }
+
+    .toolbar-toggle-wrapper {
+        padding: var(--spacing-sm);
+    }
+
+    .map-toolbar-horizontal .toolbar-toggle-wrapper {
+        padding: 3px var(--spacing-sm);
+        gap: var(--spacing-xs);
+        height: 24px;
+    }
+
+    .toolbar-checkbox {
+        @include icon-size(sm);
+    }
+
+    .map-toolbar-horizontal .toolbar-checkbox {
+        @include icon-size(sm);
+    }
+
+    .toolbar-layer-dropdown {
+        min-width: 120px;
+        right: 0;
+        left: auto;
+    }
+
+    .toolbar-layer-dropdown-item {
+        padding: var(--spacing-sm) 10px;
+        font-size: 12px;
+    }
+
+    .layer-btn {
+        @include icon-size(lg);
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .toolbar-icon-layer::before {
+        font-size: 14px;
+    }
+}

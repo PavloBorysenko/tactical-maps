@@ -1,250 +1,57 @@
-// Import Bootstrap
-@import '~bootstrap/scss/bootstrap';
+// ========================================
+// TACTICAL MAPS - MAIN STYLESHEET
+// ========================================
+// Architecture follows 7-1 Pattern
+// https://sass-guidelin.es/#the-7-1-pattern
 
-// Import Leaflet CSS
+// 1. VENDORS
+// External libraries and frameworks
+@import '~bootstrap/scss/bootstrap';
 @import '~leaflet/dist/leaflet.css';
 
-// Global base styles
-@import '~bootstrap/scss/bootstrap';
+// 2. ABSTRACTS
+// Variables, functions, mixins, placeholders
+@import 'abstracts/variables';
+@import 'abstracts/mixins';
 
-/* CSS Variables */
-:root {
-    --military-olive-bg: rgba(183, 173, 132, 0.95);
-}
+// 3. BASE
+// Reset, typography, base styles
+@import 'base/base';
 
-/* Custom background */
-body {
-    background-color: #b7ad84; /* fallback color */
-    background-image: url('../images/vector-topographic.avif');
-    background-repeat: repeat; /* repeat tile */
-    background-size: auto;
-    background-attachment: fixed; /* background stays in place when scrolling */
-    min-height: 100vh;
-    font-family: 'Roboto', sans-serif;
-}
+// 4. LAYOUT
+// Header, footer, navigation, sidebar, forms
+@import 'layout/containers';
 
-// Improve readability with light military olive backgrounds for content containers
-.container,
-.container-fluid,
-.container-sm,
-.container-md,
-.container-lg,
-.container-xl,
-.container-xxl {
-    background-color: var(--military-olive-bg);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
+// 5. COMPONENTS
+// Buttons, cards, carousels, covers, dropdowns
+@import 'components/buttons';
+@import 'components/cards';
+@import 'components/forms';
+@import 'components/geo-objects';
+@import 'components/maps';
 
-// Forms and form elements
-form,
-.form-container {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
+// 6. PAGES
+// Page-specific styles (optional)
+// @import 'pages/home';
+// @import 'pages/about';
 
-// Cards and panels
-.card,
-.panel,
-.sidebar {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
+// 7. THEMES
+// Theme-specific styles (optional)
+// @import 'themes/default';
 
-// Lists and list groups
-.list-group,
-.list-group-item {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-}
-
-// Content areas and main sections
-.content-area,
-.main-content {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-// Tables
-.table-responsive,
-table {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    padding: 10px;
-}
-
-// Navigation and headers that need background
-.navbar,
-.nav {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.breadcrumb {
-    background-color: var(--military-olive-bg) !important;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-// Buttons remain visible
-.btn {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-// Special class for geo objects sidebar
-.geo-objects-list {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-// Alert and message boxes
-.alert {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-// Map styles
-.map-container {
-    height: 600px;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    background-color: rgba(255, 255, 255, 0.95);
-}
-
-.map-display {
-    height: 500px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.95);
-}
-
-.map-coordinates {
-    margin-top: 10px;
-    background-color: rgba(248, 249, 250, 0.95);
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
-}
-
-.coordinate-display {
-    font-family: monospace;
-    font-weight: bold;
-}
-
-/* Additional custom styles */
-.navbar-brand {
-    font-weight: bold;
-}
-
-/* Geo object form styles */
-.geo-object-form-container {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.geo-form-title {
-    color: #495057;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-}
-
-/* Point counter on map */
-.point-counter {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: white !important;
-    padding: 8px 12px !important;
-    border-radius: 4px !important;
-    font-size: 14px !important;
-    z-index: 1000 !important;
-    font-family: Arial, sans-serif !important;
-}
-
-/* Icon selector styles */
-.icon-selector {
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    padding: 15px;
-    background-color: #fafafa;
-}
-
-.icon-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 10px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px 0;
-}
-
-.icon-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px;
-    border: 2px solid transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: white;
-    min-height: 70px;
-}
-
-.icon-item:hover {
-    border-color: #007bff;
-    background-color: #f0f8ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-}
-
-.icon-item.selected {
-    border-color: #28a745;
-    background-color: #f0fff0;
-    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
-}
-
-.icon-item img {
-    max-width: 32px;
-    max-height: 32px;
-    object-fit: contain;
-    margin-bottom: 4px;
-}
-
-.icon-item .icon-name {
-    font-size: 10px;
-    text-align: center;
-    color: #666;
-    word-break: break-word;
-    line-height: 1.2;
-}
+// ========================================
+// LEAFLET LAYER CONTROL OVERRIDES
+// ========================================
 
 /* Leaflet Layer Control Styles */
 .leaflet-control-layers {
     background: rgba(255, 255, 255, 0.65) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--shadow-medium) !important;
+    border: 1px solid var(--border-light) !important;
     padding: 10px !important;
     min-width: 180px !important;
-    transition: all 0.3s ease !important;
+    transition: var(--transition-slow) !important;
 }
 
 .leaflet-control-layers-expanded {
@@ -258,15 +65,15 @@ table {
     background-color: #f8f9fa !important;
     width: 36px !important;
     height: 36px !important;
-    border-radius: 6px !important;
+    border-radius: var(--border-radius-md) !important;
     border: 2px solid #dee2e6 !important;
-    transition: all 0.2s ease !important;
+    transition: var(--transition-normal) !important;
     cursor: pointer !important;
 }
 
 .leaflet-control-layers-toggle:hover {
     background-color: #e9ecef !important;
-    border-color: #007bff !important;
+    border-color: var(--primary-color) !important;
     transform: scale(1.05) !important;
 }
 
@@ -278,7 +85,7 @@ table {
     justify-content: center;
     width: 100%;
     height: 100%;
-    transition: transform 0.2s ease !important;
+    transition: transform var(--transition-normal) !important;
 }
 
 .leaflet-control-layers-expanded .leaflet-control-layers-toggle:before {
@@ -291,7 +98,7 @@ table {
     opacity: 0 !important;
     max-height: 0 !important;
     overflow: hidden !important;
-    transition: all 0.3s ease !important;
+    transition: var(--transition-slow) !important;
 }
 
 .leaflet-control-layers-expanded .leaflet-control-layers-list {
@@ -300,7 +107,7 @@ table {
 }
 
 .leaflet-control-layers-base {
-    margin-bottom: 8px !important;
+    margin-bottom: var(--spacing-sm) !important;
 }
 
 .leaflet-control-layers-base label {
@@ -310,24 +117,24 @@ table {
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
-    padding: 8px 4px !important;
-    border-radius: 4px !important;
-    transition: all 0.2s ease !important;
+    padding: var(--spacing-sm) var(--spacing-xs) !important;
+    border-radius: var(--border-radius-sm) !important;
+    transition: var(--transition-normal) !important;
 }
 
 .leaflet-control-layers-base label:hover {
-    color: #007bff !important;
+    color: var(--primary-color) !important;
     background-color: rgba(0, 123, 255, 0.1) !important;
 }
 
 .leaflet-control-layers-base input[type='radio'] {
     margin-right: 10px !important;
     transform: scale(1.1) !important;
-    accent-color: #007bff !important;
+    accent-color: var(--primary-color) !important;
 }
 
 .leaflet-control-layers-separator {
-    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-top: 1px solid var(--border-light) !important;
     margin: 10px 0 !important;
 }
 
@@ -339,8 +146,8 @@ table {
     font-size: 16px;
     color: #333;
     margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #007bff;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--primary-color);
     text-align: center;
 }
 
@@ -358,12 +165,12 @@ table {
 }
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+@include media-breakpoint-down(md) {
     .leaflet-control-layers {
         position: fixed !important;
         top: 10px !important;
         right: 10px !important;
-        z-index: 1001 !important;
+        z-index: var(--z-dropdown) !important;
         min-width: 160px !important;
     }
 
@@ -374,7 +181,7 @@ table {
 
     .leaflet-control-layers-base label {
         font-size: 13px !important;
-        padding: 6px 3px !important;
+        padding: var(--spacing-sm) 3px !important;
     }
 
     .leaflet-control-layers-toggle {
@@ -383,728 +190,23 @@ table {
     }
 }
 
-/* Map Toolbar Styles */
-.map-toolbar {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    backdrop-filter: blur(5px);
-}
-
-/* Horizontal Toolbar - Top Center */
-.map-toolbar-horizontal {
-    position: absolute;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0.36);
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 4px 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-    height: 36px;
-}
-
-.map-toolbar-horizontal:hover {
-    background: rgba(255, 255, 255, 0.45);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    transform: translateX(-50%) translateY(-2px);
-}
-
-/* Toolbar Button */
-.toolbar-btn {
-    background: transparent;
-    border: none;
-    border-radius: 4px;
-    color: #333;
-    font-size: 20px;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    filter: grayscale(100%);
-}
-
-.toolbar-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-    transform: scale(1.1);
-    filter: grayscale(0%);
-}
-
-.toolbar-btn:active {
-    transform: scale(0.95);
-}
-
-/* Toggle Wrapper */
-.toolbar-toggle-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px;
-    border-radius: 4px;
-    background: transparent;
-    border: none;
-    transition: all 0.2s ease;
-}
-
-.toolbar-toggle-wrapper:hover {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-/* Checkbox */
-.toolbar-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: #333;
-    cursor: pointer;
-}
-
-/* Label - только иконка, без текста */
-.toolbar-label {
-    font-size: 18px;
-    color: #333;
-    cursor: pointer;
-    margin: 0;
-    user-select: none;
-    filter: grayscale(100%);
-    transition: all 0.2s ease;
-}
-
-.toolbar-toggle-wrapper:hover .toolbar-label {
-    filter: grayscale(0%);
-    transform: scale(1.1);
-}
-
-/* Active state for toggles */
-.toolbar-checkbox:checked + .toolbar-label {
-    filter: grayscale(0%);
-    transform: scale(1.1);
-}
-
-.toolbar-checkbox:checked {
-    outline: 1px solid #333;
-    outline-offset: 1px;
-}
-
-/* Coordinate Popup */
-.coordinate-popup .leaflet-popup-content-wrapper {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
-}
-
-.coordinate-content {
-    padding: 8px;
-    text-align: center;
-}
-
-.coord-values {
-    margin: 8px 0;
-    padding: 8px;
-    background: rgba(0, 123, 255, 0.1);
-    border-radius: 4px;
-    font-family: monospace;
-}
-
-.coord-values div {
-    margin: 4px 0;
-}
-
-.copy-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.copy-btn:hover {
-    background: #218838;
-    transform: scale(1.05);
-}
-
-.copy-btn:active {
-    transform: scale(0.95);
-}
-
-/* Animation for successful copy */
-.copy-btn.copied {
-    background: #007bff !important;
-    transform: scale(1.1);
-    animation: copySuccess 0.6s ease;
-}
-
-@keyframes copySuccess {
-    0% {
-        background: #28a745;
-        transform: scale(1);
-    }
-    50% {
-        background: #007bff;
-        transform: scale(1.15);
-        box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
-    }
-    100% {
-        background: #007bff;
-        transform: scale(1.1);
-    }
-}
-
-/* Pulse animation for copy feedback */
-.copy-btn.copying {
-    animation: copyPulse 0.3s ease;
-}
-
-@keyframes copyPulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(0.9);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-/* Distance Popup */
-.distance-popup .leaflet-popup-content-wrapper {
-    background: rgba(255, 107, 53, 0.25) !important;
-    color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 107, 53, 0.4);
-    padding: 0 !important;
-    min-width: auto !important;
-}
-
-.distance-popup .leaflet-popup-content {
-    margin: 0 !important;
-    padding: 4px 8px !important;
-    min-height: auto !important;
-    white-space: nowrap;
-}
-
-.distance-content {
-    padding: 0;
-    text-align: center;
-    font-size: 11px;
-    line-height: 1.2;
-}
-
-.distance-value {
-    font-size: 12px;
-    font-weight: bold;
-    margin: 0;
-    color: #fff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.distance-point-number {
-    font-size: 10px;
-    opacity: 0.9;
-    margin: 0;
-    color: #fff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-/* Remove popup tip for distance popups */
-.distance-popup .leaflet-popup-tip-container {
-    display: none;
-}
-
-/* Mobile responsive for toolbar */
-@media (max-width: 768px) {
-    .map-toolbar {
-        top: 60px;
-        left: 10px;
-        min-width: 140px;
-        padding: 10px;
-        gap: 8px;
-    }
-
-    .toolbar-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 16px;
-    }
-
-    .toolbar-label {
-        font-size: 13px;
-    }
-
-    .toolbar-toggle-wrapper {
-        padding: 6px;
-    }
-}
-
-/* Animation for toolbar appearance */
-@keyframes toolbarFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.map-toolbar {
-    animation: toolbarFadeIn 0.3s ease-out;
-}
-
-/* Horizontal Toolbar Toggle Wrapper */
-.map-toolbar-horizontal .toolbar-toggle-wrapper {
-    background: rgba(255, 255, 255, 0.36);
-    border-radius: 16px;
-    padding: 4px 8px;
-    gap: 6px;
-    transition: all 0.3s ease;
-    height: 28px;
-    display: flex;
-    align-items: center;
-}
-
-.map-toolbar-horizontal .toolbar-toggle-wrapper:hover {
-    background: rgba(255, 255, 255, 0.5);
-    transform: scale(1.05);
-}
-
-/* Horizontal Toolbar Button */
-.map-toolbar-horizontal .toolbar-btn {
-    background: rgba(255, 255, 255, 0.36);
-    border: none;
-    border-radius: 50%;
-    color: #333;
-    font-size: 16px;
-    width: 32px;
-    height: 32px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    filter: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.map-toolbar-horizontal .toolbar-btn:hover {
-    background: rgba(255, 255, 255, 0.6);
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.map-toolbar-horizontal .toolbar-btn:active {
-    transform: scale(0.95);
-}
-
-/* Active state for toggles */
-.toolbar-checkbox:checked + .toolbar-label {
-    filter: grayscale(0%);
-    transform: scale(1.1);
-}
-
-.toolbar-checkbox:checked {
-    outline: 1px solid #333;
-    outline-offset: 1px;
-}
-
-/* Horizontal Toolbar Checkbox */
-.map-toolbar-horizontal .toolbar-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: #007bff;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.map-toolbar-horizontal .toolbar-checkbox:checked {
-    outline: 2px solid #007bff;
-    outline-offset: 1px;
-}
-
-/* Horizontal Toolbar Label */
-.map-toolbar-horizontal .toolbar-label {
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    margin: 0;
-    user-select: none;
-    filter: none;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.map-toolbar-horizontal .toolbar-toggle-wrapper:hover .toolbar-label {
-    color: #007bff;
-    transform: none;
-}
-
-.map-toolbar-horizontal .toolbar-checkbox:checked + .toolbar-label {
-    color: #007bff;
-    transform: none;
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-    .map-toolbar-horizontal {
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 4px 10px;
-        gap: 6px;
-        height: 32px;
-    }
-
-    .map-toolbar-horizontal .toolbar-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 14px;
-    }
-
-    .map-toolbar-horizontal .toolbar-toggle-wrapper {
-        padding: 3px 6px;
-        gap: 4px;
-        height: 24px;
-    }
-
-    .map-toolbar-horizontal .toolbar-checkbox {
-        width: 14px;
-        height: 14px;
-    }
-
-    .map-toolbar-horizontal .toolbar-label {
-        font-size: 12px;
-    }
-}
-
-/* Toolbar Icons - CSS Background Images */
-.toolbar-icon-center,
-.toolbar-icon-coordinates,
-.toolbar-icon-distance,
-.toolbar-icon-layer {
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    min-height: 20px;
-}
-
-/* Default symbols - always show */
-.toolbar-icon-center::before {
-    content: '⌖';
-    font-size: inherit;
-    color: inherit;
-    vertical-align: middle;
-}
-
-.toolbar-icon-coordinates::before {
-    content: '✚';
-    font-size: inherit;
-    color: inherit;
-}
-
-.toolbar-icon-distance::before {
-    content: '↔';
-    font-size: inherit;
-    color: inherit;
-}
-
-.toolbar-icon-layer::before {
-    content: '🗺️';
-    font-size: 16px;
-    vertical-align: middle;
-}
-
-/* Hide symbols when background image is loaded */
-.toolbar-icon-center[style*='background-image']::before,
-.toolbar-icon-coordinates[style*='background-image']::before,
-.toolbar-icon-distance[style*='background-image']::before,
-.toolbar-icon-layer[style*='background-image']::before {
-    display: none;
-}
-
-/* Mobile responsive for icons */
-@media (max-width: 768px) {
-    .toolbar-icon-center,
-    .toolbar-icon-coordinates,
-    .toolbar-icon-distance,
-    .toolbar-icon-layer {
-        min-width: 16px;
-        min-height: 16px;
-    }
-}
-
-/* Layer Selector Styles */
-.toolbar-layer-selector-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-
-/* Layer Button Styles */
-.layer-btn {
-    border-radius: 6px !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.2s ease !important;
-    filter: none !important;
-    background: transparent !important;
-    position: relative;
-}
-
-/* Background only when no custom icon is loaded */
-.layer-btn:not([style*='background-image']) {
-    background: rgba(255, 255, 255, 0.9) !important;
-}
-
-.layer-btn:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    transform: scale(1.1) !important;
-}
-
-/* Background on hover only when no custom icon is loaded */
-.layer-btn:not([style*='background-image']):hover {
-    background: rgba(255, 255, 255, 1) !important;
-}
-
-.layer-btn.active {
-    color: white !important;
-    transform: scale(1.1) !important;
-}
-
-/* Active background only when no custom icon is loaded */
-.layer-btn:not([style*='background-image']).active {
-    background: rgba(0, 123, 255, 0.9) !important;
-}
-
-/* Layer Dropdown Menu */
-.toolbar-layer-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 1001;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
-    min-width: 150px;
-    margin-top: 4px;
-    overflow: hidden;
-    animation: dropdownFadeIn 0.2s ease;
-}
-
-@keyframes dropdownFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Layer Dropdown Items */
-.toolbar-layer-dropdown-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #333;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.toolbar-layer-dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.toolbar-layer-dropdown-item:hover {
-    background: rgba(0, 123, 255, 0.1);
-    color: #007bff;
-}
-
-.toolbar-layer-dropdown-item.active {
-    background: rgba(0, 123, 255, 0.15);
-    color: #007bff;
-    font-weight: 500;
-    position: relative;
-}
-
-.toolbar-layer-dropdown-item.active::after {
-    content: '✓';
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    color: #007bff;
-}
-
-/* Layer Icon Styles */
-.toolbar-icon-layer {
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    min-height: 20px;
-}
-
-/* Default symbol for layer icon */
-.toolbar-icon-layer::before {
-    content: '🗺️';
-    font-size: 16px;
-    vertical-align: middle;
-}
-
-/* Hide symbol when background image is loaded */
-.toolbar-icon-layer[style*='background-image']::before {
-    display: none;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .toolbar-layer-dropdown {
-        min-width: 120px;
-        right: 0;
-        left: auto;
-    }
-
-    .toolbar-layer-dropdown-item {
-        padding: 6px 10px;
-        font-size: 12px;
-    }
-
-    .layer-btn {
-        width: 28px !important;
-        height: 28px !important;
-    }
-
-    .toolbar-icon-layer::before {
-        font-size: 14px;
-    }
-}
-
-/* Layer Icon with !important */
-.toolbar-icon-layer[style*='background-image'] {
-    background-image: url('../images/toolbar-icons/layer.png') !important;
-}
-
-/* Alternative - force layer icon */
-.layer-btn.toolbar-icon-layer {
-    background-image: url('../images/toolbar-icons/layer.png') !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-}
-
-/* Soft Delete Button Styles */
-.btn-outline-danger {
-    --bs-btn-color: #dc3545;
-    --bs-btn-border-color: rgba(220, 53, 69, 0.5);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: rgba(220, 53, 69, 0.8);
-    --bs-btn-hover-border-color: rgba(220, 53, 69, 0.8);
-    --bs-btn-focus-shadow-rgb: 220, 53, 69;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #dc3545;
-    --bs-btn-active-border-color: #dc3545;
-    transition: all 0.2s ease-in-out;
-}
-
-.btn-outline-danger:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
-}
-
-.btn-outline-danger:active {
-    transform: translateY(0);
-}
-
-/* Inline Form Styles */
-.inline-form {
-    display: inline-block;
-    margin: 0;
-    padding: 0;
-}
-
-/* Мягкие стили для кнопок Delete в inline формах */
-.inline-form .btn-outline-danger,
-.confirm-delete-form .btn-outline-danger {
-    --bs-btn-color: #6c757d;
-    --bs-btn-border-color: rgba(108, 117, 125, 0.3);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: rgba(220, 53, 69, 0.7);
-    --bs-btn-hover-border-color: rgba(220, 53, 69, 0.7);
-    --bs-btn-focus-shadow-rgb: 108, 117, 125;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #dc3545;
-    --bs-btn-active-border-color: #dc3545;
-    background-color: transparent;
-    border-color: rgba(108, 117, 125, 0.3);
-    color: #6c757d;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-    transition: all 0.15s ease-in-out;
-}
-
-.inline-form .btn-outline-danger:hover,
-.confirm-delete-form .btn-outline-danger:hover {
-    color: #fff;
-    background-color: rgba(220, 53, 69, 0.7);
-    border-color: rgba(220, 53, 69, 0.7);
-    transform: none;
-    box-shadow: 0 1px 3px rgba(220, 53, 69, 0.1);
-}
-
-.inline-form .btn-outline-danger:focus,
-.confirm-delete-form .btn-outline-danger:focus {
-    color: #fff;
-    background-color: rgba(220, 53, 69, 0.8);
-    border-color: rgba(220, 53, 69, 0.8);
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-.inline-form .btn-outline-danger:active,
-.confirm-delete-form .btn-outline-danger:active {
-    color: #fff;
-    background-color: #dc3545;
-    border-color: #dc3545;
-    transform: none;
-}
+// ========================================
+// PROFESSIONAL SETUP COMPLETE
+// ========================================
+//
+// ✅ BACKGROUND IMAGE SOLUTION:
+// The background image is imported as ES6 module in assets/app.js
+// and applied dynamically via JavaScript. This approach avoids
+// webpack resolve-url-loader conflicts while maintaining clean,
+// professional architecture.
+//
+// Implementation:
+// - Import: import backgroundImage from './images/vector-topographic.avif';
+// - Apply: document.body.style.backgroundImage = `url('${backgroundImage}')`;
+//
+// Benefits:
+// - Webpack handles image optimization and hashing
+// - No resolve-url-loader conflicts
+// - Production-ready solution
+// - Scalable for other assets
+//

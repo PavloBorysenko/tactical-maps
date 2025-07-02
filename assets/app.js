@@ -5,9 +5,8 @@
  * (and its CSS file) in your base layout (base.html.twig).
  */
 
-// any CSS you import will output into a single css file (app.css in this case)
+// Import main stylesheet - modular SCSS architecture
 import './styles/app.scss';
-import './styles/sides.css';
 
 // Import Font Awesome icons
 import '@fortawesome/fontawesome-free/css/all.css';
@@ -19,8 +18,14 @@ import { Modal, Tooltip } from 'bootstrap';
 import L from 'leaflet';
 L.Icon.Default.prototype.options.imagePath = '/build/images/leaflet/';
 
+// Import background image as module (avoids resolve-url-loader issues)
+import backgroundImage from './images/vector-topographic.avif';
+
 // Initialize Bootstrap components when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
+    // Set background image dynamically
+    document.body.style.backgroundImage = `url('${backgroundImage}')`;
+
     // Initialize all modals
     const modals = document.querySelectorAll('.modal');
     modals.forEach((modal) => {
