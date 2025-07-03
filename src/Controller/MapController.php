@@ -10,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\GeoObjectService;
 use Symfony\Component\Form\FormFactoryInterface;
 use App\Form\GeoObjectType;
 
@@ -51,12 +50,8 @@ class MapController extends AbstractController
     }
 
     #[Route('/{id}', name: 'map_show', methods: ['GET'])]
-    public function show(Map $map, GeoObjectService $geoObjectService, FormFactoryInterface $formFactory): Response
+    public function show(Map $map, FormFactoryInterface $formFactory): Response
     {
-        // Get all geo objects for this map
-        $geoObjectsResult = $geoObjectService->getGeoObjectsByMap($map);
-        $geoObjects = $geoObjectsResult['success'] ? $geoObjectsResult['objects'] : [];
-        
         // Create an empty form for new geo objects
         $geoObjectForm = $formFactory->create(GeoObjectType::class, null, [
             'is_edit' => false,
@@ -64,7 +59,6 @@ class MapController extends AbstractController
         
         return $this->render('map/show.html.twig', [
             'map' => $map,
-            'geoObjects' => $geoObjects,
             'geoObjectForm' => $geoObjectForm->createView(),
         ]);
     }

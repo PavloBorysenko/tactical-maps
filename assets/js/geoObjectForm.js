@@ -468,12 +468,21 @@ function initGeoObjectForm(mapInstance) {
         const mapId = mapIdInput.value;
 
         if (!mapId) {
+            showObjectsError('Map ID is missing');
             return;
         }
 
+        // Show loading state
+        showObjectsLoading();
+
         // Always fetch and update the list manually
         fetch(`/geo-object/by-map/${mapId}`)
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then((data) => {
                 if (data.success && data.objects) {
                     // Update the HTML list of objects
@@ -487,10 +496,17 @@ function initGeoObjectForm(mapInstance) {
                     ) {
                         map.geoObjectManager.loadGeoObjects(mapId);
                     }
+                } else {
+                    showObjectsError(
+                        data.message || 'Failed to load geo objects'
+                    );
                 }
             })
             .catch((error) => {
-                // Silent error handling
+                console.error('Error loading geo objects:', error);
+                showObjectsError(
+                    'Failed to load geo objects. Please check your connection.'
+                );
             });
     }
 
@@ -503,22 +519,24 @@ function initGeoObjectForm(mapInstance) {
         );
 
         if (!listContainer) {
-            // Try alternative selector
-            const altContainer = document.querySelector(
-                '.geo-objects-container'
-            );
             return;
         }
 
-        // Clear existing list
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('geo-objects-loading');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+
+        // Clear existing list (except loading indicator which is already removed)
         listContainer.innerHTML = '';
 
-        if (objects.length === 0) {
+        if (!objects || objects.length === 0) {
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-info';
             alertDiv.innerHTML =
                 '<i class="fas fa-info-circle me-2"></i> No geo objects available for this map.';
-            listContainer.parentElement.replaceWith(alertDiv);
+            listContainer.appendChild(alertDiv);
             return;
         }
 
@@ -530,6 +548,54 @@ function initGeoObjectForm(mapInstance) {
 
         // Re-attach event listeners for the new elements
         attachObjectListEventListeners();
+    }
+
+    /**
+     * Show loading state in the objects list
+     */
+    function showObjectsLoading() {
+        const listContainer = document.querySelector(
+            '.geo-objects-list .list-group'
+        );
+
+        if (!listContainer) {
+            return;
+        }
+
+        listContainer.innerHTML = `
+            <div class="alert alert-info" id="geo-objects-loading">
+                <i class="fas fa-spinner fa-spin me-2"></i> Loading geo objects...
+            </div>
+        `;
+    }
+
+    /**
+     * Show error state in the objects list
+     */
+    function showObjectsError(message = 'Failed to load geo objects') {
+        const listContainer = document.querySelector(
+            '.geo-objects-list .list-group'
+        );
+
+        if (!listContainer) {
+            return;
+        }
+
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('geo-objects-loading');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i> ${message}
+            <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.geoObjectForm.refreshObjects()">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        `;
+        listContainer.appendChild(alertDiv);
     }
 
     /**
@@ -560,20 +626,58 @@ function initGeoObjectForm(mapInstance) {
             iconColor = '#ffc107';
         }
 
-        // Format TTL display
+        // TTL Status Icon
+        let ttlStatusIcon = '';
+        if (object.isExpired !== undefined) {
+            if (object.isExpired) {
+                ttlStatusIcon =
+                    '<i class="fas fa-eye-slash text-danger" title="Object has expired (not visible)" style="font-size: 14px;"></i>';
+            } else {
+                ttlStatusIcon =
+                    '<i class="fas fa-eye text-success" title="Object is visible" style="font-size: 14px;"></i>';
+            }
+        }
+
+        // Format TTL display using new fields
         let ttlDisplay = 'Unlimited time';
-        if (object.ttl && object.ttl > 0) {
+        if (object.remainingTtl !== undefined && object.remainingTtl !== null) {
+            if (object.isExpired) {
+                ttlDisplay =
+                    '<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Expired</span>';
+            } else {
+                const remaining = object.remainingTtl;
+                if (remaining >= 3600) {
+                    const hours = Math.floor(remaining / 3600);
+                    const minutes = Math.floor((remaining % 3600) / 60);
+                    ttlDisplay = `Expires in: ${hours} hour${
+                        hours !== 1 ? 's' : ''
+                    }`;
+                    if (minutes > 0) {
+                        ttlDisplay += ` ${minutes} min`;
+                    }
+                } else if (remaining >= 60) {
+                    ttlDisplay = `Expires in: ${Math.floor(
+                        remaining / 60
+                    )} min`;
+                } else {
+                    ttlDisplay = `Expires in: ${remaining} sec`;
+                }
+            }
+        } else if (object.ttl && object.ttl > 0) {
+            // Fallback to old TTL field if new fields are not available
             if (object.ttl >= 3600) {
                 const hours = Math.floor(object.ttl / 3600);
                 const minutes = Math.floor((object.ttl % 3600) / 60);
-                ttlDisplay = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                ttlDisplay = `Expires in: ${hours} hour${
+                    hours !== 1 ? 's' : ''
+                }`;
                 if (minutes > 0) {
                     ttlDisplay += ` ${minutes} min`;
                 }
             } else if (object.ttl >= 60) {
-                ttlDisplay = `${Math.floor(object.ttl / 60)} min`;
+                ttlDisplay = `Expires in: ${Math.floor(object.ttl / 60)} min`;
             } else {
-                ttlDisplay = `${object.ttl} sec`;
+                ttlDisplay = `Expires in: ${object.ttl} sec`;
             }
         }
 
@@ -608,6 +712,9 @@ function initGeoObjectForm(mapInstance) {
 
         div.innerHTML = `
             <div class="d-flex align-items-center">
+                <div class="ttl-status-icon me-2">
+                    ${ttlStatusIcon}
+                </div>
                 ${iconDisplay}
                 <i class="${iconClass} me-2 geo-type-icon small" style="font-size: 12px; opacity: 0.7; color: #6c757d;"></i>
                 <div>
@@ -816,6 +923,8 @@ function initGeoObjectForm(mapInstance) {
         resetForm: resetForm,
         refreshObjects: refreshGeoObjects,
         updateObjectsList: updateObjectsList,
+        showObjectsLoading: showObjectsLoading,
+        showObjectsError: showObjectsError,
     };
 
     // Initialize form

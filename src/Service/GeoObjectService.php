@@ -171,6 +171,11 @@ class GeoObjectService
                 $geoObject->setGeometryType($data['type']);
             }
             
+            // Update TTL if provided
+            if (isset($data['ttl'])) {
+                $geoObject->setTtl($data['ttl']);
+            }
+            
             // Update side if provided
             if (isset($data['sideId'])) {
                 if (!empty($data['sideId'])) {
@@ -209,7 +214,7 @@ class GeoObjectService
                 $geoObject->setGeometry($geoJson);
             }
             
-            // Save changes
+            // Save changes - this will trigger @PreUpdate which sets updatedAt
             $this->entityManager->flush();
             
             return [

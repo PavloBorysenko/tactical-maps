@@ -1,121 +1,17 @@
 <div class="geo-objects-container">
     <h3 class="mb-3">Geo Objects</h3>
     
-    {% if geoObjects is defined and geoObjects|length > 0 %}
-        <div class="geo-objects-list">
-            <div class="list-group">
-                {% for object in geoObjects %}
-                    {% if object is not same as(true) and object is not same as(false) and object.id is defined %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center geo-object-item" 
-                             data-id="{{ object.id }}" 
-                             data-type="{{ object.type }}" 
-                             data-hash="{{ object.hash }}">
-                            
-                            <div class="d-flex align-items-center">
-                                {# TTL Status Icon #}
-                                <div class="ttl-status-icon me-2">
-                                    {% if object.isExpired is defined and object.isExpired %}
-                                        <i class="fas fa-eye-slash text-danger" title="Object has expired (not visible)"></i>
-                                    {% else %}
-                                        <i class="fas fa-eye text-success" title="Object is visible"></i>
-                                    {% endif %}
-                                </div>
-                                
-                                {# Display object icon if available, otherwise show type icon #}
-                                <div class="geo-object-icon me-3">
-                                    {% if object.iconUrl %}
-                                        <img src="{{ object.iconUrl }}" 
-                                             alt="Object icon" 
-                                             class="geo-custom-icon">
-                                    {% else %}
-                                        {# Default type-based icons as fallback #}
-                                        {% if object.type == 'point' %}
-                                            <i class="fas fa-map-marker-alt geo-type-icon-large point"></i>
-                                        {% elseif object.type == 'polygon' %}
-                                            <i class="fas fa-draw-polygon geo-type-icon-large polygon"></i>
-                                        {% elseif object.type == 'circle' %}
-                                            <i class="fas fa-circle geo-type-icon-large circle"></i>
-                                        {% elseif object.type == 'line' %}
-                                            <i class="fas fa-route geo-type-icon-large line"></i>
-                                        {% else %}
-                                            <i class="fas fa-map geo-type-icon-large default"></i>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                                
-                                {# Small type indicator alongside main icon #}
-                                {% if object.type == 'point' %}
-                                    <i class="fas fa-map-marker-alt me-2 geo-type-icon small"></i>
-                                {% elseif object.type == 'polygon' %}
-                                    <i class="fas fa-draw-polygon me-2 geo-type-icon small"></i>
-                                {% elseif object.type == 'circle' %}
-                                    <i class="fas fa-circle me-2 geo-type-icon small"></i>
-                                {% elseif object.type == 'line' %}
-                                    <i class="fas fa-route me-2 geo-type-icon small"></i>
-                                {% else %}
-                                    <i class="fas fa-map me-2 geo-type-icon small"></i>
-                                {% endif %}
-                                
-                                <div>
-                                    <h5 class="mb-1">{{ object.title }}</h5>
-                                    {% if object.remainingTtl is defined and object.remainingTtl is not null %}
-                                        {% if object.isExpired %}
-                                            <small class="text-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> Expired
-                                            </small>
-                                        {% else %}
-                                            <small class="text-muted">
-                                                Expires in: 
-                                                {% if object.remainingTtl >= 3600 %}
-                                                    {{ (object.remainingTtl / 3600)|round(1, 'floor') }} hour(s)
-                                                    {% if object.remainingTtl % 3600 > 0 %}
-                                                        {{ ((object.remainingTtl % 3600) / 60)|round(0, 'floor') }} min
-                                                    {% endif %}
-                                                {% elseif object.remainingTtl >= 60 %}
-                                                    {{ (object.remainingTtl / 60)|round(0, 'floor') }} min
-                                                {% else %}
-                                                    {{ object.remainingTtl }} sec
-                                                {% endif %}
-                                            </small>
-                                        {% endif %}
-                                    {% else %}
-                                        <small class="text-muted">Unlimited time</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary geo-object-focus" 
-                                        title="Focus on map" 
-                                        data-id="{{ object.id }}">
-                                    <i class="fas fa-search-location"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-warning geo-object-edit" 
-                                        title="Edit object" 
-                                        data-id="{{ object.id }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger geo-object-delete" 
-                                        title="Delete object" 
-                                        data-id="{{ object.id }}"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#delete-geo-modal">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+    <div class="geo-objects-list">
+        <div class="list-group">
+            <!-- Loading indicator - will be replaced by JavaScript -->
+            <div class="alert alert-info" id="geo-objects-loading">
+                <i class="fas fa-spinner fa-spin me-2"></i> Loading geo objects...
             </div>
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i> No geo objects available for this map.
-        </div>
-    {% endif %}
+    </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Confirmation Modal - kept for backward compatibility if needed -->
 <div class="modal fade" id="delete-geo-modal" tabindex="-1" aria-labelledby="delete-geo-modal-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
