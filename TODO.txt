@@ -1,8 +1,8 @@
-refactor css
 add ttl funcion
 add login for admin
 change template
 add user or observer
+create map viewer for observer
 refactor php
 create tests
 publish project
