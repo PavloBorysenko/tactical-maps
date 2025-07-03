@@ -54,7 +54,8 @@ class MapController extends AbstractController
     public function show(Map $map, GeoObjectService $geoObjectService, FormFactoryInterface $formFactory): Response
     {
         // Get all geo objects for this map
-        $geoObjects = $geoObjectService->getGeoObjectsByMap($map );
+        $geoObjectsResult = $geoObjectService->getGeoObjectsByMap($map);
+        $geoObjects = $geoObjectsResult['success'] ? $geoObjectsResult['objects'] : [];
         
         // Create an empty form for new geo objects
         $geoObjectForm = $formFactory->create(GeoObjectType::class, null, [

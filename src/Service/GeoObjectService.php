@@ -403,6 +403,10 @@ class GeoObjectService
             'iconUrl' => $geoObject->getIconUrl(),
             'side' => null,
             'sideId' => null,
+            'isExpired' => $geoObject->isExpired(),
+            'remainingTtl' => $geoObject->getRemainingTtl(),
+            'createdAt' => $geoObject->getCreatedAt()?->format('Y-m-d H:i:s'),
+            'updatedAt' => $geoObject->getUpdatedAt()?->format('Y-m-d H:i:s'),
         ];
         
         // Add side information if available

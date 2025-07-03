@@ -489,6 +489,54 @@ class GeoObject
     {
         return $this->updatedAt;
     }
+
+    /**
+     * Check if the object has expired based on TTL
+     */
+    public function isExpired(): bool
+    {
+        // If TTL is not set or is 0, object never expires
+        if ($this->ttl === null || $this->ttl === 0) {
+            return false;
+        }
+        
+        // Use updatedAt if available, otherwise use createdAt
+        $lastUpdateTime = $this->updatedAt ?? $this->createdAt;
+        
+        if ($lastUpdateTime === null) {
+            return false;
+        }
+        
+        $expirationTime = $lastUpdateTime->add(new \DateInterval('PT' . $this->ttl . 'S'));
+        $currentTime = new \DateTimeImmutable();
+        
+        return $currentTime > $expirationTime;
+    }
+
+    /**
+     * Get remaining time until expiration in seconds
+     */
+    public function getRemainingTtl(): ?int
+    {
+        // If TTL is not set or is 0, object never expires
+        if ($this->ttl === null || $this->ttl === 0) {
+            return null;
+        }
+        
+        // Use updatedAt if available, otherwise use createdAt
+        $lastUpdateTime = $this->updatedAt ?? $this->createdAt;
+        
+        if ($lastUpdateTime === null) {
+            return null;
+        }
+        
+        $expirationTime = $lastUpdateTime->add(new \DateInterval('PT' . $this->ttl . 'S'));
+        $currentTime = new \DateTimeImmutable();
+        
+        $remaining = $expirationTime->getTimestamp() - $currentTime->getTimestamp();
+        
+        return $remaining > 0 ? $remaining : 0;
+    }
     
     /**
      * Helper method to create a GeoJSON Point
