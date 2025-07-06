@@ -33,6 +33,9 @@ class MapGeoObjectManager {
         this.hiddenSides = new Set(); // Contains IDs of hidden sides
         this.sideFilterControl = null;
         this.allObjects = []; // Store all objects for sidebar filtering
+
+        // TTL visibility filter
+        this.showOnlyActiveObjects = false;
     }
 
     /**
@@ -185,8 +188,11 @@ class MapGeoObjectManager {
                     }
 
                     // Check filtering before adding to map
-                    const shouldShow =
+                    const sideVisible =
                         !object.side || !this.hiddenSides.has(object.side.id);
+                    const ttlVisible =
+                        !this.showOnlyActiveObjects || !object.isExpired;
+                    const shouldShow = sideVisible && ttlVisible;
 
                     if (shouldShow) {
                         // Add to map only if not filtered out
@@ -227,6 +233,25 @@ class MapGeoObjectManager {
 
         if (object.description) {
             content += `<p>${object.description}</p>`;
+        }
+
+        // Add visibility status information
+        if (object.isExpired !== undefined) {
+            const visibilityIcon = object.isExpired
+                ? '<i class="fas fa-eye-slash text-danger"></i>'
+                : '<i class="fas fa-eye text-success"></i>';
+            const visibilityText = object.isExpired
+                ? 'Expired (not visible)'
+                : 'Visible';
+            const visibilityClass = object.isExpired
+                ? 'text-danger'
+                : 'text-success';
+
+            content += `<div class="visibility-info mb-2">
+                <small class="${visibilityClass}">
+                    ${visibilityIcon} ${visibilityText}
+                </small>
+            </div>`;
         }
 
         if (object.ttl > 0) {
@@ -1834,53 +1859,88 @@ class MapGeoObjectManager {
 
         legendControl.onAdd = () => {
             const div = L.DomUtil.create('div', 'sides-legend');
-            div.innerHTML = '<h4>Sides <small>(uncheck to hide)</small></h4>';
+            div.innerHTML = '<h4>Filters</h4>';
 
+            // Add TTL visibility filter
+            const ttlFilterHtml = `
+                <div class="legend-item">
+                    <div class="legend-item-checkbox">
+                        <label class="legend-checkbox-label">
+                            <input type="checkbox" id="ttl-visibility-filter" ${
+                                this.showOnlyActiveObjects ? 'checked' : ''
+                            }>
+                            <span style="margin-left: 5px;">
+                                <i class="fas fa-eye text-success"></i> Show only active objects
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <hr style="margin: 8px 0;">
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px;">
+                    Sides <small style="font-weight: normal; color: #666;">(uncheck to hide)</small>
+                </div>
+            `;
+            div.innerHTML += ttlFilterHtml;
+
+            // Add sides checkboxes
             sides.forEach((side) => {
-                const sideItem = L.DomUtil.create(
-                    'div',
-                    'legend-item legend-item-checkbox',
-                    div
-                );
-                sideItem.setAttribute('data-side-id', side.id);
-
-                // Create HTML with checkbox
-                sideItem.innerHTML = `
-                    <label class="legend-checkbox-label">
-                        <input type="checkbox" 
-                               class="legend-checkbox" 
-                               data-side-id="${side.id}" 
-                               checked>
-                        <div class="legend-color" style="
-                            background-color: ${side.color || '#666'};
-                            width: 16px;
-                            height: 16px;
-                            border-radius: 50%;
-                            display: inline-block;
-                            margin-right: 8px;
-                            border: 2px solid white;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                        "></div>
-                        <span>${side.name}</span>
-                    </label>
+                const isChecked = !this.hiddenSides.has(side.id);
+                const sideHtml = `
+                    <div class="legend-item">
+                        <div class="legend-item-checkbox">
+                            <label class="legend-checkbox-label">
+                                <input type="checkbox" class="side-checkbox" data-side-id="${
+                                    side.id
+                                }" ${isChecked ? 'checked' : ''}>
+                                <span style="margin-left: 5px; color: ${
+                                    side.color || '#6c757d'
+                                };">
+                                    <i class="fas fa-circle"></i> ${side.name}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 `;
+                div.innerHTML += sideHtml;
+            });
 
-                // Add checkbox event handler
-                const checkbox = sideItem.querySelector('.legend-checkbox');
-                L.DomEvent.on(checkbox, 'change', (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    this.toggleSideVisibility(side.id, e.target.checked);
+            // Add event listeners
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            // TTL filter event listener
+            const ttlCheckbox = div.querySelector('#ttl-visibility-filter');
+            ttlCheckbox.addEventListener('change', (e) => {
+                this.toggleTtlVisibilityFilter(e.target.checked);
+            });
+
+            // Side filter event listeners
+            const sideCheckboxes = div.querySelectorAll('.side-checkbox');
+            sideCheckboxes.forEach((checkbox) => {
+                checkbox.addEventListener('change', (e) => {
+                    const sideId = parseInt(e.target.dataset.sideId);
+                    this.toggleSideVisibility(sideId, e.target.checked);
                 });
-
-                // Prevent map interaction when clicking on legend
-                L.DomEvent.disableClickPropagation(sideItem);
             });
 
             return div;
         };
 
-        this.legendControl = legendControl;
-        legendControl.addTo(this.leafletMap);
+        this.sidesLegend = legendControl;
+        this.sidesLegend.addTo(this.leafletMap);
+    }
+
+    /**
+     * Toggle TTL visibility filter
+     */
+    toggleTtlVisibilityFilter(showOnlyActive) {
+        this.showOnlyActiveObjects = showOnlyActive;
+
+        // Update visibility of all objects on map
+        this.updateObjectsVisibility();
+
+        // Update sidebar objects list
+        this.updateSidebarObjectsList();
     }
 
     /**
@@ -1903,7 +1963,7 @@ class MapGeoObjectManager {
     }
 
     /**
-     * Update visibility of all objects based on side filters
+     * Update visibility of all objects based on side filters and TTL filter
      */
     updateObjectsVisibility() {
         Object.values(this.geoObjectLayers).forEach((item) => {
@@ -1912,9 +1972,15 @@ class MapGeoObjectManager {
 
             if (!layer) return;
 
-            // Show object if its side is not hidden or if it has no side
-            const shouldShow =
+            // Check side filter
+            const sideVisible =
                 !object.side || !this.hiddenSides.has(object.side.id);
+
+            // Check TTL filter
+            const ttlVisible = !this.showOnlyActiveObjects || !object.isExpired;
+
+            // Show object if it passes both filters
+            const shouldShow = sideVisible && ttlVisible;
 
             if (shouldShow) {
                 if (!this.leafletMap.hasLayer(layer)) {
@@ -1929,14 +1995,21 @@ class MapGeoObjectManager {
     }
 
     /**
-     * Update the sidebar objects list based on current side filters
+     * Update the sidebar objects list based on current filters
      */
     updateSidebarObjectsList() {
         if (window.geoObjectForm && window.geoObjectForm.updateObjectsList) {
-            // Filter objects by hidden sides
+            // Filter objects by hidden sides and TTL filter
             const visibleObjects = this.allObjects.filter((object) => {
-                // Show object if its side is not hidden or if it has no side
-                return !object.side || !this.hiddenSides.has(object.side.id);
+                // Check side filter
+                const sideVisible =
+                    !object.side || !this.hiddenSides.has(object.side.id);
+
+                // Check TTL filter
+                const ttlVisible =
+                    !this.showOnlyActiveObjects || !object.isExpired;
+
+                return sideVisible && ttlVisible;
             });
 
             window.geoObjectForm.updateObjectsList(visibleObjects);
@@ -1947,9 +2020,9 @@ class MapGeoObjectManager {
      * Remove sides legend from the map
      */
     removeSidesLegend() {
-        if (this.legendControl) {
-            this.leafletMap.removeControl(this.legendControl);
-            this.legendControl = null;
+        if (this.sidesLegend) {
+            this.leafletMap.removeControl(this.sidesLegend);
+            this.sidesLegend = null;
         }
     }
 }

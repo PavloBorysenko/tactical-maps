@@ -226,18 +226,18 @@
     background: var(--popup-bg);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-medium);
-    padding: 10px;
+    padding: 12px;
     font-family: Arial, sans-serif;
-    min-width: 150px;
+    min-width: 180px;
     margin: 10px;
 
     h4 {
-        margin: 0 0 8px 0;
+        margin: 0 0 10px 0;
         font-size: 14px;
         font-weight: bold;
         color: #333;
         border-bottom: 1px solid #ddd;
-        padding-bottom: 4px;
+        padding-bottom: 6px;
 
         small {
             font-weight: normal;
@@ -249,16 +249,17 @@
     .legend-item {
         @include flex-center;
         justify-content: flex-start;
-        margin: 4px 0;
+        margin: 6px 0;
         font-size: 12px;
         color: #555;
     }
 
     .legend-item-checkbox {
         cursor: pointer;
-        padding: 2px 4px;
-        border-radius: 3px;
+        padding: 3px 6px;
+        border-radius: 4px;
         transition: var(--transition-normal);
+        width: 100%;
 
         &:hover {
             background-color: rgba(0, 0, 0, 0.05);
@@ -273,31 +274,18 @@
         font-size: 12px;
         color: #555;
         width: 100%;
+
+        input[type='checkbox'] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
     }
 
-    .legend-checkbox {
-        margin-right: 6px;
-        cursor: pointer;
-        accent-color: var(--primary-color);
-    }
-
-    .legend-color {
-        flex-shrink: 0;
-        transition: opacity var(--transition-normal);
-    }
-
-    .legend-checkbox:not(:checked) + .legend-color {
-        opacity: 0.4;
-    }
-
-    .legend-checkbox:not(:checked) ~ span {
-        opacity: 0.6;
-        text-decoration: line-through;
-    }
-
-    span {
-        @include text-truncate;
-        transition: opacity var(--transition-normal);
+    hr {
+        border: none;
+        height: 1px;
+        background: #ddd;
+        margin: 8px 0;
     }
 }
 
@@ -380,4 +368,56 @@
     font-size: 14px !important;
     z-index: var(--z-tooltip) !important;
     font-family: Arial, sans-serif !important;
+}
+
+// Geo Object Popup Styles
+.geo-popup {
+    .side-info {
+        .side-badge {
+            display: inline-block;
+            font-size: 0.85em;
+            padding: 0.35em 0.65em;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    .visibility-info {
+        margin-bottom: 8px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: rgba(0, 0, 0, 0.05);
+
+        small {
+            font-size: 11px;
+            font-weight: 500;
+
+            i {
+                margin-right: 4px;
+            }
+        }
+    }
+
+    .ttl-info {
+        margin-bottom: 8px;
+
+        small {
+            font-size: 11px;
+
+            i {
+                margin-right: 4px;
+            }
+        }
+    }
+
+    .popup-actions {
+        .btn {
+            margin-right: 6px;
+
+            &:last-child {
+                margin-right: 0;
+            }
+        }
+    }
 }
