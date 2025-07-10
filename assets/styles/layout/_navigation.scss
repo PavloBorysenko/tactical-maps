@@ -1,0 +1,167 @@
+// ========================================
+// NAVIGATION STYLES
+// ========================================
+// Professional navigation component styles
+// Follows BEM methodology and Bootstrap conventions
+
+// Admin Menu Styles
+// ========================================
+.navbar-dark {
+    .navbar-nav {
+        .nav-link {
+            color: rgba($white, 0.9);
+            transition: all $transition-base;
+
+            &:hover {
+                color: $white;
+                background-color: rgba($white, 0.1);
+                border-radius: $border-radius;
+            }
+
+            &:focus {
+                color: $white;
+            }
+
+            // Active state highlighting
+            &.active {
+                background-color: rgba($white, 0.2) !important;
+                border-radius: $border-radius;
+                font-weight: $font-weight-semibold;
+            }
+        }
+    }
+}
+
+// Guest/User Menu Styles
+// ========================================
+.navbar-light {
+    .navbar-brand {
+        transition: all $transition-base;
+
+        &:hover {
+            color: var(--#{$prefix}primary) !important;
+            transform: scale(1.05);
+        }
+    }
+}
+
+// Brand Logo Animation
+// ========================================
+.navbar-brand {
+    transition: all $transition-base;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+// Dropdown Menu Enhancement
+// ========================================
+.dropdown-menu {
+    border: none;
+    box-shadow: $box-shadow-lg;
+    border-radius: $border-radius-lg;
+
+    .dropdown-header {
+        color: var(--#{$prefix}primary);
+        font-weight: $font-weight-semibold;
+    }
+
+    .dropdown-item {
+        transition: all $transition-base;
+
+        &:hover {
+            background-color: var(--#{$prefix}primary);
+            color: $white;
+            border-radius: $border-radius;
+        }
+    }
+}
+
+// Mobile Responsive Navigation
+// ========================================
+@include media-breakpoint-down(lg) {
+    .navbar-nav {
+        .nav-link {
+            padding: $spacer * 0.5 $spacer;
+            margin: $spacer * 0.1 0;
+            border-radius: $border-radius;
+
+            &:hover {
+                background-color: rgba($white, 0.1);
+            }
+        }
+    }
+
+    .dropdown-menu {
+        border-radius: $border-radius;
+        margin-top: $spacer * 0.5;
+    }
+
+    .btn-outline-primary {
+        margin: $spacer * 0.5 0;
+    }
+}
+
+// Enhanced Shadow System
+// ========================================
+.shadow-sm {
+    box-shadow: $box-shadow-sm !important;
+}
+
+// Navigation Container Enhancements
+// ========================================
+.navbar {
+    // Professional spacing and transitions
+    .container-fluid {
+        transition: all $transition-base;
+    }
+
+    // Improved toggle button for mobile
+    .navbar-toggler {
+        border: none;
+        padding: $spacer * 0.25 $spacer * 0.5;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+}
+
+// User Information Display
+// ========================================
+.navbar-text {
+    color: rgba($white, 0.8) !important;
+    font-size: $font-size-sm;
+
+    .fas {
+        margin-right: $spacer * 0.25;
+    }
+}
+
+// Accessibility Improvements
+// ========================================
+.nav-link {
+    // Focus states for keyboard navigation
+    &:focus-visible {
+        outline: 2px solid var(--#{$prefix}primary);
+        outline-offset: 2px;
+    }
+}
+
+// Loading States (for future use)
+// ========================================
+.navbar {
+    &.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+}
+
+// Dark/Light Theme Support (for future use)
+// ========================================
+@media (prefers-color-scheme: dark) {
+    .navbar-light {
+        // Future dark theme implementation
+    }
+}
