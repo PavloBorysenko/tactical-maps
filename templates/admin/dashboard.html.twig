@@ -11,9 +11,6 @@
                     <h5>Admin Navigation</h5>
                 </div>
                 <div class="list-group list-group-flush">
-                    <a href="{{ path('admin_dashboard') }}" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a>
                     <a href="{{ path('map_index') }}" class="list-group-item list-group-item-action">
                         <i class="fas fa-map"></i> Maps
                     </a>
@@ -43,46 +40,6 @@
                     </button>
                 </div>
             {% endfor %}
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-header">
-                            <i class="fas fa-map"></i> Maps Management
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">Manage tactical maps - create, edit, delete</p>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ path('map_index') }}" class="btn btn-light btn-sm">
-                                <i class="fas fa-list"></i> View All Maps
-                            </a>
-                            <a href="{{ path('map_new') }}" class="btn btn-light btn-sm">
-                                <i class="fas fa-plus"></i> Create New Map
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card text-white bg-success mb-3">
-                        <div class="card-header">
-                            <i class="fas fa-users"></i> Sides Management
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">Manage sides/factions - create, edit, delete</p>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ path('side_index') }}" class="btn btn-light btn-sm">
-                                <i class="fas fa-list"></i> View All Sides
-                            </a>
-                            <a href="{{ path('side_new') }}" class="btn btn-light btn-sm">
-                                <i class="fas fa-plus"></i> Create New Side
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="row">
                 <div class="col-md-12">
