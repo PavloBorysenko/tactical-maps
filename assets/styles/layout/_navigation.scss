@@ -4,6 +4,40 @@
 // Professional navigation component styles
 // Follows BEM methodology and Bootstrap conventions
 
+// Base Navigation Styles
+// ========================================
+.tactical-maps-body .navbar {
+    padding: 0;
+    margin: 0;
+
+    .container-fluid {
+        padding: $spacer * 0.5; // Using SCSS variable instead of CSS custom property
+        margin: 0;
+        border-radius: 0;
+        transition: all $transition-base;
+    }
+
+    // Improved toggle button for mobile
+    .navbar-toggler {
+        border: none;
+        padding: $spacer * 0.25 $spacer * 0.5;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+}
+
+// Brand Logo Animation
+// ========================================
+.navbar-brand {
+    transition: all $transition-base;
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
 // Admin Menu Styles
 // ========================================
 .navbar-dark {
@@ -45,16 +79,6 @@
     }
 }
 
-// Brand Logo Animation
-// ========================================
-.navbar-brand {
-    transition: all $transition-base;
-
-    &:hover {
-        transform: scale(1.05);
-    }
-}
-
 // Dropdown Menu Enhancement
 // ========================================
 .dropdown-menu {
@@ -75,6 +99,33 @@
             color: $white;
             border-radius: $border-radius;
         }
+    }
+}
+
+// User Information Display
+// ========================================
+.navbar-text {
+    color: rgba($white, 0.8) !important;
+    font-size: $font-size-sm;
+
+    .fas {
+        margin-right: $spacer * 0.25;
+    }
+}
+
+// Enhanced Shadow System
+// ========================================
+.shadow-sm {
+    box-shadow: $box-shadow-sm !important;
+}
+
+// Accessibility Improvements
+// ========================================
+.nav-link {
+    // Focus states for keyboard navigation
+    &:focus-visible {
+        outline: 2px solid var(--#{$prefix}primary);
+        outline-offset: 2px;
     }
 }
 
@@ -100,52 +151,6 @@
 
     .btn-outline-primary {
         margin: $spacer * 0.5 0;
-    }
-}
-
-// Enhanced Shadow System
-// ========================================
-.shadow-sm {
-    box-shadow: $box-shadow-sm !important;
-}
-
-// Navigation Container Enhancements
-// ========================================
-.navbar {
-    // Professional spacing and transitions
-    .container-fluid {
-        transition: all $transition-base;
-    }
-
-    // Improved toggle button for mobile
-    .navbar-toggler {
-        border: none;
-        padding: $spacer * 0.25 $spacer * 0.5;
-
-        &:focus {
-            box-shadow: none;
-        }
-    }
-}
-
-// User Information Display
-// ========================================
-.navbar-text {
-    color: rgba($white, 0.8) !important;
-    font-size: $font-size-sm;
-
-    .fas {
-        margin-right: $spacer * 0.25;
-    }
-}
-
-// Accessibility Improvements
-// ========================================
-.nav-link {
-    // Focus states for keyboard navigation
-    &:focus-visible {
-        outline: 2px solid var(--#{$prefix}primary);
-        outline-offset: 2px;
     }
 }
 
