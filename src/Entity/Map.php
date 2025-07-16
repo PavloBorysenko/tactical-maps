@@ -40,9 +40,13 @@ class Map
     #[ORM\OneToMany(mappedBy: 'map', targetEntity: GeoObject::class, orphanRemoval: true)]
     private Collection $geoObjects;
 
+    #[ORM\OneToMany(mappedBy: 'map', targetEntity: Observer::class, orphanRemoval: true)]
+    private Collection $observers;
+
     public function __construct()
     {
         $this->geoObjects = new ArrayCollection();
+        $this->observers = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -134,6 +138,36 @@ class Map
             // set the owning side to null (unless already changed)
             if ($geoObject->getMap() === $this) {
                 $geoObject->setMap(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Observer>
+     */
+    public function getObservers(): Collection
+    {
+        return $this->observers;
+    }
+
+    public function addObserver(Observer $observer): static
+    {
+        if (!$this->observers->contains($observer)) {
+            $this->observers->add($observer);
+            $observer->setMap($this);
+        }
+
+        return $this;
+    }
+
+    public function removeObserver(Observer $observer): static
+    {
+        if ($this->observers->removeElement($observer)) {
+            // set the owning side to null (unless already changed)
+            if ($observer->getMap() === $this) {
+                $observer->setMap(null);
             }
         }
 
