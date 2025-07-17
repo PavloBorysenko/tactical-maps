@@ -25,6 +25,11 @@
                         <i class="fas fa-users me-1"></i>Sides
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 {% if app.request.get('_route') == 'observer_index' or app.request.get('_route') starts with 'observer_' %}active{% endif %}" href="{{ path('observer_index') }}">
+                        <i class="fas fa-eye me-1"></i>Observers
+                    </a>
+                </li>
             </ul>
             
             <ul class="navbar-nav ms-auto">

@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Observer{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Create New Observer</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for message in app.flashes('error') %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+
+                        {{ form_start(form) }}
+                        <div class="mb-3">
+                            {{ form_label(form.name) }}
+                            {{ form_widget(form.name) }}
+                            {{ form_errors(form.name) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.icon) }}
+                            {{ form_widget(form.icon) }}
+                            {{ form_errors(form.icon) }}
+                            <small class="form-text text-muted">
+                                Enter FontAwesome icon class (e.g., "fas fa-eye") or leave empty
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.map) }}
+                            {{ form_widget(form.map) }}
+                            {{ form_errors(form.map) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.rules) }}
+                            {{ form_widget(form.rules) }}
+                            {{ form_errors(form.rules) }}
+                            {{ form_help(form.rules) }}
+                            <small class="form-text text-muted">
+                                Example rules:<br>
+                                <code>
+                                {<br>
+                                &nbsp;&nbsp;"view_range": 1000,<br>
+                                &nbsp;&nbsp;"max_requests": 100,<br>
+                                &nbsp;&nbsp;"allowed_objects": ["military", "civilian"],<br>
+                                &nbsp;&nbsp;"time_limit": 3600<br>
+                                }
+                                </code>
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('observer_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to list
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Observer
+                            </button>
+                        </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Information</h6>
+                        <ul class="mb-0">
+                            <li>An access token will be automatically generated for this observer</li>
+                            <li>The observer will be able to access only the selected map</li>
+                            <li>Rules are stored in JSON format and can be customized later</li>
+                            <li>If the associated map is deleted, this observer will be deleted too</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
