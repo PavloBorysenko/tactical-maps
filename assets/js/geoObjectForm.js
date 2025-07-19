@@ -38,15 +38,24 @@ function initGeoObjectForm(mapInstance) {
     const updateBtn = document.getElementById('btn-update-geo');
     const cancelBtn = document.getElementById('btn-cancel-geo');
 
-    // Icon selector elements
-    const iconUrlInput = document.querySelector('.geo-object-icon-url');
-    const iconGrid = document.getElementById('icon-grid');
-    const clearIconBtn = document.getElementById('clear-icon-btn');
+    // Initialize icon selector for geo object forms
+    const geoObjectIconSelector = new IconSelector({
+        inputSelector: '.geo-object-icon-url',
+        gridSelector: '#icon-grid',
+        clearButtonSelector: '#clear-icon-btn',
+        itemClassName: 'icon-item',
+        nameClassName: 'icon-name',
+        selectedClassName: 'selected',
+        loadingText: 'Loading icons...',
+        errorText: 'Error loading icons',
+        emptyText: 'No custom icons available',
+        emptyHelpText:
+            'Add PNG, JPG, or SVG files to /public/assets/icons/custom/',
+    });
 
     let currentMode = 'create'; // 'create' or 'edit'
     let currentObjectId = null;
     let drawingMode = false;
-    let availableIcons = [];
 
     // Get a reference to the map (should be available from a global object)
     const map = window.tacticalMap || null;
@@ -72,122 +81,113 @@ function initGeoObjectForm(mapInstance) {
         }
     });
 
-    // Handle cancel button
-    cancelBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        resetForm();
-        setCreateMode();
-        disableDrawingMode();
+    // Handle TTL change
+    ttlSelect.addEventListener('change', function () {
+        // You can add any logic here for TTL changes if needed
     });
 
-    // Handle icon clear button
-    if (clearIconBtn) {
-        clearIconBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            clearIconSelection();
-        });
+    // Clear icon button event
+    if (geoObjectIconSelector) {
+        const clearIconBtn = document.querySelector('#clear-icon-btn');
+        if (clearIconBtn) {
+            clearIconBtn.addEventListener('click', () => {
+                geoObjectIconSelector.clearSelection();
+            });
+        }
     }
 
-    // Handle form submission (create or update)
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Check the basic fields
-        if (!titleInput.value.trim()) {
-            alert('Please enter a title');
-            titleInput.focus();
+    // Create button
+    createBtn.addEventListener('click', function () {
+        const type = typeSelect.value;
+        if (!type || type === '') {
+            showErrorMessage('Please select a geometry type first');
             return;
-        }
-
-        // Check if type is selected
-        if (!typeSelect.value || typeSelect.value === '') {
-            alert('Please select a type for the geo object');
-            typeSelect.focus();
-            return;
-        }
-
-        // Special handling for polygon and line drawing in progress
-        if (drawingMode && map && map.geoObjectManager) {
-            const drawingStatus = map.geoObjectManager.getDrawingStatus();
-
-            if (
-                drawingStatus.isDrawing &&
-                (drawingStatus.type === 'polygon' ||
-                    drawingStatus.type === 'line')
-            ) {
-                if (!drawingStatus.canFinish) {
-                    const minPoints = drawingStatus.minPoints;
-                    const currentPoints = drawingStatus.pointCount;
-                    const needed = minPoints - currentPoints;
-                    alert(
-                        `Please add ${needed} more point${
-                            needed > 1 ? 's' : ''
-                        } to complete the ${
-                            drawingStatus.type
-                        }. Currently you have ${currentPoints} point${
-                            currentPoints !== 1 ? 's' : ''
-                        }, need minimum ${minPoints}.`
-                    );
-                    return;
-                }
-
-                // Try to finish the drawing
-                let finishResult = false;
-                if (drawingStatus.type === 'polygon') {
-                    finishResult =
-                        map.geoObjectManager.finishPolygonFromButton();
-                } else if (drawingStatus.type === 'line') {
-                    finishResult = map.geoObjectManager.finishLineFromButton();
-                }
-
-                if (!finishResult) {
-                    return; // Drawing couldn't be finished
-                }
-
-                // Continue with form submission after successful drawing completion
-            }
         }
 
         if (!geoJsonInput.value) {
-            alert('Please create a geo object on the map');
+            showErrorMessage('Please draw the geometry on the map first');
             return;
         }
 
-        // Check if mapId is set
-        if (!mapIdInput.value) {
-            alert('Map ID is missing. Please refresh the page and try again.');
+        if (!titleInput.value.trim()) {
+            showErrorMessage('Please enter a title for the geo object');
             return;
         }
 
-        // Collect the form data as JSON instead of FormData
-        let geoJsonData;
-        try {
-            geoJsonData = JSON.parse(geoJsonInput.value);
-        } catch (e) {
-            alert('Invalid GeoJSON format');
+        // Submit form - function will handle data collection
+        submitGeoObjectForm(null, 'create');
+    });
+
+    // Update button
+    updateBtn.addEventListener('click', function () {
+        if (!currentObjectId) {
+            showErrorMessage('No object selected for update');
             return;
         }
 
+        if (!titleInput.value.trim()) {
+            showErrorMessage('Please enter a title for the geo object');
+            return;
+        }
+
+        // Submit form - function will handle data collection
+        submitGeoObjectForm(null, 'update');
+    });
+
+    // Cancel button
+    cancelBtn.addEventListener('click', function () {
+        resetForm();
+    });
+
+    /**
+     * Submit geo object form
+     */
+    function submitGeoObjectForm(formData, action) {
+        const url =
+            action === 'create'
+                ? '/geo-object/new'
+                : `/geo-object/${currentObjectId}/update`;
+
+        showObjectsLoading();
+
+        // Get form elements
+        const descriptionInput = document.querySelector(
+            '.geo-object-description'
+        );
+        const hashInput = document.querySelector('.geo-object-hash');
+
+        // Convert FormData back to JSON format as expected by the controller
         const jsonData = {
             title: titleInput.value.trim(),
-            description: document.querySelector('.geo-object-description')
-                .value,
+            description: descriptionInput ? descriptionInput.value : '',
             type: typeSelect.value,
             ttl: parseInt(ttlSelect.value) || 0,
-            geoJson: geoJsonData, // Send as object, not string
-            hash: document.querySelector('.geo-object-hash').value,
+            hash: hashInput ? hashInput.value : '',
             mapId: mapIdInput.value,
-            iconUrl: iconUrlInput ? iconUrlInput.value : null,
             sideId: sideSelect ? sideSelect.value : null,
         };
 
-        // Determine the URL and method depending on the mode
-        let url = '/geo-object/new';
-        if (currentMode === 'edit' && currentObjectId) {
-            url = `/geo-object/${currentObjectId}/update`;
+        // Handle geoJson - parse if it's a string
+        let geoJsonData = null;
+        if (geoJsonInput.value) {
+            try {
+                geoJsonData =
+                    typeof geoJsonInput.value === 'string'
+                        ? JSON.parse(geoJsonInput.value)
+                        : geoJsonInput.value;
+            } catch (e) {
+                showErrorMessage('Invalid GeoJSON format');
+                return;
+            }
+        }
+        jsonData.geoJson = geoJsonData;
+
+        // Add icon URL if available
+        if (geoObjectIconSelector) {
+            jsonData.iconUrl = geoObjectIconSelector.getSelectedIcon();
         }
 
-        // Send the request as JSON
+        // Send as JSON instead of FormData
         fetch(url, {
             method: 'POST',
             headers: {
@@ -198,30 +198,30 @@ function initGeoObjectForm(mapInstance) {
             .then((response) => response.json())
             .then((data) => {
                 if (data.success) {
-                    // Update the list of objects on the map
+                    // Refresh objects list
                     refreshGeoObjects();
 
-                    // Reset the form
-                    resetForm();
-                    setCreateMode();
-                    disableDrawingMode();
-
                     // Show success message
-                    showSuccessMessage(
-                        currentMode === 'edit'
-                            ? 'Geo object updated successfully'
-                            : 'Geo object created successfully'
-                    );
+                    if (action === 'create') {
+                        console.log('Geo object created successfully');
+                        // Reset form only after create
+                        resetForm();
+                    } else {
+                        console.log('Geo object updated successfully');
+                        // For updates, just show a temporary success indicator
+                        showSuccessMessage('Object updated successfully');
+                    }
                 } else {
-                    showErrorMessage(data.message || 'An error occurred');
+                    showErrorMessage(data.message || 'Error saving geo object');
+                    refreshGeoObjects(); // Refresh anyway to show current state
                 }
             })
             .catch((error) => {
-                showErrorMessage(
-                    'Failed to save geo object. Please try again.'
-                );
+                console.error('Error:', error);
+                showErrorMessage('Network error occurred');
+                refreshGeoObjects(); // Refresh anyway to show current state
             });
-    });
+    }
 
     /**
      * Set creation mode for the form
@@ -266,88 +266,89 @@ function initGeoObjectForm(mapInstance) {
         fetch(`/geo-object/${objectId}`)
             .then((response) => response.json())
             .then((data) => {
-                if (data.success && data.object) {
-                    // Fill the form with object data
-                    titleInput.value = data.object.title || '';
-                    document.querySelector('.geo-object-description').value =
-                        data.object.description || '';
-                    typeSelect.value = data.object.type || 'Point';
-                    geoJsonInput.value = JSON.stringify(
-                        data.object.geoJson || {}
-                    );
+                if (data.success) {
+                    const obj = data.object;
 
-                    // Set TTL if available
-                    if (ttlSelect && data.object.ttl !== undefined) {
-                        ttlSelect.value = data.object.ttl;
-                    }
-
-                    // Set hash if available
-                    const hashInput =
-                        document.querySelector('.geo-object-hash');
-                    if (hashInput && data.object.hash) {
-                        hashInput.value = data.object.hash;
-                    }
-
-                    // Set map ID
-                    if (mapIdInput && data.object.mapId) {
-                        mapIdInput.value = data.object.mapId;
-                    }
-
-                    // Set side if available
-                    if (sideSelect && data.object.sideId) {
-                        sideSelect.value = data.object.sideId;
-                    } else if (sideSelect) {
-                        sideSelect.value = '';
-                    }
+                    // Populate form fields with correct field names from server response
+                    if (titleInput) titleInput.value = obj.title || ''; // Changed from obj.name
+                    if (typeSelect) typeSelect.value = obj.type || ''; // Changed from obj.geometryType
+                    if (ttlSelect)
+                        ttlSelect.value =
+                            obj.ttl !== undefined && obj.ttl !== null
+                                ? obj.ttl
+                                : ''; // Fix for TTL=0 (unlimited)
+                    if (sideSelect) sideSelect.value = obj.sideId || '';
+                    if (geoJsonInput)
+                        geoJsonInput.value = JSON.stringify(obj.geoJson) || ''; // Changed from obj.geometry and ensure JSON string
 
                     // Set icon if available
-                    if (data.object.iconUrl) {
-                        selectIcon(data.object.iconUrl);
-                    } else {
-                        clearIconSelection();
+                    if (obj.iconUrl && geoObjectIconSelector) {
+                        geoObjectIconSelector.setSelectedIcon(obj.iconUrl);
+                    } else if (geoObjectIconSelector) {
+                        geoObjectIconSelector.clearSelection();
                     }
 
-                    // Update type help text
-                    updateTypeHelp(data.object.type);
+                    // Update type help text with correct field name
+                    updateTypeHelp(obj.type || '');
+
+                    // Enable drawing mode for the current type
+                    if (obj.type) {
+                        enableDrawingMode(obj.type);
+                    }
+
+                    // Focus on the object on the map if possible
+                    if (
+                        map &&
+                        map.geoObjectManager &&
+                        map.geoObjectManager.geoObjectLayers
+                    ) {
+                        const layerInfo =
+                            map.geoObjectManager.geoObjectLayers[objectId];
+                        if (layerInfo && layerInfo.layer) {
+                            const layer = layerInfo.layer;
+
+                            // Focus on the object
+                            if (layer instanceof L.LayerGroup) {
+                                // For LayerGroups, fit bounds of the group
+                                if (layer.getBounds) {
+                                    map.getLeafletMap().fitBounds(
+                                        layer.getBounds()
+                                    );
+                                }
+                            } else {
+                                // For single layers
+                                if (layer.getLatLng) {
+                                    // For points
+                                    map.getLeafletMap().setView(
+                                        layer.getLatLng(),
+                                        16
+                                    );
+                                } else if (layer.getBounds) {
+                                    // For polygons, circles, lines
+                                    map.getLeafletMap().fitBounds(
+                                        layer.getBounds()
+                                    );
+                                }
+                            }
+                        }
+                    }
 
                     // Set edit mode
                     setEditMode(objectId);
 
-                    // Enable drawing mode for all object types in edit mode
-                    if (data.object.type) {
-                        enableDrawingMode(data.object.type);
-
-                        // Pre-populate geometry from existing data for all types
-                        if (
-                            map &&
-                            map.geoObjectManager &&
-                            data.object.geoJson
-                        ) {
-                            map.geoObjectManager.loadExistingGeometryForEdit(
-                                data.object.geoJson,
-                                data.object.type
-                            );
-                        }
-                    }
-
-                    // Display the object on the map (if the function exists)
-                    if (map && map.showGeoJsonObject) {
-                        map.showGeoJsonObject(
-                            data.object.geoJson,
-                            data.object.type,
-                            data.object // Pass full object data for custom icons
-                        );
-                    }
-                } else {
-                    showErrorMessage(
-                        data.message || 'Failed to load geo object data'
+                    console.log(
+                        'Geo object loaded for editing:',
+                        obj.title,
+                        'TTL:',
+                        obj.ttl
                     );
+                } else {
+                    showErrorMessage('Error loading object data');
                 }
             })
             .catch((error) => {
-                showErrorMessage(
-                    'Failed to load geo object data. Please try again.'
-                );
+                console.error('Error loading object:', error);
+                showErrorMessage('Error loading object data');
             });
     }
 
@@ -378,8 +379,16 @@ function initGeoObjectForm(mapInstance) {
             map.geoObjectManager.clearEditPointMarkers();
         }
 
-        // Clear icon selection
-        clearIconSelection();
+        // Clear icon selection using IconSelector API
+        if (geoObjectIconSelector) {
+            geoObjectIconSelector.clearSelection();
+        }
+
+        // Return to create mode
+        setCreateMode();
+
+        // Disable drawing mode
+        disableDrawingMode();
     }
 
     /**
@@ -753,6 +762,7 @@ function initGeoObjectForm(mapInstance) {
         document.querySelectorAll('.geo-object-focus').forEach((btn) => {
             btn.addEventListener('click', function () {
                 const objectId = this.getAttribute('data-id');
+                console.log('Focus button clicked for object:', objectId);
 
                 if (
                     map &&
@@ -761,16 +771,23 @@ function initGeoObjectForm(mapInstance) {
                 ) {
                     const layerInfo =
                         map.geoObjectManager.geoObjectLayers[objectId];
+                    console.log('Layer info found:', !!layerInfo, layerInfo);
+
                     if (layerInfo && layerInfo.layer) {
                         const layer = layerInfo.layer;
+                        console.log('Layer type:', layer.constructor.name);
 
                         // Focus on the object
                         if (layer instanceof L.LayerGroup) {
+                            console.log('Handling LayerGroup');
                             // For LayerGroups, fit bounds of the group
-                            if (layer.getBounds) {
-                                map.getLeafletMap().fitBounds(
-                                    layer.getBounds()
-                                );
+                            if (
+                                layer.getBounds &&
+                                typeof layer.getBounds === 'function'
+                            ) {
+                                const bounds = layer.getBounds();
+                                console.log('LayerGroup bounds:', bounds);
+                                map.getLeafletMap().fitBounds(bounds);
                             }
                             // Open popup on the first layer that has one
                             let popupOpened = false;
@@ -785,18 +802,24 @@ function initGeoObjectForm(mapInstance) {
                                 }
                             });
                         } else {
+                            console.log('Handling single layer');
                             // Original logic for single layers
-                            if (layer.getLatLng) {
+                            if (
+                                layer.getLatLng &&
+                                typeof layer.getLatLng === 'function'
+                            ) {
                                 // For points
-                                map.getLeafletMap().setView(
-                                    layer.getLatLng(),
-                                    16
-                                );
-                            } else if (layer.getBounds) {
+                                const latlng = layer.getLatLng();
+                                console.log('Point location:', latlng);
+                                map.getLeafletMap().setView(latlng, 16);
+                            } else if (
+                                layer.getBounds &&
+                                typeof layer.getBounds === 'function'
+                            ) {
                                 // For polygons, circles, lines
-                                map.getLeafletMap().fitBounds(
-                                    layer.getBounds()
-                                );
+                                const bounds = layer.getBounds();
+                                console.log('Layer bounds:', bounds);
+                                map.getLeafletMap().fitBounds(bounds);
                             }
 
                             // Open popup if it exists
@@ -804,7 +827,20 @@ function initGeoObjectForm(mapInstance) {
                                 layer.openPopup();
                             }
                         }
+                    } else {
+                        console.warn('Layer not found for object:', objectId);
+
+                        // Fallback: try to refresh objects and center on the area
+                        if (map && map.getLeafletMap) {
+                            // If we can't find the layer, at least zoom to a reasonable level
+                            const currentZoom = map.getLeafletMap().getZoom();
+                            if (currentZoom < 10) {
+                                map.getLeafletMap().setZoom(14);
+                            }
+                        }
                     }
+                } else {
+                    console.warn('Map or geoObjectManager not available');
                 }
             });
         });
@@ -813,8 +849,11 @@ function initGeoObjectForm(mapInstance) {
         document.querySelectorAll('.geo-object-edit').forEach((btn) => {
             btn.addEventListener('click', function () {
                 const objectId = this.getAttribute('data-id');
+                console.log('Edit button clicked for object:', objectId);
                 if (window.geoObjectForm && window.geoObjectForm.setEditMode) {
                     window.geoObjectForm.setEditMode(objectId);
+                } else {
+                    console.error('geoObjectForm.setEditMode not available');
                 }
             });
         });
@@ -903,16 +942,60 @@ function initGeoObjectForm(mapInstance) {
      * Display success message
      */
     function showSuccessMessage(message) {
-        // Simple implementation that can be replaced with more complex notifications
-        alert(message);
+        // Create a toast notification
+        const toast = document.createElement('div');
+        toast.className =
+            'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        toast.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Auto-remove after 4 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 4000);
     }
 
     /**
      * Display error message
      */
     function showErrorMessage(message) {
-        // Simple implementation that can be replaced with more complex notifications
-        alert('Error: ' + message);
+        // Create a toast notification for errors
+        const toast = document.createElement('div');
+        toast.className =
+            'alert alert-danger alert-dismissible fade show position-fixed';
+        toast.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        toast.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>Error: ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Auto-remove after 6 seconds (longer for errors)
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 6000);
     }
 
     // Export public methods for use from other scripts
@@ -944,87 +1027,6 @@ function initGeoObjectForm(mapInstance) {
     refreshGeoObjects();
 
     // Load custom icons from server
-    fetch('/api/icons')
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.success) {
-                availableIcons = data.icons;
-                renderIconGrid();
-            } else {
-                iconGrid.innerHTML =
-                    '<div class="text-muted">No custom icons available</div>';
-            }
-        })
-        .catch((error) => {
-            console.error('Error loading icons:', error);
-            iconGrid.innerHTML =
-                '<div class="text-danger">Error loading icons</div>';
-        });
-
-    /**
-     * Render icon grid
-     */
-    function renderIconGrid() {
-        if (!iconGrid || !availableIcons) return;
-
-        if (availableIcons.length === 0) {
-            iconGrid.innerHTML =
-                '<div class="text-muted">No custom icons available. Add PNG, JPG, or SVG files to /public/assets/icons/custom/</div>';
-            return;
-        }
-
-        iconGrid.innerHTML = '';
-
-        availableIcons.forEach((icon) => {
-            const iconItem = document.createElement('div');
-            iconItem.className = 'icon-item';
-            iconItem.setAttribute('data-icon-url', icon.url);
-            iconItem.title = `Click to select ${icon.name}`;
-
-            iconItem.innerHTML = `
-                <img src="${icon.url}" alt="${icon.name}" onerror="this.style.display='none'">
-                <div class="icon-name">${icon.name}</div>
-            `;
-
-            iconItem.addEventListener('click', () => {
-                selectIcon(icon.url);
-            });
-
-            iconGrid.appendChild(iconItem);
-        });
-    }
-
-    /**
-     * Select an icon
-     */
-    function selectIcon(iconUrl) {
-        if (!iconUrlInput) return;
-
-        // Update input field
-        iconUrlInput.value = iconUrl;
-
-        // Update visual selection
-        document.querySelectorAll('.icon-item').forEach((item) => {
-            item.classList.remove('selected');
-        });
-
-        const selectedItem = document.querySelector(
-            `[data-icon-url="${iconUrl}"]`
-        );
-        if (selectedItem) {
-            selectedItem.classList.add('selected');
-        }
-    }
-
-    /**
-     * Clear icon selection
-     */
-    function clearIconSelection() {
-        if (!iconUrlInput) return;
-
-        iconUrlInput.value = '';
-        document.querySelectorAll('.icon-item').forEach((item) => {
-            item.classList.remove('selected');
-        });
-    }
+    // This part is now handled by the IconSelector module
+    // geoObjectIconSelector.loadIcons();
 }

@@ -25,11 +25,12 @@ class ObserverType extends AbstractType
                 ]
             ])
             ->add('icon', TextType::class, [
-                'label' => 'Icon (optional)',
+                'label' => 'Custom Icon',
                 'required' => false,
                 'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Enter icon name or path'
+                    'class' => 'form-control observer-icon-url',
+                    'readonly' => true,
+                    'placeholder' => 'Select an icon or leave empty for default'
                 ]
             ])
             ->add('map', EntityType::class, [

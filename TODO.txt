@@ -1,4 +1,8 @@
-
+add  select  icons
+add description to observer
+filter observer by map
+add  map view for  observer
+create  rules functionality 
 add user or observer
 create map viewer for observer
 refactor php

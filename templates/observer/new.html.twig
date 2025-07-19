@@ -2,6 +2,12 @@
 
 {% block title %}New Observer{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('iconSelector') }}
+    {{ encore_entry_script_tags('observerForm') }}
+{% endblock %}
+
 {% block body %}
     <div class="container mt-4">
         <div class="row justify-content-center">
@@ -29,8 +35,22 @@
                             {{ form_label(form.icon) }}
                             {{ form_widget(form.icon) }}
                             {{ form_errors(form.icon) }}
+                            
+                            <!-- Custom Icon Selector -->
+                            <div class="observer-icon-selector mt-2">
+                                <div class="d-flex align-items-center mb-2">
+                                    <small class="text-muted me-2">Available icons:</small>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="observer-clear-icon-btn">
+                                        <i class="fas fa-times"></i> Clear
+                                    </button>
+                                </div>
+                                <div class="observer-icon-grid" id="observer-icon-grid">
+                                    <div class="text-muted">Loading icons...</div>
+                                </div>
+                            </div>
+                            
                             <small class="form-text text-muted">
-                                Enter FontAwesome icon class (e.g., "fas fa-eye") or leave empty
+                                Select an icon from the grid above or leave empty for default
                             </small>
                         </div>
 
@@ -42,7 +62,7 @@
 
                         <div class="mb-3">
                             {{ form_label(form.rules) }}
-                            {{ form_widget(form.rules) }}
+                            {{ form_widget(form.rules, {'attr': {'class': 'form-control observer-rules-textarea'}}) }}
                             {{ form_errors(form.rules) }}
                             {{ form_help(form.rules) }}
                             <small class="form-text text-muted">
@@ -78,6 +98,7 @@
                             <li>The observer will be able to access only the selected map</li>
                             <li>Rules are stored in JSON format and can be customized later</li>
                             <li>If the associated map is deleted, this observer will be deleted too</li>
+                            <li>Custom icons should be placed in <code>/public/assets/icons/custom/</code></li>
                         </ul>
                     </div>
                 </div>

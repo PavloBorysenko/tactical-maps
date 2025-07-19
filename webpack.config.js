@@ -24,7 +24,9 @@ Encore
     .addEntry('home', './assets/js/home.js')
     .addEntry('mapEditor', './assets/js/mapEditor.js')
     .addEntry('mapViewer', './assets/js/mapViewer.js')
+    .addEntry('iconSelector', './assets/js/iconSelector.js')
     .addEntry('geoObjectForm', './assets/js/geoObjectForm.js')
+    .addEntry('observerForm', './assets/js/observerForm.js')
     .addEntry('confirmDelete', './assets/js/confirmDelete.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.

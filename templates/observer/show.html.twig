@@ -32,9 +32,20 @@
                                     <th>Icon</th>
                                     <td>
                                         {% if observer.icon %}
-                                            <i class="{{ observer.icon }}"></i> {{ observer.icon }}
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ observer.icon }}" 
+                                                     alt="Observer icon" 
+                                                     class="observer-icon-detail me-2"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                                <span class="text-muted small" style="display: none;">Icon error</span>
+                                                <div class="ms-2">
+                                                    <small class="text-muted">{{ observer.icon }}</small>
+                                                </div>
+                                            </div>
                                         {% else %}
-                                            <span class="text-muted">No icon</span>
+                                            <span class="text-muted">
+                                                <i class="fas fa-eye-slash"></i> No icon set
+                                            </span>
                                         {% endif %}
                                     </td>
                                 </tr>
