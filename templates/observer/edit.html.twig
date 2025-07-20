@@ -32,6 +32,12 @@
                         </div>
 
                         <div class="mb-3">
+                            {{ form_label(form.description) }}
+                            {{ form_widget(form.description) }}
+                            {{ form_errors(form.description) }}
+                        </div>
+
+                        <div class="mb-3">
                             {{ form_label(form.icon) }}
                             {{ form_widget(form.icon) }}
                             {{ form_errors(form.icon) }}

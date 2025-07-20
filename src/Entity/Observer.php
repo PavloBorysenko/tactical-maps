@@ -32,6 +32,9 @@ class Observer
     #[Assert\NotBlank]
     private ?string $name = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $icon = null;
 
@@ -73,6 +76,19 @@ class Observer
     public function setName(string $name): static
     {
         $this->name = $name;
+        $this->updatedAt = new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
         $this->updatedAt = new \DateTimeImmutable();
 
         return $this;
@@ -164,6 +180,7 @@ class Observer
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'description' => $this->description,
             'icon' => $this->icon,
             'map' => $this->map?->toArray(),
             'rules' => $this->rules,

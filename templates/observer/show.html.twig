@@ -29,6 +29,16 @@
                                     <td>{{ observer.name }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Description</th>
+                                    <td>
+                                        {% if observer.description %}
+                                            {{ observer.description|nl2br }}
+                                        {% else %}
+                                            <span class="text-muted">No description provided</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Icon</th>
                                     <td>
                                         {% if observer.icon %}

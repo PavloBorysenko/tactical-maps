@@ -36,6 +36,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
+                            <th>Description</th>
                             <th>Icon</th>
                             <th>Map</th>
                             <th>Created</th>
@@ -47,6 +48,17 @@
                         <tr>
                             <td>{{ observer.id }}</td>
                             <td>{{ observer.name }}</td>
+                            <td>
+                                {% if observer.description %}
+                                    <div class="observer-description-preview">
+                                        {{ observer.description|length > 50 
+                                           ? observer.description|slice(0, 47) ~ '...' 
+                                           : observer.description }}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">No description</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if observer.icon %}
                                     <div class="d-flex align-items-center">

@@ -24,6 +24,15 @@ class ObserverType extends AbstractType
                     'placeholder' => 'Enter observer name'
                 ]
             ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Description',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'rows' => 3,
+                    'placeholder' => 'Enter observer description (optional)'
+                ]
+            ])
             ->add('icon', TextType::class, [
                 'label' => 'Custom Icon',
                 'required' => false,
