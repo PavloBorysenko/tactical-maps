@@ -43,6 +43,23 @@ class ObserverRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find all observers with optional map filter
+     */
+    public function findAllWithMapFilter(?Map $map = null): array
+    {
+        $qb = $this->createQueryBuilder('o');
+        
+        if ($map) {
+            $qb->andWhere('o.map = :map')
+               ->setParameter('map', $map);
+        }
+        
+        return $qb->orderBy('o.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
      * Find observers by name (case-insensitive search)
      */
     public function findByNameLike(string $name): array

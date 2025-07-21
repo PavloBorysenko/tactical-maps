@@ -11,16 +11,33 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\MapRepository;
 
 #[Route('/admin/observers')]
 #[IsGranted('ROLE_ADMIN')]
 class ObserverController extends AbstractController
 {
     #[Route('/', name: 'observer_index', methods: ['GET'])]
-    public function index(ObserverRepository $observerRepository): Response
+    public function index(ObserverRepository $observerRepository, Request $request, MapRepository $mapRepository): Response
     {
+        // Get map filter from request
+        $mapId = $request->query->get('map');
+        $selectedMap = null;
+        
+        if ($mapId) {
+            $selectedMap = $mapRepository->find($mapId);
+        }
+        
+        // Get observers with optional map filter
+        $observers = $observerRepository->findAllWithMapFilter($selectedMap);
+        
+        // Get all maps for the filter dropdown
+        $maps = $mapRepository->findAll();
+        
         return $this->render('observer/index.html.twig', [
-            'observers' => $observerRepository->findAll(),
+            'observers' => $observers,
+            'maps' => $maps,
+            'selectedMap' => $selectedMap,
         ]);
     }
 

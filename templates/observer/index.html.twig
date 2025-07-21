@@ -28,6 +28,43 @@
             </div>
         {% endfor %}
 
+        <!-- Map Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ path('observer_index') }}" class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label for="map-filter" class="form-label">Filter by Map:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="map-filter" name="map" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Maps</option>
+                            {% for map in maps %}
+                                <option value="{{ map.id }}" {% if selectedMap and selectedMap.id == map.id %}selected{% endif %}>
+                                    {{ map.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if selectedMap %}
+                        <div class="col-auto">
+                            <a href="{{ path('observer_index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear Filter
+                            </a>
+                        </div>
+                        <div class="col-auto">
+                            <small class="text-muted">
+                                Showing {{ observers|length }} observer(s) for map: <strong>{{ selectedMap.title }}</strong>
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="col-auto">
+                            <small class="text-muted">Showing all {{ observers|length }} observer(s)</small>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-body">
                 {% if observers|length > 0 %}

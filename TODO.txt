@@ -1,4 +1,3 @@
-add description to observer
 filter observer by map
 add  map view for  observer
 create  rules functionality 
