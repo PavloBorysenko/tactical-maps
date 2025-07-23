@@ -5,6 +5,39 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('confirmDelete') }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Copy token functionality
+            document.querySelectorAll('.copy-token-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const token = this.getAttribute('data-token');
+                    
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(token).then(() => {
+                        // Update button appearance temporarily
+                        const originalIcon = this.innerHTML;
+                        const originalTitle = this.title;
+                        
+                        this.innerHTML = '<i class="fas fa-check"></i>';
+                        this.title = 'Copied!';
+                        this.classList.remove('btn-outline-primary');
+                        this.classList.add('btn-success');
+                        
+                        // Revert after 2 seconds
+                        setTimeout(() => {
+                            this.innerHTML = originalIcon;
+                            this.title = originalTitle;
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-outline-primary');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy token: ', err);
+                        alert('Failed to copy token to clipboard');
+                    });
+                });
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block body %}
@@ -76,6 +109,7 @@
                             <th>Description</th>
                             <th>Icon</th>
                             <th>Map</th>
+                            <th>Access Token</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -115,6 +149,18 @@
                                 <a href="{{ path('map_show', {'id': observer.map.id}) }}" class="text-decoration-none">
                                     {{ observer.map.title }}
                                 </a>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="token-preview me-2" title="{{ observer.accessToken }}">
+                                        {{ observer.accessToken|slice(0, 8) }}...
+                                    </span>
+                                    <button class="btn btn-sm btn-outline-primary copy-token-btn" 
+                                            data-token="{{ observer.accessToken }}" 
+                                            title="Copy full token">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
                             </td>
                             <td>{{ observer.createdAt|date('Y-m-d H:i') }}</td>
                             <td>
