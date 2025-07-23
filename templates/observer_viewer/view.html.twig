@@ -1,0 +1,195 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ observer.name }} - Observer View{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .observer-info-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .observer-info-panel h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .observer-info-panel p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .map-container {
+            height: 70vh;
+            min-height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .observer-stats {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+            margin-top: 1rem;
+        }
+        
+        .observer-stats small {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        
+        .map-info-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        body {
+            background-color: #f5f6fa;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-3">
+        <div class="row">
+            <div class="col-12">
+                <!-- Observer Information Panel -->
+                <div class="observer-info-panel">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2>
+                                {% if observer.icon %}
+                                    <img src="{{ observer.icon }}" alt="Observer icon" style="width: 32px; height: 32px; margin-right: 10px;">
+                                {% endif %}
+                                {{ observer.name }}
+                            </h2>
+                            {% if observer.description %}
+                                <p>{{ observer.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="observer-stats">
+                                <strong>Map:</strong> {{ map.title }}<br>
+                                <small>{{ geoObjects|length }} active objects</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Information Bar -->
+                <div class="map-info-bar">
+                    <div>
+                        <strong>{{ map.title }}</strong>
+                        {% if map.description %}
+                            - {{ map.description }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> Observer View
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Map Container -->
+                <div id="map-container" class="map-container"
+                     data-map-id="{{ map.id }}" 
+                     data-map-center-lat="{{ map.centerLat }}" 
+                     data-map-center-lng="{{ map.centerLng }}" 
+                     data-map-zoom="{{ map.zoomLevel }}"
+                     data-observer-mode="true">
+                </div>
+                
+                <!-- Observer Status -->
+                <div class="observer-stats mt-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small>
+                                <i class="fas fa-clock"></i> 
+                                Connected since: {{ observer.createdAt|date('Y-m-d H:i:s') }}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <small>
+                                <i class="fas fa-map-marker-alt"></i> 
+                                Objects with active TTL: {{ geoObjects|length }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden data for JavaScript -->
+    <script type="application/json" id="geo-objects-data">
+        {{ geoObjects|map(obj => {
+            'id': obj.id,
+            'hash': obj.hash,
+            'title': obj.name,
+            'description': obj.description,
+            'type': obj.geometryType,
+            'geoJson': obj.geometry,
+            'ttl': obj.ttl,
+            'iconUrl': obj.iconUrl,
+            'side': obj.side ? {
+                'id': obj.side.id,
+                'name': obj.side.name,
+                'color': obj.side.color
+            } : null,
+            'sideId': obj.side ? obj.side.id : null,
+            'isExpired': obj.isExpired,
+            'remainingTtl': obj.remainingTtl,
+            'createdAt': obj.createdAt ? obj.createdAt.format('Y-m-d H:i:s') : null,
+            'updatedAt': obj.updatedAt ? obj.updatedAt.format('Y-m-d H:i:s') : null
+        })|json_encode|raw }}
+    </script>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('observerMapViewer') }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load geo objects data for observer
+            const geoObjectsScript = document.getElementById('geo-objects-data');
+            if (!geoObjectsScript) {
+                console.error('No geo-objects-data found');
+                return;
+            }
+
+            try {
+                const geoObjects = JSON.parse(geoObjectsScript.textContent);
+                console.log('Parsed geo objects:', geoObjects.length, 'objects');
+                
+                // Listen for tactical map ready event
+                document.addEventListener('tactical-map-ready', function(event) {
+                    console.log('Tactical map ready event received');
+                    if (event.detail?.map && event.detail.map.loadGeoObjects) {
+                        event.detail.map.loadGeoObjects(geoObjects);
+                    } else {
+                        console.error('Map instance not found in event');
+                    }
+                });
+                
+            } catch (e) {
+                console.error('Error parsing geo objects:', e);
+            }
+        });
+    </script>
+{% endblock %} 

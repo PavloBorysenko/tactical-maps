@@ -166,6 +166,9 @@
                             <td>
                                 <a href="{{ path('observer_show', {'id': observer.id}) }}" class="btn btn-sm btn-info">Show</a>
                                 <a href="{{ path('observer_edit', {'id': observer.id}) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" class="btn btn-sm btn-success" target="_blank" title="Open observer map view">
+                                    <i class="fas fa-map"></i> View Map
+                                </a>
                                 <form method="post" action="{{ path('observer_delete', {'id': observer.id}) }}" class="inline-form confirm-delete-form" data-confirm-message="Are you sure you want to delete this observer?">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ observer.id) }}">
                                     <button class="btn btn-sm btn-outline-danger">Delete</button>

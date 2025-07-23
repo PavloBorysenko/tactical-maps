@@ -24,6 +24,7 @@ Encore
     .addEntry('home', './assets/js/home.js')
     .addEntry('mapEditor', './assets/js/mapEditor.js')
     .addEntry('mapViewer', './assets/js/mapViewer.js')
+    .addEntry('observerMapViewer', './assets/js/observerMapViewer.js')
     .addEntry('iconSelector', './assets/js/iconSelector.js')
     .addEntry('geoObjectForm', './assets/js/geoObjectForm.js')
     .addEntry('observerForm', './assets/js/observerForm.js')

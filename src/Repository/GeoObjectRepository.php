@@ -372,7 +372,7 @@ class GeoObjectRepository extends ServiceEntityRepository
         $now = new \DateTime();
         
         return $this->createQueryBuilder('g')
-            ->where('g.ttl IS NOT NULL')
+            ->where('g.ttl IS NOT NULL AND g.ttl > 0')
             ->andWhere('g.createdAt + g.ttl < :now')
             ->setParameter('now', $now)
             ->getQuery()
@@ -574,7 +574,7 @@ class GeoObjectRepository extends ServiceEntityRepository
         
         $qb = $this->createQueryBuilder('g')
             ->delete()
-            ->where('g.ttl IS NOT NULL')
+            ->where('g.ttl IS NOT NULL AND g.ttl > 0')
             ->andWhere(
                 $this->getEntityManager()->getExpressionBuilder()->andX(
                     'g.updatedAt IS NULL',
@@ -653,14 +653,14 @@ class GeoObjectRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('g')
             ->andWhere(
                 $this->getEntityManager()->getExpressionBuilder()->orX(
-                    // Objects without TTL (never expire)
-                    'g.ttl IS NULL',
+                    // Objects without TTL or with TTL = 0 (never expire)
+                    'g.ttl IS NULL OR g.ttl = 0',
                     
-                    // Objects with TTL that haven't expired based on createdAt
-                    'DATE_ADD(g.createdAt, g.ttl, \'second\') > :now',
+                    // Objects with TTL > 0 that haven't expired based on createdAt
+                    'g.ttl > 0 AND DATE_ADD(g.createdAt, g.ttl, \'second\') > :now',
                     
-                    // Objects with TTL that haven't expired based on updatedAt
-                    'g.updatedAt IS NOT NULL AND DATE_ADD(g.updatedAt, g.ttl, \'second\') > :now'
+                    // Objects with TTL > 0 that haven't expired based on updatedAt
+                    'g.updatedAt IS NOT NULL AND g.ttl > 0 AND DATE_ADD(g.updatedAt, g.ttl, \'second\') > :now'
                 )
             )
             ->setParameter('now', $now);
@@ -687,14 +687,14 @@ class GeoObjectRepository extends ServiceEntityRepository
             ->setParameter('map', $map)
             ->andWhere(
                 $this->getEntityManager()->getExpressionBuilder()->orX(
-                    // Objects without TTL (never expire)
-                    'g.ttl IS NULL',
+                    // Objects without TTL or with TTL = 0 (never expire)
+                    'g.ttl IS NULL OR g.ttl = 0',
                     
-                    // Objects with TTL that haven't expired based on createdAt
-                    'DATE_ADD(g.createdAt, g.ttl, \'second\') > :now',
+                    // Objects with TTL > 0 that haven't expired based on createdAt
+                    'g.ttl > 0 AND DATE_ADD(g.createdAt, g.ttl, \'second\') > :now',
                     
-                    // Objects with TTL that haven't expired based on updatedAt
-                    'g.updatedAt IS NOT NULL AND DATE_ADD(g.updatedAt, g.ttl, \'second\') > :now'
+                    // Objects with TTL > 0 that haven't expired based on updatedAt
+                    'g.updatedAt IS NOT NULL AND g.ttl > 0 AND DATE_ADD(g.updatedAt, g.ttl, \'second\') > :now'
                 )
             )
             ->setParameter('now', $now);
