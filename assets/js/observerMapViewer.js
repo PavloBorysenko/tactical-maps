@@ -92,12 +92,56 @@ class ObserverMapViewer extends BaseMapComponent {
     }
 
     /**
+     * Universal method to bind popup to any layer type (including LayerGroup)
+     * Following DRY principle - same popup behavior for all object types
+     * @param {L.Layer} layer - Leaflet layer (can be single layer or LayerGroup)
+     * @param {Object} objectData - Object data for popup content
+     */
+    bindPopupToLayer(layer, objectData) {
+        const popupContent = this.createPopupContent(objectData);
+
+        if (layer instanceof L.LayerGroup) {
+            // For LayerGroup (geometry + icon), bind popup to ALL child layers
+            console.log(
+                'Binding popup to LayerGroup children for:',
+                objectData.id
+            );
+            layer.eachLayer((childLayer) => {
+                childLayer.bindPopup(popupContent);
+                childLayer.on('click', (e) => {
+                    console.log(
+                        'LayerGroup child clicked:',
+                        objectData.id,
+                        'child:',
+                        childLayer.constructor.name
+                    );
+                });
+            });
+        } else {
+            // For single layer (like Point), bind popup directly
+            console.log('Binding popup to single layer for:', objectData.id);
+            layer.bindPopup(popupContent);
+            layer.on('click', (e) => {
+                console.log(
+                    'Single layer clicked:',
+                    objectData.id,
+                    'type:',
+                    layer.constructor.name
+                );
+            });
+        }
+    }
+
+    /**
      * Display a single geo object on the map
      * @param {Object} object - Geo object data
      */
     displayGeoObject(object) {
         try {
+            console.log('Displaying geo object:', object);
+
             if (!object || !object.geoJson || !object.type) {
+                console.warn('Invalid object data:', object);
                 return;
             }
 
@@ -107,23 +151,40 @@ class ObserverMapViewer extends BaseMapComponent {
                     ? JSON.parse(object.geoJson)
                     : object.geoJson;
 
+            console.log('Parsed geoJson:', geoJson);
+
             let layer = null;
             const objectType = object.type.toLowerCase();
 
-            // Create layer based on type
+            // Create layer based on type - simplified approach
             switch (objectType) {
                 case 'point':
                     layer = this.createPointLayer(geoJson, object);
                     break;
                 case 'polygon':
-                    layer = this.createPolygonLayer(geoJson, object);
+                    const polygonResult = this.createPolygonLayer(
+                        geoJson,
+                        object,
+                        true
+                    );
+                    layer = polygonResult.layer;
                     break;
                 case 'circle':
-                    layer = this.createCircleLayer(geoJson, object);
+                    const circleResult = this.createCircleLayer(
+                        geoJson,
+                        object,
+                        true
+                    );
+                    layer = circleResult.layer;
                     break;
                 case 'line':
                 case 'linestring':
-                    layer = this.createLineLayer(geoJson, object);
+                    const lineResult = this.createLineLayer(
+                        geoJson,
+                        object,
+                        true
+                    );
+                    layer = lineResult.layer;
                     break;
                 default:
                     console.warn(`Unknown geometry type: ${objectType}`);
@@ -131,97 +192,59 @@ class ObserverMapViewer extends BaseMapComponent {
             }
 
             if (layer) {
-                // For LayerGroup (line with icon), popup is already bound in createLineLayer
-                // For other layer types, bind popup here
-                if (!(layer instanceof L.LayerGroup)) {
-                    layer.bindPopup(this.createPopupContent(object));
-                }
+                console.log(
+                    'Created layer for object:',
+                    object.id,
+                    'type:',
+                    objectType,
+                    'layer:',
+                    layer
+                );
+
+                // Use universal popup binding method (DRY principle)
+                this.bindPopupToLayer(layer, object);
+
+                console.log('Popup bound to layer for object:', object.id);
 
                 // Add to map
                 layer.addTo(this.map);
 
-                // Store reference
+                // Store reference (simplified - no need for mainLayer anymore)
                 this.geoObjectLayers[object.id] = {
                     layer: layer,
                     type: object.type,
                     data: object,
                 };
+
+                console.log('Layer added to map for object:', object.id);
+            } else {
+                console.error('Failed to create layer for object:', object);
             }
         } catch (error) {
-            console.error('Error displaying geo object:', error);
+            console.error(
+                'Error displaying geo object:',
+                error,
+                'object:',
+                object
+            );
         }
     }
 
     /**
      * Create popup content for observer (read-only)
+     * Uses base method to eliminate code duplication (DRY principle)
      */
     createPopupContent(object) {
         console.log('Creating popup for object:', object);
 
-        let content = `<div class="geo-popup-observer" data-object-id="${object.id}">`;
+        // Use base method with observer-specific options
+        const content = this.createBasePopupContent(object, {
+            cssClass: 'geo-popup-observer',
+            showCreatedAt: true, // Show creation time for observers
+            showActions: false, // No edit/delete buttons for observers
+            showVisibility: false, // No visibility info for observers
+        });
 
-        // Add side information if available
-        if (object.side && object.side.name) {
-            content += `<div class="side-info mb-2">
-                <span class="badge" style="
-                    background-color: ${object.side.color || '#6c757d'}; 
-                    color: white;
-                    font-size: 0.9em;
-                    padding: 0.4em 0.8em;
-                    border-radius: 0.25rem;
-                    font-weight: 600;
-                ">
-                    ${object.side.name}
-                </span>
-            </div>`;
-        }
-
-        content += `<h5>${
-            object.title || object.name || 'Unnamed object'
-        }</h5>`;
-
-        if (object.description) {
-            content += `<p>${object.description}</p>`;
-        }
-
-        // Show TTL info if available
-        if (object.ttl > 0) {
-            let ttlDisplay;
-            if (object.ttl >= 3600) {
-                const hours = Math.floor(object.ttl / 3600);
-                const minutes = Math.floor((object.ttl % 3600) / 60);
-                ttlDisplay =
-                    hours + 'h' + (minutes > 0 ? ' ' + minutes + 'm' : '');
-            } else if (object.ttl >= 60) {
-                const minutes = Math.floor(object.ttl / 60);
-                ttlDisplay = minutes + 'm';
-            } else {
-                ttlDisplay = object.ttl + 's';
-            }
-
-            content += `<div class="ttl-info">
-                <small class="text-muted">
-                    <i class="fas fa-clock"></i> TTL: ${ttlDisplay}
-                </small>
-            </div>`;
-        } else if (object.ttl === 0 || object.ttl === null) {
-            content += `<div class="ttl-info">
-                <small class="text-muted">
-                    <i class="fas fa-infinity"></i> No expiration
-                </small>
-            </div>`;
-        }
-
-        // Show creation time
-        if (object.createdAt) {
-            content += `<div class="creation-info mt-2">
-                <small class="text-muted">
-                    <i class="fas fa-calendar"></i> Created: ${object.createdAt}
-                </small>
-            </div>`;
-        }
-
-        content += `</div>`;
         console.log('Generated popup content:', content);
         return content;
     }
@@ -274,14 +297,14 @@ class ObserverMapViewer extends BaseMapComponent {
     /**
      * Create polygon layer for observer display
      */
-    createPolygonLayer(geoJson, objectData) {
+    createPolygonLayer(geoJson, objectData, returnBothLayers = false) {
         if (
             !geoJson ||
             geoJson.type !== 'Polygon' ||
             !geoJson.coordinates ||
             !geoJson.coordinates[0]
         ) {
-            return null;
+            return { layer: null };
         }
 
         const points = geoJson.coordinates[0].map((coord) =>
@@ -313,26 +336,24 @@ class ObserverMapViewer extends BaseMapComponent {
             const iconMarker = L.marker(center, { icon: customIcon });
             const layerGroup = L.layerGroup([polygon, iconMarker]);
 
-            // Bind popup to the layer group
-            layerGroup.bindPopup(this.createPopupContent(objectData));
-
-            return layerGroup;
+            // Return LayerGroup - popup will be bound to all children by bindPopupToLayer
+            return { layer: layerGroup };
         }
 
-        return polygon;
+        return { layer: polygon };
     }
 
     /**
      * Create circle layer for observer display
      */
-    createCircleLayer(geoJson, objectData) {
+    createCircleLayer(geoJson, objectData, returnBothLayers = false) {
         if (
             !geoJson ||
             geoJson.type !== 'Circle' ||
             !geoJson.coordinates ||
             !geoJson.radius
         ) {
-            return null;
+            return { layer: null };
         }
 
         const center = L.latLng(geoJson.coordinates[1], geoJson.coordinates[0]);
@@ -360,19 +381,17 @@ class ObserverMapViewer extends BaseMapComponent {
             const iconMarker = L.marker(center, { icon: customIcon });
             const layerGroup = L.layerGroup([circle, iconMarker]);
 
-            // Bind popup to the layer group
-            layerGroup.bindPopup(this.createPopupContent(objectData));
-
-            return layerGroup;
+            // Return LayerGroup - popup will be bound to all children by bindPopupToLayer
+            return { layer: layerGroup };
         }
 
-        return circle;
+        return { layer: circle };
     }
 
     /**
      * Create line layer for observer display
      */
-    createLineLayer(geoJson, objectData) {
+    createLineLayer(geoJson, objectData, returnBothLayers = false) {
         console.log(
             'Creating line layer with geoJson:',
             geoJson,
@@ -386,7 +405,7 @@ class ObserverMapViewer extends BaseMapComponent {
             !geoJson.coordinates
         ) {
             console.warn('Invalid line geometry:', geoJson);
-            return null;
+            return { layer: null };
         }
 
         const points = geoJson.coordinates.map((coord) =>
@@ -416,13 +435,11 @@ class ObserverMapViewer extends BaseMapComponent {
             const iconMarker = L.marker(center, { icon: customIcon });
             const layerGroup = L.layerGroup([line, iconMarker]);
 
-            // Bind popup to the layer group
-            layerGroup.bindPopup(this.createPopupContent(objectData));
-
-            return layerGroup;
+            // Return LayerGroup - popup will be bound to all children by bindPopupToLayer
+            return { layer: layerGroup };
         }
 
-        return line;
+        return { layer: line };
     }
 
     /**

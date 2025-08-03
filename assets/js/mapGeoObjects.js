@@ -169,10 +169,8 @@ class MapGeoObjectManager {
                             // Remove any existing popupopen listeners to prevent duplicates
                             sublayer.off('popupopen');
                             sublayer.on('popupopen', () => {
-                                // Use setTimeout to ensure popup DOM is ready
-                                setTimeout(() => {
-                                    this.attachPopupEventListeners(object);
-                                }, 10);
+                                // Let attachPopupEventListeners handle the timing
+                                this.attachPopupEventListeners(object);
                             });
                         });
                     } else {
@@ -180,10 +178,8 @@ class MapGeoObjectManager {
                         // Remove any existing popupopen listeners to prevent duplicates
                         layer.off('popupopen');
                         layer.on('popupopen', () => {
-                            // Use setTimeout to ensure popup DOM is ready
-                            setTimeout(() => {
-                                this.attachPopupEventListeners(object);
-                            }, 10);
+                            // Let attachPopupEventListeners handle the timing
+                            this.attachPopupEventListeners(object);
                         });
                     }
 
@@ -229,7 +225,9 @@ class MapGeoObjectManager {
             </div>`;
         }
 
-        content += `<h5>${object.title || 'Unnamed object'}</h5>`;
+        content += `<h5>${
+            object.title || object.name || 'Unnamed object'
+        }</h5>`;
 
         if (object.description) {
             content += `<p>${object.description}</p>`;
@@ -254,6 +252,7 @@ class MapGeoObjectManager {
             </div>`;
         }
 
+        // Add TTL information
         if (object.ttl > 0) {
             // Format TTL for display
             let ttlDisplay;
@@ -272,6 +271,12 @@ class MapGeoObjectManager {
             content += `<div class="ttl-info">
                 <small class="text-muted">
                     <i class="fas fa-clock"></i> TTL: ${ttlDisplay}
+                </small>
+            </div>`;
+        } else if (object.ttl === 0 || object.ttl === null) {
+            content += `<div class="ttl-info">
+                <small class="text-muted">
+                    <i class="fas fa-infinity"></i> No expiration
                 </small>
             </div>`;
         }
@@ -1280,27 +1285,46 @@ class MapGeoObjectManager {
      * Attach popup event listeners to a geo object
      */
     attachPopupEventListeners(object) {
-        // Wait for popup to be rendered in DOM
+        // Wait for popup to be rendered in DOM - increased timeout for reliability
         setTimeout(() => {
+            // Find the currently opened popup
             const popupElement = document.querySelector(
                 '.leaflet-popup-content'
             );
+
             if (!popupElement) {
                 console.warn('Popup element not found for object:', object.id);
+                // Try again with longer delay
+                setTimeout(() => {
+                    this.attachPopupEventListeners(object);
+                }, 100);
+                return;
+            }
+
+            // Verify this is the correct popup by checking data-object-id
+            const popupContainer = popupElement.querySelector(
+                `[data-object-id="${object.id}"]`
+            );
+            if (!popupContainer) {
+                console.warn(
+                    'Popup container not found for object:',
+                    object.id
+                );
                 return;
             }
 
             console.log('Attaching popup listeners for object:', object.id);
 
-            // Use event delegation and check if listeners are already attached
+            // Find buttons within the specific popup container
             const popupEditButton =
-                popupElement.querySelector('.popup-edit-btn');
+                popupContainer.querySelector('.popup-edit-btn');
             const popupDeleteButton =
-                popupElement.querySelector('.popup-delete-btn');
+                popupContainer.querySelector('.popup-delete-btn');
 
             console.log('Found edit button:', !!popupEditButton);
             console.log('Found delete button:', !!popupDeleteButton);
 
+            // Attach edit button listener
             if (
                 popupEditButton &&
                 !popupEditButton.hasAttribute('data-listener-attached')
@@ -1315,6 +1339,7 @@ class MapGeoObjectManager {
                 popupEditButton.setAttribute('data-listener-attached', 'true');
             }
 
+            // Attach delete button listener
             if (
                 popupDeleteButton &&
                 !popupDeleteButton.hasAttribute('data-listener-attached')
@@ -1331,7 +1356,16 @@ class MapGeoObjectManager {
                     'true'
                 );
             }
-        }, 50);
+
+            // Double-check if buttons are still not found and log debug info
+            if (!popupEditButton || !popupDeleteButton) {
+                console.warn('Debug - Popup HTML:', popupContainer.innerHTML);
+                console.warn(
+                    'Debug - Available buttons:',
+                    popupContainer.querySelectorAll('button')
+                );
+            }
+        }, 100); // Increased from 50ms to 100ms for better reliability
     }
 
     /**

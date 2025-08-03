@@ -18,6 +18,134 @@ export default class BaseMapComponent {
     }
 
     /**
+     * Create base popup content for geo objects (DRY principle)
+     * This method contains shared popup logic, can be extended by child classes
+     * @param {Object} object - Geo object data
+     * @param {Object} options - Popup options
+     * @returns {string} HTML content for popup
+     */
+    createBasePopupContent(object, options = {}) {
+        const {
+            cssClass = 'geo-popup',
+            showCreatedAt = false,
+            showActions = false,
+            showVisibility = false,
+        } = options;
+
+        let content = `<div class="${cssClass}" data-object-id="${object.id}">`;
+
+        // Add side information if available (common for all popups)
+        if (object.side && object.side.name) {
+            content += `<div class="side-info mb-2">
+                <span class="badge side-badge" style="
+                    background-color: ${object.side.color || '#6c757d'}; 
+                    color: white;
+                    font-size: 0.9em;
+                    padding: 0.4em 0.8em;
+                    border-radius: 0.25rem;
+                    font-weight: 600;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                ">
+                    ${object.side.name}
+                </span>
+            </div>`;
+        }
+
+        // Add title (common for all popups)
+        content += `<h5>${
+            object.title || object.name || 'Unnamed object'
+        }</h5>`;
+
+        // Add description if available (common for all popups)
+        if (object.description) {
+            content += `<p>${object.description}</p>`;
+        }
+
+        // Add visibility info (admin only)
+        if (showVisibility && object.isExpired !== undefined) {
+            const visibilityIcon = object.isExpired
+                ? '<i class="fas fa-eye-slash text-danger"></i>'
+                : '<i class="fas fa-eye text-success"></i>';
+            const visibilityText = object.isExpired
+                ? 'Expired (not visible)'
+                : 'Visible';
+            const visibilityClass = object.isExpired
+                ? 'text-danger'
+                : 'text-success';
+
+            content += `<div class="visibility-info mb-2">
+                <small class="${visibilityClass}">
+                    ${visibilityIcon} ${visibilityText}
+                </small>
+            </div>`;
+        }
+
+        // Add TTL information (common logic with different display)
+        content += this.formatTTLInfo(object);
+
+        // Add creation time (observer only)
+        if (showCreatedAt && object.createdAt) {
+            content += `<div class="creation-info mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-calendar"></i> Created: ${object.createdAt}
+                </small>
+            </div>`;
+        }
+
+        // Add action buttons (admin only)
+        if (showActions) {
+            content += `
+                <div class="popup-actions mt-2">
+                    <button class="btn btn-sm btn-primary popup-edit-btn" data-object-id="${object.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger popup-delete-btn" data-object-id="${object.id}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>`;
+        }
+
+        content += `</div>`;
+        return content;
+    }
+
+    /**
+     * Format TTL information for popup (DRY principle)
+     * @param {Object} object - Geo object data
+     * @returns {string} HTML for TTL info
+     */
+    formatTTLInfo(object) {
+        if (object.ttl > 0) {
+            // Format TTL for display (common logic)
+            let ttlDisplay;
+            if (object.ttl >= 3600) {
+                const hours = Math.floor(object.ttl / 3600);
+                const minutes = Math.floor((object.ttl % 3600) / 60);
+                ttlDisplay =
+                    hours + 'h' + (minutes > 0 ? ' ' + minutes + 'm' : '');
+            } else if (object.ttl >= 60) {
+                const minutes = Math.floor(object.ttl / 60);
+                ttlDisplay = minutes + 'm';
+            } else {
+                ttlDisplay = object.ttl + 's';
+            }
+
+            return `<div class="ttl-info">
+                <small class="text-muted">
+                    <i class="fas fa-clock"></i> TTL: ${ttlDisplay}
+                </small>
+            </div>`;
+        } else if (object.ttl === 0 || object.ttl === null) {
+            return `<div class="ttl-info">
+                <small class="text-muted">
+                    <i class="fas fa-infinity"></i> No expiration
+                </small>
+            </div>`;
+        }
+        return '';
+    }
+
+    /**
      * Get map coordinates from container attributes
      * @param {HTMLElement} container - Map container element
      * @param {Object} defaults - Default coordinates

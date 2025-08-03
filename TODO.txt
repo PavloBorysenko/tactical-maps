@@ -1,4 +1,4 @@
-filter observer by map
+fix editing of object
 add  map view for  observer ✅ DONE
 create  rules functionality 
 add user or observer
