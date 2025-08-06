@@ -294,6 +294,18 @@ function initGeoObjectForm(mapInstance) {
                     // Enable drawing mode for the current type
                     if (obj.type) {
                         enableDrawingMode(obj.type);
+
+                        // Load existing geometry for editing mode with draggable markers
+                        if (
+                            map &&
+                            map.geoObjectManager &&
+                            map.geoObjectManager.loadExistingGeometryForEdit
+                        ) {
+                            map.geoObjectManager.loadExistingGeometryForEdit(
+                                obj.geoJson,
+                                obj.type
+                            );
+                        }
                     }
 
                     // Focus on the object on the map if possible
