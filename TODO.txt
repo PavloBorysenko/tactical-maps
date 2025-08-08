@@ -1,4 +1,4 @@
-fix editing of object
+fix template styles js
 create  rules functionality 
 create page to add rules
 create action functionality
