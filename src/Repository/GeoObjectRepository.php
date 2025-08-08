@@ -671,12 +671,45 @@ class GeoObjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all objects belonging to a map where TTL has not expired
-     * since their last update
+     * Find all active geo objects for the given map (for Observer view)
+     * This method ignores side visibility constraints and returns ALL active objects
      * 
-     * @param Map $map The map to search objects for
-     * @param Side|null $side Optional side for visibility filtering
-     * @return array<GeoObject> Array of active (non-expired) geo objects
+     * @param Map $map The map to search in
+     * @return array<GeoObject> Array of active GeoObject entities
+     */
+    public function findActiveByMapForObserver(Map $map): array
+    {
+        $now = new \DateTimeImmutable();
+        
+        $qb = $this->createQueryBuilder('g')
+            ->where('g.map = :map')
+            ->setParameter('map', $map)
+            ->andWhere(
+                $this->getEntityManager()->getExpressionBuilder()->orX(
+                    // Objects without TTL or with TTL = 0 (never expire)
+                    'g.ttl IS NULL OR g.ttl = 0',
+                    
+                    // Objects with TTL > 0 that haven't expired based on createdAt
+                    'g.ttl > 0 AND DATE_ADD(g.createdAt, g.ttl, \'second\') > :now',
+                    
+                    // Objects with TTL > 0 that haven't expired based on updatedAt
+                    'g.updatedAt IS NOT NULL AND g.ttl > 0 AND DATE_ADD(g.updatedAt, g.ttl, \'second\') > :now'
+                )
+            )
+            ->setParameter('now', $now);
+        
+        // NOTE: We intentionally do NOT call addVisibilityConstraint here
+        // Observer should see ALL active objects regardless of side visibility
+        
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Find all active geo objects for the given map with side visibility constraints
+     * 
+     * @param Map $map The map to search in
+     * @param Side|null $side The side to filter visibility for (null = only public objects)
+     * @return array<GeoObject> Array of active GeoObject entities visible to the given side
      */
     public function findActiveByMap(Map $map, ?Side $side = null): array
     {

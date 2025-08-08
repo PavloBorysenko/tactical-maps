@@ -102,33 +102,12 @@ class ObserverMapViewer extends BaseMapComponent {
 
         if (layer instanceof L.LayerGroup) {
             // For LayerGroup (geometry + icon), bind popup to ALL child layers
-            console.log(
-                'Binding popup to LayerGroup children for:',
-                objectData.id
-            );
             layer.eachLayer((childLayer) => {
                 childLayer.bindPopup(popupContent);
-                childLayer.on('click', (e) => {
-                    console.log(
-                        'LayerGroup child clicked:',
-                        objectData.id,
-                        'child:',
-                        childLayer.constructor.name
-                    );
-                });
             });
         } else {
             // For single layer (like Point), bind popup directly
-            console.log('Binding popup to single layer for:', objectData.id);
             layer.bindPopup(popupContent);
-            layer.on('click', (e) => {
-                console.log(
-                    'Single layer clicked:',
-                    objectData.id,
-                    'type:',
-                    layer.constructor.name
-                );
-            });
         }
     }
 
@@ -138,8 +117,6 @@ class ObserverMapViewer extends BaseMapComponent {
      */
     displayGeoObject(object) {
         try {
-            console.log('Displaying geo object:', object);
-
             if (!object || !object.geoJson || !object.type) {
                 console.warn('Invalid object data:', object);
                 return;
@@ -150,8 +127,6 @@ class ObserverMapViewer extends BaseMapComponent {
                 typeof object.geoJson === 'string'
                     ? JSON.parse(object.geoJson)
                     : object.geoJson;
-
-            console.log('Parsed geoJson:', geoJson);
 
             let layer = null;
             const objectType = object.type.toLowerCase();
@@ -192,19 +167,8 @@ class ObserverMapViewer extends BaseMapComponent {
             }
 
             if (layer) {
-                console.log(
-                    'Created layer for object:',
-                    object.id,
-                    'type:',
-                    objectType,
-                    'layer:',
-                    layer
-                );
-
                 // Use universal popup binding method (DRY principle)
                 this.bindPopupToLayer(layer, object);
-
-                console.log('Popup bound to layer for object:', object.id);
 
                 // Add to map
                 layer.addTo(this.map);
@@ -215,8 +179,6 @@ class ObserverMapViewer extends BaseMapComponent {
                     type: object.type,
                     data: object,
                 };
-
-                console.log('Layer added to map for object:', object.id);
             } else {
                 console.error('Failed to create layer for object:', object);
             }
@@ -235,8 +197,6 @@ class ObserverMapViewer extends BaseMapComponent {
      * Uses base method to eliminate code duplication (DRY principle)
      */
     createPopupContent(object) {
-        console.log('Creating popup for object:', object);
-
         // Use base method with observer-specific options
         const content = this.createBasePopupContent(object, {
             cssClass: 'geo-popup-observer',
@@ -245,7 +205,6 @@ class ObserverMapViewer extends BaseMapComponent {
             showVisibility: false, // No visibility info for observers
         });
 
-        console.log('Generated popup content:', content);
         return content;
     }
 
@@ -253,7 +212,7 @@ class ObserverMapViewer extends BaseMapComponent {
      * Create point layer for observer display
      */
     createPointLayer(geoJson, objectData) {
-        if (!geoJson || geoJson.type !== 'Point' || !geoJson.coordinates) {
+        if (!geoJson || !geoJson.coordinates) {
             return null;
         }
 
@@ -298,12 +257,7 @@ class ObserverMapViewer extends BaseMapComponent {
      * Create polygon layer for observer display
      */
     createPolygonLayer(geoJson, objectData, returnBothLayers = false) {
-        if (
-            !geoJson ||
-            geoJson.type !== 'Polygon' ||
-            !geoJson.coordinates ||
-            !geoJson.coordinates[0]
-        ) {
+        if (!geoJson || !geoJson.coordinates || !geoJson.coordinates[0]) {
             return { layer: null };
         }
 
@@ -347,12 +301,7 @@ class ObserverMapViewer extends BaseMapComponent {
      * Create circle layer for observer display
      */
     createCircleLayer(geoJson, objectData, returnBothLayers = false) {
-        if (
-            !geoJson ||
-            geoJson.type !== 'Circle' ||
-            !geoJson.coordinates ||
-            !geoJson.radius
-        ) {
+        if (!geoJson || !geoJson.coordinates || !geoJson.radius) {
             return { layer: null };
         }
 
@@ -392,18 +341,7 @@ class ObserverMapViewer extends BaseMapComponent {
      * Create line layer for observer display
      */
     createLineLayer(geoJson, objectData, returnBothLayers = false) {
-        console.log(
-            'Creating line layer with geoJson:',
-            geoJson,
-            'objectData:',
-            objectData
-        );
-
-        if (
-            !geoJson ||
-            (geoJson.type !== 'LineString' && geoJson.type !== 'Line') ||
-            !geoJson.coordinates
-        ) {
+        if (!geoJson || !geoJson.coordinates) {
             console.warn('Invalid line geometry:', geoJson);
             return { layer: null };
         }

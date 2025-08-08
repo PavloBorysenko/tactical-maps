@@ -51,7 +51,28 @@
                      data-map-center-lat="{{ map.centerLat }}" 
                      data-map-center-lng="{{ map.centerLng }}" 
                      data-map-zoom="{{ map.zoomLevel }}"
-                     data-observer-mode="true">
+                     data-observer-mode="true"
+                     data-observer-token="{{ observer.accessToken }}"
+                     data-geo-objects="{{ geoObjects|map(obj => {
+                         'id': obj.id,
+                         'hash': obj.hash,
+                         'title': obj.name,
+                         'description': obj.description,
+                         'type': obj.geometryType,
+                         'geoJson': obj.geometry,
+                         'ttl': obj.ttl,
+                         'iconUrl': obj.iconUrl,
+                         'side': obj.side ? {
+                             'id': obj.side.id,
+                             'name': obj.side.name,
+                             'color': obj.side.color
+                         } : null,
+                         'sideId': obj.side ? obj.side.id : null,
+                         'isExpired': obj.isExpired,
+                         'remainingTtl': obj.remainingTtl,
+                         'createdAt': obj.createdAt ? obj.createdAt.format('Y-m-d H:i:s') : null,
+                         'updatedAt': obj.updatedAt ? obj.updatedAt.format('Y-m-d H:i:s') : null
+                     })|json_encode|e('html_attr') }}">
                 </div>
                 
                 <!-- Observer Status -->
@@ -74,30 +95,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- Hidden data for JavaScript -->
-    <script type="application/json" id="geo-objects-data">
-        {{ geoObjects|map(obj => {
-            'id': obj.id,
-            'hash': obj.hash,
-            'title': obj.name,
-            'description': obj.description,
-            'type': obj.geometryType,
-            'geoJson': obj.geometry,
-            'ttl': obj.ttl,
-            'iconUrl': obj.iconUrl,
-            'side': obj.side ? {
-                'id': obj.side.id,
-                'name': obj.side.name,
-                'color': obj.side.color
-            } : null,
-            'sideId': obj.side ? obj.side.id : null,
-            'isExpired': obj.isExpired,
-            'remainingTtl': obj.remainingTtl,
-            'createdAt': obj.createdAt ? obj.createdAt.format('Y-m-d H:i:s') : null,
-            'updatedAt': obj.updatedAt ? obj.updatedAt.format('Y-m-d H:i:s') : null
-        })|json_encode|raw }}
-    </script>
 </div>
 {% endblock %}
 

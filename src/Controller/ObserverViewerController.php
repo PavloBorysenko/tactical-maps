@@ -28,8 +28,9 @@ class ObserverViewerController extends AbstractController
         // Get the map associated with this observer
         $map = $observer->getMap();
         
-        // Get all active geo objects for this map (with valid TTL)
-        $geoObjects = $geoObjectRepository->findActiveByMap($map);
+        // Get ALL active geo objects for this map (ignoring side visibility constraints)
+        // Observer should see all objects, not filtered by side visibility
+        $geoObjects = $geoObjectRepository->findActiveByMapForObserver($map);
         
         // Debug information
         error_log('=== Observer Debug ===');

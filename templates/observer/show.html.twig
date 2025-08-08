@@ -1,40 +1,40 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Observer: {{ observer.name }}{% endblock %}
+{% block title %}{{ observer.name }} - Observer Details{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('observerManagement') }}
+{% endblock %}
 
 {% block body %}
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h4>Observer Details</h4>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            {% if observer.icon %}
+                                <img src="{{ observer.icon }}" alt="Observer icon" class="me-2 rounded" style="width: 32px; height: 32px;">
+                            {% endif %}
+                            {{ observer.name }}
+                        </h4>
+                        <span class="badge bg-info">Observer</span>
                     </div>
                     <div class="card-body">
-                        {% for message in app.flashes('success') %}
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-
-                        <table class="table table-bordered">
+                        <table class="table table-borderless">
                             <tbody>
                                 <tr>
-                                    <th width="150">ID</th>
-                                    <td>{{ observer.id }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Name</th>
+                                    <th width="150">Name</th>
                                     <td>{{ observer.name }}</td>
                                 </tr>
                                 <tr>
                                     <th>Description</th>
                                     <td>
                                         {% if observer.description %}
-                                            {{ observer.description|nl2br }}
+                                            {{ observer.description }}
                                         {% else %}
-                                            <span class="text-muted">No description provided</span>
+                                            <span class="text-muted">No description</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -42,20 +42,9 @@
                                     <th>Icon</th>
                                     <td>
                                         {% if observer.icon %}
-                                            <div class="d-flex align-items-center">
-                                                <img src="{{ observer.icon }}" 
-                                                     alt="Observer icon" 
-                                                     class="observer-icon-detail me-2"
-                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                                                <span class="text-muted small" style="display: none;">Icon error</span>
-                                                <div class="ms-2">
-                                                    <small class="text-muted">{{ observer.icon }}</small>
-                                                </div>
-                                            </div>
+                                            <img src="{{ observer.icon }}" alt="Observer icon" class="rounded" style="width: 48px; height: 48px;">
                                         {% else %}
-                                            <span class="text-muted">
-                                                <i class="fas fa-eye-slash"></i> No icon set
-                                            </span>
+                                            <span class="text-muted">No icon</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -63,8 +52,32 @@
                                     <th>Map</th>
                                     <td>
                                         <a href="{{ path('map_show', {'id': observer.map.id}) }}" class="text-decoration-none">
-                                            {{ observer.map.title }}
+                                            <span class="badge bg-primary">{{ observer.map.title }}</span>
                                         </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Access Token</th>
+                                    <td>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control font-monospace" id="tokenInput" 
+                                                   value="{{ observer.accessToken }}" readonly>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()" title="Copy token">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Observer URL</th>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <code class="me-2">{{ url('observer_viewer', {'token': observer.accessToken}) }}</code>
+                                            <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" 
+                                               class="btn btn-outline-success btn-sm" target="_blank" title="Open observer view">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr>
@@ -97,63 +110,46 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Access Token</h5>
+                        <h5>Quick Actions</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Token:</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" value="{{ observer.accessToken }}" readonly id="tokenInput">
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <form method="post" action="{{ path('observer_regenerate_token', {'id': observer.id}) }}" class="confirm-form" data-confirm-message="Are you sure you want to regenerate the access token? The current token will become invalid.">
-                            <input type="hidden" name="_token" value="{{ csrf_token('regenerate' ~ observer.id) }}">
-                            <button type="submit" class="btn btn-warning btn-sm">
-                                <i class="fas fa-refresh"></i> Regenerate Token
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5>Actions</h5>
-                    </div>
-                    <div class="card-body">
-                        <a href="{{ path('observer_edit', {'id': observer.id}) }}" class="btn btn-warning btn-sm mb-2">
-                            <i class="fas fa-edit"></i> Edit Observer
-                        </a>
-                        <br>
-                        <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" class="btn btn-success btn-sm mb-2" target="_blank">
-                            <i class="fas fa-map"></i> View Observer Map
-                        </a>
-                        <br>
-                        <form method="post" action="{{ path('observer_delete', {'id': observer.id}) }}" class="confirm-delete-form" data-confirm-message="Are you sure you want to delete this observer?">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ observer.id) }}">
-                            <button type="submit" class="btn btn-danger btn-sm">
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('observer_edit', {'id': observer.id}) }}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit Observer
+                            </a>
+                            
+                            <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" 
+                               class="btn btn-success" target="_blank">
+                                <i class="fas fa-map"></i> Open Map View
+                            </a>
+                            
+                            <hr>
+                            
+                            <button class="btn btn-outline-danger" 
+                                    onclick="confirmDelete('{{ path('observer_delete', {'id': observer.id}) }}', '{{ observer.name }}')">
                                 <i class="fas fa-trash"></i> Delete Observer
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mt-4">
+                <div class="card mt-3">
                     <div class="card-header">
-                        <h5>Usage Information</h5>
+                        <h6>Observer Statistics</h6>
                     </div>
                     <div class="card-body">
-                        <small class="text-muted">
-                            <strong>API Access:</strong><br>
-                            Use the access token to make API requests for this observer.<br><br>
-                            <strong>Map Access:</strong><br>
-                            This observer can only access the "{{ observer.map.title }}" map.<br><br>
-                            <strong>Rules:</strong><br>
-                            The rules configuration determines what this observer can see and do.
-                        </small>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h4 class="mb-1">{{ observer.rules|length }}</h4>
+                                    <small class="text-muted">Rules</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="mb-1">1</h4>
+                                <small class="text-muted">Map</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -165,26 +161,4 @@
             </a>
         </div>
     </div>
-
-    <script>
-        function copyToken() {
-            const tokenInput = document.getElementById('tokenInput');
-            tokenInput.select();
-            tokenInput.setSelectionRange(0, 99999);
-            document.execCommand('copy');
-            
-            // Show feedback
-            const button = event.target.closest('button');
-            const originalHTML = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-check"></i>';
-            button.classList.add('btn-success');
-            button.classList.remove('btn-outline-secondary');
-            
-            setTimeout(() => {
-                button.innerHTML = originalHTML;
-                button.classList.remove('btn-success');
-                button.classList.add('btn-outline-secondary');
-            }, 2000);
-        }
-    </script>
 {% endblock %} 

@@ -16,8 +16,6 @@ class ObserverViewerPage {
      * Initialize the observer viewer page
      */
     init() {
-        console.log('ObserverViewerPage: Initializing...');
-
         // Load geo objects data
         this.loadGeoObjectsData();
 
@@ -26,28 +24,60 @@ class ObserverViewerPage {
 
         // Setup page enhancements
         this.setupPageEnhancements();
+
+        // Fallback: Check if map is already ready after a short delay
+        setTimeout(() => {
+            this.checkForExistingMap();
+        }, 1000);
     }
 
     /**
-     * Load geo objects data from the embedded JSON script
+     * Check if map is already available (fallback mechanism)
+     */
+    checkForExistingMap() {
+        if (this.isMapReady) {
+            return;
+        }
+
+        // Check if tacticalMap is available globally
+        if (window.tacticalMap && window.tacticalMap.loadGeoObjects) {
+            this.mapInstance = window.tacticalMap;
+            this.isMapReady = true;
+            this.loadObjectsIntoMap();
+            this.markMapAsLoaded();
+        }
+    }
+
+    /**
+     * Load geo objects data from the map container data attribute
      */
     loadGeoObjectsData() {
-        const geoObjectsScript = document.getElementById('geo-objects-data');
+        const mapContainer = document.getElementById('map-container');
 
-        if (!geoObjectsScript) {
+        if (!mapContainer) {
+            console.error('ObserverViewerPage: Map container not found');
+            this.showError(
+                'Failed to load map container. Please refresh the page.'
+            );
+            return;
+        }
+
+        const geoObjectsData = mapContainer.getAttribute('data-geo-objects');
+
+        if (!geoObjectsData) {
             console.error(
-                'ObserverViewerPage: No geo-objects-data script found'
+                'ObserverViewerPage: No geo-objects data found in map container'
             );
             this.showError('Failed to load map data. Please refresh the page.');
             return;
         }
 
         try {
-            this.geoObjects = JSON.parse(geoObjectsScript.textContent);
+            this.geoObjects = JSON.parse(geoObjectsData);
             console.log(
-                'ObserverViewerPage: Parsed geo objects:',
+                'ObserverViewerPage: Loaded',
                 this.geoObjects.length,
-                'objects'
+                'geo objects'
             );
 
             // Update objects count in UI
@@ -68,22 +98,14 @@ class ObserverViewerPage {
      */
     setupMapReadyListener() {
         document.addEventListener('tactical-map-ready', (event) => {
-            console.log(
-                'ObserverViewerPage: Tactical map ready event received'
-            );
-
             if (event.detail?.map && event.detail.map.loadGeoObjects) {
                 this.mapInstance = event.detail.map;
                 this.isMapReady = true;
-
-                // Load geo objects into the map
                 this.loadObjectsIntoMap();
-
-                // Mark map container as loaded
                 this.markMapAsLoaded();
             } else {
                 console.error(
-                    'ObserverViewerPage: Map instance not found in event'
+                    'ObserverViewerPage: Invalid map instance in event'
                 );
                 this.showError(
                     'Failed to initialize map. Please refresh the page.'
@@ -98,6 +120,11 @@ class ObserverViewerPage {
     loadObjectsIntoMap() {
         if (!this.mapInstance || !this.isMapReady) {
             console.warn('ObserverViewerPage: Map not ready yet');
+            return;
+        }
+
+        if (!this.geoObjects || this.geoObjects.length === 0) {
+            console.warn('ObserverViewerPage: No geo objects to load');
             return;
         }
 
@@ -338,8 +365,6 @@ class ObserverViewerPage {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('ObserverViewerPage: DOM loaded, initializing...');
-
     // Create global instance
     window.observerViewerPage = new ObserverViewerPage();
 
