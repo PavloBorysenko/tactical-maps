@@ -22,74 +22,84 @@
                         <span class="badge bg-info">Observer</span>
                     </div>
                     <div class="card-body">
-                        <table class="table table-borderless">
-                            <tbody>
-                                <tr>
-                                    <th width="150">Name</th>
-                                    <td>{{ observer.name }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Description</th>
-                                    <td>
-                                        {% if observer.description %}
-                                            {{ observer.description }}
-                                        {% else %}
-                                            <span class="text-muted">No description</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Icon</th>
-                                    <td>
-                                        {% if observer.icon %}
-                                            <img src="{{ observer.icon }}" alt="Observer icon" class="rounded" style="width: 48px; height: 48px;">
-                                        {% else %}
-                                            <span class="text-muted">No icon</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Map</th>
-                                    <td>
-                                        <a href="{{ path('map_show', {'id': observer.map.id}) }}" class="text-decoration-none">
-                                            <span class="badge bg-primary">{{ observer.map.title }}</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Access Token</th>
-                                    <td>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control font-monospace" id="tokenInput" 
-                                                   value="{{ observer.accessToken }}" readonly>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()" title="Copy token">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Observer URL</th>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <code class="me-2">{{ url('observer_viewer', {'token': observer.accessToken}) }}</code>
-                                            <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" 
-                                               class="btn btn-outline-success btn-sm" target="_blank" title="Open observer view">
-                                                <i class="fas fa-external-link-alt"></i>
+                        <div class="table-responsive">
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <th width="150">Name</th>
+                                        <td>{{ observer.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Description</th>
+                                        <td>
+                                            {% if observer.description %}
+                                                {{ observer.description }}
+                                            {% else %}
+                                                <span class="text-muted">No description</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Icon</th>
+                                        <td>
+                                            {% if observer.icon %}
+                                                <img src="{{ observer.icon }}" alt="Observer icon" class="rounded" style="width: 48px; height: 48px;">
+                                            {% else %}
+                                                <span class="text-muted">No icon</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Map</th>
+                                        <td>
+                                            <a href="{{ path('map_show', {'id': observer.map.id}) }}" class="text-decoration-none">
+                                                <span class="badge bg-primary">{{ observer.map.title }}</span>
                                             </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Created</th>
-                                    <td>{{ observer.createdAt|date('Y-m-d H:i:s') }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Updated</th>
-                                    <td>{{ observer.updatedAt|date('Y-m-d H:i:s') }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Access Token</th>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control font-monospace" id="tokenInput" 
+                                                       value="{{ observer.accessToken }}" readonly 
+                                                       style="font-size: 0.85rem;">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="copyToken()" title="Copy token">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Observer URL</th>
+                                        <td>
+                                            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+                                                <code class="text-break flex-grow-1" style="font-size: 0.8rem; word-break: break-all;">{{ url('observer_viewer', {'token': observer.accessToken}) }}</code>
+                                                <div class="d-flex gap-1 flex-shrink-0">
+                                                    <button class="btn btn-outline-primary btn-sm copy-url-btn" 
+                                                            data-url="{{ url('observer_viewer', {'token': observer.accessToken}) }}"
+                                                            title="Copy URL">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                    <a href="{{ path('observer_viewer', {'token': observer.accessToken}) }}" 
+                                                       class="btn btn-outline-success btn-sm" target="_blank" title="Open observer view">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Created</th>
+                                        <td>{{ observer.createdAt|date('Y-m-d H:i:s') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Updated</th>
+                                        <td>{{ observer.updatedAt|date('Y-m-d H:i:s') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -99,7 +109,7 @@
                     </div>
                     <div class="card-body">
                         {% if observer.rules %}
-                            <pre class="bg-light p-3 rounded"><code>{{ observer.rules|json_encode(constant('JSON_PRETTY_PRINT')) }}</code></pre>
+                            <pre class="bg-light p-3 rounded text-break"><code>{{ observer.rules|json_encode(constant('JSON_PRETTY_PRINT')) }}</code></pre>
                         {% else %}
                             <p class="text-muted">No rules configured</p>
                         {% endif %}

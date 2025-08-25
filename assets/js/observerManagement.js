@@ -20,6 +20,7 @@ class ObserverManagement {
         // Setup other observer management features
         this.setupAccessLinkGeneration();
         this.setupTokenRefresh();
+        this.setupUrlCopying();
     }
 
     /**
@@ -81,6 +82,34 @@ class ObserverManagement {
     }
 
     /**
+     * Setup URL copying functionality
+     */
+    setupUrlCopying() {
+        const copyUrlButtons = document.querySelectorAll('.copy-url-btn');
+
+        copyUrlButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                const url = button.getAttribute('data-url');
+                if (!url) {
+                    console.error(
+                        'ObserverManagement: No URL found in button data'
+                    );
+                    this.showError('No URL to copy');
+                    return;
+                }
+
+                this.copyToClipboard(url, button);
+            });
+        });
+
+        console.log(
+            `ObserverManagement: Setup ${copyUrlButtons.length} copy URL buttons`
+        );
+    }
+
+    /**
      * Copy text to clipboard with visual feedback
      */
     async copyToClipboard(text, button, isInputBased = false) {
@@ -109,10 +138,10 @@ class ObserverManagement {
             // Show success feedback
             this.showCopySuccess(button);
 
-            console.log('ObserverManagement: Token copied successfully');
+            console.log('ObserverManagement: Text copied successfully');
         } catch (error) {
-            console.error('ObserverManagement: Failed to copy token:', error);
-            this.showError('Failed to copy token to clipboard');
+            console.error('ObserverManagement: Failed to copy text:', error);
+            this.showError('Failed to copy to clipboard');
         }
     }
 
@@ -147,7 +176,9 @@ class ObserverManagement {
         setTimeout(() => {
             button.innerHTML = originalContent;
             button.className = originalClasses;
-            button.title = 'Copy token';
+            button.title = button.classList.contains('copy-url-btn')
+                ? 'Copy URL'
+                : 'Copy token';
             button.disabled = false;
         }, 2000);
     }
@@ -274,6 +305,19 @@ class ObserverManagement {
                 display.textContent = newToken;
             }
         });
+
+        // Update URL buttons with new token
+        const urlButtons = document.querySelectorAll('.copy-url-btn');
+        urlButtons.forEach((button) => {
+            const currentUrl = button.getAttribute('data-url');
+            if (currentUrl && currentUrl.includes('/observer/')) {
+                const newUrl = currentUrl.replace(
+                    /\/observer\/[^\/]+/,
+                    `/observer/${newToken}`
+                );
+                button.setAttribute('data-url', newUrl);
+            }
+        });
     }
 
     /**
@@ -324,10 +368,12 @@ class ObserverManagement {
         const copyButtons = document.querySelectorAll('.copy-token-btn').length;
         const refreshButtons =
             document.querySelectorAll('.refresh-token-btn').length;
+        const urlButtons = document.querySelectorAll('.copy-url-btn').length;
 
         return {
             copyButtonsCount: copyButtons,
             refreshButtonsCount: refreshButtons,
+            urlButtonsCount: urlButtons,
             hasTokenInput: !!document.getElementById('tokenInput'),
         };
     }
