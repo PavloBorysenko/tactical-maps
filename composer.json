@@ -11,6 +11,7 @@
         "doctrine/doctrine-bundle": "^2.14",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
+        "justinrainbow/json-schema": "^6.4",
         "mjaschen/phpgeo": "^6.0",
         "overblog/graphql-bundle": "^1.7",
         "phpdocumentor/reflection-docblock": "^5.6",

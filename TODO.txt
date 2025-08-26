@@ -1,4 +1,4 @@
-fix template styles js
+discoverRuleClasses  исправить
 create  rules functionality 
 create page to add rules
 create action functionality
