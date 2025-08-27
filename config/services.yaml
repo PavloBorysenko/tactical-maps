@@ -23,3 +23,36 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # === Observer Rules System (Stage 1) ===
+
+    # Rule Factory - manages rule instances with validation and priority sorting
+    App\Service\Rule\RuleFactory:
+        arguments:
+            $rules: !tagged_iterator observer.rule
+            $configValidator: '@App\Service\Rule\RuleValidatorInterface'
+            $logger: '@logger'
+
+    # Interface bindings
+    App\Service\Rule\RuleFactoryInterface: '@App\Service\Rule\RuleFactory'
+    App\Service\Rule\RuleValidatorInterface: '@App\Service\RuleConfigValidator'
+
+    # JSON Schema validator (static approach for better performance)
+    App\Service\RuleConfigValidator:
+        arguments:
+            $logger: '@logger'
+
+    # Main Observer Rule Service (Stage 1 - validation + graceful fallback)
+    App\Service\ObserverRuleService:
+        arguments:
+            $geoObjectRepository: '@App\Repository\GeoObjectRepository'
+            $ruleFactory: '@App\Service\Rule\RuleFactoryInterface'
+            $logger: '@logger'
+
+    # Automatic registration of all rules with observer.rule tag
+    App\Service\Rule\:
+        resource: '../src/Service/Rule/*'
+        exclude:
+            - '../src/Service/Rule/AbstractObserverRule.php'
+            - '../src/Service/Rule/*Interface.php'
+        tags: ['observer.rule']
