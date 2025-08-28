@@ -1,4 +1,4 @@
-discoverRuleClasses  исправить
+ObjectIdRuleTest проверить
 create  rules functionality 
 create page to add rules
 create action functionality
