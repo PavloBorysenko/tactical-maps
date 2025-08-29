@@ -51,9 +51,8 @@ class ObserverRuleService
             $rules = $this->validateAndCreateRules($rulesConfig);
             $this->logRulesValidated($observer, $rules);
             
-            // TODO: Stage 2+ - Apply actual rules here
-            // For now, return default result
-            return $this->getDefaultGeoObjects($observer);
+            // Apply rules using hybrid SQL+Memory approach
+            return $this->applyRulesToObserver($observer, $rules);
             
         } catch (InvalidRuleConfigurationException $e) {
             $this->logValidationError($observer, $rulesConfig, $e);
@@ -97,6 +96,57 @@ class ObserverRuleService
             'observer' => $observer->getName(),
             'rules_count' => count($rules)
         ]);
+    }
+
+    /**
+     * Apply rules to observer using hybrid SQL+Memory approach
+     * 
+     * @param Observer $observer Observer entity
+     * @param array $rules Validated rules array
+     * @return array Array of filtered GeoObject entities
+     */
+    private function applyRulesToObserver(Observer $observer, array $rules): array
+    {
+        $map = $observer->getMap();
+        
+        // Phase 1: SQL-level filtering
+        $queryBuilder = $this->geoObjectRepository->createQueryBuilder('g')
+            ->where('g.map = :map')
+            ->andWhere('g.isActive = true')
+            ->setParameter('map', $map);
+        
+        // Apply SQL-compatible rules to QueryBuilder
+        foreach ($rules as $ruleData) {
+            $rule = $ruleData['rule'];
+            $config = $ruleData['config'];
+            
+            $queryBuilder = $rule->applyToQuery($queryBuilder, $config);
+        }
+        
+        // Execute SQL query to get pre-filtered objects
+        $geoObjects = $queryBuilder->getQuery()->getResult();
+        
+        $this->logger->debug('SQL phase completed', [
+            'observer' => $observer->getName(),
+            'objects_after_sql' => count($geoObjects),
+            'applied_rules' => count($rules)
+        ]);
+        
+        // Phase 2: Memory-level filtering for complex rules
+        foreach ($rules as $ruleData) {
+            $rule = $ruleData['rule'];
+            $config = $ruleData['config'];
+            
+            $geoObjects = $rule->applyToObjects($geoObjects, $config);
+        }
+        
+        $this->logger->info('Rules applied successfully', [
+            'observer' => $observer->getName(),
+            'final_objects_count' => count($geoObjects),
+            'rules_applied' => count($rules)
+        ]);
+        
+        return $geoObjects;
     }
 
     /**

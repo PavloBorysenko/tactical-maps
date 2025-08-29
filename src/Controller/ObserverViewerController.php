@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Observer;
 use App\Repository\ObserverRepository;
-use App\Repository\GeoObjectRepository;
+use App\Service\ObserverRuleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,7 +16,7 @@ class ObserverViewerController extends AbstractController
     public function view(
         string $token,
         ObserverRepository $observerRepository,
-        GeoObjectRepository $geoObjectRepository
+        ObserverRuleService $observerRuleService
     ): Response {
         // Find observer by access token
         $observer = $observerRepository->findByAccessToken($token);
@@ -25,14 +25,12 @@ class ObserverViewerController extends AbstractController
             throw new NotFoundHttpException('Observer not found or invalid token');
         }
         
-        // Get the map associated with this observer
-        $map = $observer->getMap();
-        
-        // Get ALL active geo objects for this map (ignoring side visibility constraints)
-        // Observer should see all objects, not filtered by side visibility
-        $geoObjects = $geoObjectRepository->findActiveByMapForObserver($map);
+        // Get filtered geo objects using new rule service (Stage 2 integration)
+        // This will apply any configured rules or fallback to default behavior
+        $geoObjects = $observerRuleService->getFilteredGeoObjects($observer);
         
         // Debug information
+        $map = $observer->getMap();
         error_log('=== Observer Debug ===');
         error_log('Observer: ' . $observer->getName());
         error_log('Map: ' . $map->getTitle() . ' (ID: ' . $map->getId() . ')');
