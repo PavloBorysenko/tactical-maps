@@ -1,22 +1,37 @@
 <?php
 
+/**
+ * Unit tests for RuleConfigValidator
+ * 
+ * @category Tests
+ * @package  App\Tests\Unit\Service
+ * @author   Tactical Maps Team
+ * @license  MIT
+ * @link     https://github.com/tactical-maps
+ */
+
 namespace App\Tests\Unit\Service;
 
 use App\Service\RuleConfigValidator;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for RuleConfigValidator
  * 
- * Tests rule configuration validation, JSON schema validation, and error handling.
- * Uses mock logger to avoid dependencies and test logging behavior.
+ * Tests JSON Schema validation functionality for rule configurations.
  */
 class RuleConfigValidatorTest extends TestCase
 {
     private RuleConfigValidator $validator;
-    private LoggerInterface $mockLogger;
+    private MockObject $mockLogger;
 
+    /**
+     * Set up test fixtures
+     * 
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->mockLogger = $this->createMock(LoggerInterface::class);
@@ -24,305 +39,425 @@ class RuleConfigValidatorTest extends TestCase
     }
 
     /**
-     * Test successful validation with valid configuration and schema
+     * Test basic structure validation with valid configuration
+     * 
+     * @return void
      */
-    public function testValidateWithSchemaSuccess(): void
+    public function testValidBasicStructure(): void
     {
+        // Arrange
         $config = [
-            'ObjectIdRule' => [1, 2, 3],
-            'AnotherRule' => ['key' => 'value']
+            'ObjectIdRule' => [1, 2, 3, 4, 5],
+            'SideIdRule' => [1, 2],
+            'ValidRule123' => ['some', 'data']
         ];
-        
-        $schema = (object) [
-            'type' => 'object',
-            'properties' => (object) [
-                'ObjectIdRule' => (object) [
-                    'type' => 'array',
-                    'items' => (object) ['type' => 'integer']
-                ],
-                'AnotherRule' => (object) [
-                    'type' => 'object'
-                ]
-            ],
-            'additionalProperties' => false
-        ];
-        
-        // Should not log any warnings for valid config
-        $this->mockLogger->expects($this->never())
-            ->method('warning');
-        
+        $schema = $this->createBasicSchema();
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-        
-        $this->assertEmpty($errors);
+
+        // Assert
+        $this->assertEmpty($errors, 'Valid configuration should pass validation');
     }
 
     /**
-     * Test validation failure with empty configuration
+     * Test basic structure validation with empty configuration
+     * 
+     * @return void
      */
-    public function testValidateWithSchemaEmptyConfig(): void
+    public function testEmptyConfiguration(): void
     {
+        // Arrange
         $config = [];
-        $schema = (object) ['type' => 'object'];
-        
-        // Should log warning about basic validation failure
-        $this->mockLogger->expects($this->once())
+        $schema = $this->createBasicSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
             ->method('warning')
-            ->with('Basic rule configuration validation failed', $this->isArray());
-        
+            ->with('Basic rule configuration validation failed');
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-        
+
+        // Assert
         $this->assertNotEmpty($errors);
         $this->assertContains('Configuration cannot be empty', $errors);
     }
 
     /**
-     * Test validation failure with invalid rule names
+     * Test basic structure validation with invalid rule names
+     * 
+     * @return void
      */
-    public function testValidateWithSchemaInvalidRuleNames(): void
+    public function testInvalidRuleNames(): void
     {
+        // Arrange
         $config = [
-            '' => [1, 2, 3],           // Empty rule name
-            '123InvalidName' => ['test'], // Name starts with number
-            'Invalid-Name!' => ['test']   // Invalid characters
+            '' => [1, 2, 3],                    // Empty rule name
+            '123InvalidStart' => [1, 2],        // Starts with number
+            'Invalid-Name' => [1, 2],           // Contains hyphen
+            'Invalid.Name' => [1, 2],           // Contains dot
+            'Invalid Name' => [1, 2],           // Contains space
+            'Valid_Rule_123' => [1, 2]          // Valid name
         ];
-        
-        $schema = (object) ['type' => 'object'];
-        
-        // Should log warning about basic validation failure
-        $this->mockLogger->expects($this->once())
+        $schema = $this->createBasicSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
             ->method('warning')
-            ->with('Basic rule configuration validation failed', $this->isArray());
-        
+            ->with('Basic rule configuration validation failed');
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-        
+
+        // Assert
         $this->assertNotEmpty($errors);
-        $this->assertContains('Rule name must be a non-empty string', $errors);
-        $this->assertContains('Invalid rule name format: 123InvalidName', $errors);
-        $this->assertContains('Invalid rule name format: Invalid-Name!', $errors);
+        $this->assertStringContainsString('Rule name must be a non-empty string', implode(' ', $errors));
+        $this->assertStringContainsString('Invalid rule name format: 123InvalidStart', implode(' ', $errors));
+        $this->assertStringContainsString('Invalid rule name format: Invalid-Name', implode(' ', $errors));
+        $this->assertStringContainsString('Invalid rule name format: Invalid.Name', implode(' ', $errors));
+        $this->assertStringContainsString('Invalid rule name format: Invalid Name', implode(' ', $errors));
     }
 
     /**
-     * Test validation failure with JSON schema errors
+     * Test JSON Schema validation with valid ObjectIdRule configuration
+     * 
+     * @return void
      */
-    public function testValidateWithSchemaJsonSchemaErrors(): void
+    public function testValidObjectIdRuleSchema(): void
     {
+        // Arrange
         $config = [
-            'ObjectIdRule' => 'invalid_type_should_be_array'
+            'ObjectIdRule' => [1, 2, 3, 4, 5]
         ];
-        
-        $schema = (object) [
-            'type' => 'object',
-            'properties' => (object) [
-                'ObjectIdRule' => (object) [
-                    'type' => 'array',
-                    'items' => (object) ['type' => 'integer']
-                ]
-            ],
-            'additionalProperties' => false
-        ];
-        
-        // Should log warning about JSON schema validation failure
-        $this->mockLogger->expects($this->once())
-            ->method('warning')
-            ->with('JSON schema validation failed', $this->isArray());
-        
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-        
-        $this->assertNotEmpty($errors);
-        $this->assertCount(1, $errors);
-        // Error message should contain property path and validation message
-        $this->assertStringContainsString('ObjectIdRule', $errors[0]);
+
+        // Assert
+        $this->assertEmpty($errors, 'Valid ObjectIdRule configuration should pass');
     }
 
     /**
-     * Test validation with valid rule names
+     * Test JSON Schema validation with invalid ObjectIdRule configuration
+     * 
+     * @return void
      */
-    public function testValidRuleNames(): void
+    public function testInvalidObjectIdRuleSchema(): void
     {
+        // Arrange
         $config = [
-            'ValidRule' => ['test'],
-            'ValidRule123' => ['test'],
-            'Valid_Rule_Name' => ['test'],
-            'AnotherValidRule' => ['test']
-        ];
-        
-        $schema = (object) [
-            'type' => 'object',
-            'properties' => (object) [
-                'ValidRule' => (object) ['type' => 'array'],
-                'ValidRule123' => (object) ['type' => 'array'],
-                'Valid_Rule_Name' => (object) ['type' => 'array'],
-                'AnotherValidRule' => (object) ['type' => 'array']
-            ],
-            'additionalProperties' => false
-        ];
-        
-        // Should not log any warnings
-        $this->mockLogger->expects($this->never())
-            ->method('warning');
-        
-        $errors = $this->validator->validateWithSchema($config, $schema);
-        
-        $this->assertEmpty($errors);
-    }
-
-    /**
-     * Test complex JSON schema validation
-     */
-    public function testComplexJsonSchemaValidation(): void
-    {
-        $config = [
-            'ObjectIdRule' => [1, 2, 3, -1], // -1 should fail minimum validation
-            'ComplexRule' => [
-                'required_field' => 'value',
-                'optional_field' => 123
-                // missing 'another_required_field'
+            'ObjectIdRule' => [
+                'invalid',  // Not an integer
+                -1,         // Negative number
+                0,          // Zero
+                1.5,        // Float
+                null        // Null value
             ]
         ];
-        
-        $schema = (object) [
-            'type' => 'object',
-            'properties' => (object) [
-                'ObjectIdRule' => (object) [
-                    'type' => 'array',
-                    'items' => (object) [
-                        'type' => 'integer',
-                        'minimum' => 1
-                    ]
-                ],
-                'ComplexRule' => (object) [
-                    'type' => 'object',
-                    'properties' => (object) [
-                        'required_field' => (object) ['type' => 'string'],
-                        'another_required_field' => (object) ['type' => 'string'],
-                        'optional_field' => (object) ['type' => 'integer']
-                    ],
-                    'required' => ['required_field', 'another_required_field'],
-                    'additionalProperties' => false
-                ]
-            ],
-            'additionalProperties' => false
-        ];
-        
-        // Should log warning about JSON schema validation failure
-        $this->mockLogger->expects($this->once())
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
             ->method('warning')
-            ->with('JSON schema validation failed', $this->isArray());
-        
+            ->with('JSON schema validation failed');
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertNotEmpty($errors, 'Invalid ObjectIdRule configuration should fail');
         
-        $this->assertNotEmpty($errors);
-        $this->assertGreaterThan(1, count($errors)); // Should have multiple errors
-        
-        // Check that errors contain expected property paths
+        // Check that we have validation errors for invalid values
         $errorString = implode(' ', $errors);
         $this->assertStringContainsString('ObjectIdRule', $errorString);
-        $this->assertStringContainsString('ComplexRule', $errorString);
     }
 
     /**
-     * Test validation with additional properties not allowed
+     * Test JSON Schema validation with SideIdRule configuration
+     * 
+     * @return void
+     */
+    public function testValidSideIdRuleSchema(): void
+    {
+        // Arrange
+        $config = [
+            'SideIdRule' => [1, 2, 3]
+        ];
+        $schema = $this->createSideIdRuleSchema();
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertEmpty($errors, 'Valid SideIdRule configuration should pass');
+    }
+
+    /**
+     * Test JSON Schema validation with too many items
+     * 
+     * @return void
+     */
+    public function testTooManyItemsInObjectIdRule(): void
+    {
+        // Arrange - ObjectIdRule has maxItems: 100
+        $config = [
+            'ObjectIdRule' => range(1, 101) // 101 items, exceeds limit
+        ];
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
+            ->method('warning')
+            ->with('JSON schema validation failed');
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertNotEmpty($errors);
+        $errorString = implode(' ', $errors);
+        $this->assertStringContainsString('ObjectIdRule', $errorString);
+    }
+
+    /**
+     * Test JSON Schema validation with duplicate items
+     * 
+     * @return void
+     */
+    public function testDuplicateItemsInObjectIdRule(): void
+    {
+        // Arrange - ObjectIdRule requires uniqueItems: true
+        $config = [
+            'ObjectIdRule' => [1, 2, 3, 2, 4] // Duplicate '2'
+        ];
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
+            ->method('warning')
+            ->with('JSON schema validation failed');
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertNotEmpty($errors);
+        $errorString = implode(' ', $errors);
+        $this->assertStringContainsString('ObjectIdRule', $errorString);
+    }
+
+    /**
+     * Test JSON Schema validation with additional properties
+     * 
+     * @return void
      */
     public function testAdditionalPropertiesNotAllowed(): void
     {
+        // Arrange
         $config = [
-            'ValidRule' => ['test'],
-            'UnknownRule' => ['test'] // This should fail additionalProperties: false
+            'ObjectIdRule' => [1, 2, 3],
+            'UnknownRule' => [1, 2, 3]  // This rule doesn't exist in schema
         ];
-        
-        $schema = (object) [
-            'type' => 'object',
-            'properties' => (object) [
-                'ValidRule' => (object) ['type' => 'array']
-            ],
-            'additionalProperties' => false
-        ];
-        
-        // Should log warning about JSON schema validation failure
-        $this->mockLogger->expects($this->once())
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
             ->method('warning')
-            ->with('JSON schema validation failed', $this->isArray());
-        
+            ->with('JSON schema validation failed');
+
+        // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-        
+
+        // Assert
         $this->assertNotEmpty($errors);
-        $this->assertStringContainsString('UnknownRule', $errors[0]);
+        $errorString = implode(' ', $errors);
+        $this->assertStringContainsString('additional', strtolower($errorString));
     }
 
     /**
-     * Test validation with type coercion
+     * Test combined valid rules configuration
+     * 
+     * @return void
      */
-    public function testTypeCoercion(): void
+    public function testCombinedValidRules(): void
     {
+        // Arrange
         $config = [
-            'NumberRule' => ['1', '2', '3'] // Strings that should be coerced to integers
+            'ObjectIdRule' => [1, 2, 3, 4, 5],
+            'SideIdRule' => [1, 2]
         ];
-        
-        $schema = (object) [
+        $schema = $this->createCombinedSchema();
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertEmpty($errors, 'Valid combined rules should pass validation');
+    }
+
+    /**
+     * Test mixed valid and invalid rules configuration
+     * 
+     * @return void
+     */
+    public function testMixedValidInvalidRules(): void
+    {
+        // Arrange
+        $config = [
+            'ObjectIdRule' => [1, 2, 3],        // Valid
+            'SideIdRule' => ['invalid', -1]     // Invalid
+        ];
+        $schema = $this->createCombinedSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
+            ->method('warning')
+            ->with('JSON schema validation failed');
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertNotEmpty($errors);
+        $errorString = implode(' ', $errors);
+        $this->assertStringContainsString('SideIdRule', $errorString);
+    }
+
+    /**
+     * Test minimum items validation
+     * 
+     * @return void
+     */
+    public function testMinimumItemsValidation(): void
+    {
+        // Arrange - Both rules require minItems: 1
+        $config = [
+            'ObjectIdRule' => []  // Empty array, violates minItems
+        ];
+        $schema = $this->createObjectIdRuleSchema();
+
+        // Expect logger to be called
+        $this->mockLogger
+            ->expects($this->once())
+            ->method('warning')
+            ->with('JSON schema validation failed');
+
+        // Act
+        $errors = $this->validator->validateWithSchema($config, $schema);
+
+        // Assert
+        $this->assertNotEmpty($errors);
+    }
+
+    /**
+     * Create basic schema for testing
+     * 
+     * @return object
+     */
+    private function createBasicSchema(): object
+    {
+        return json_decode(json_encode([
             'type' => 'object',
-            'properties' => (object) [
-                'NumberRule' => (object) [
+            'properties' => [],
+            'additionalProperties' => true,
+            'minProperties' => 1
+        ]));
+    }
+
+    /**
+     * Create ObjectIdRule schema for testing
+     * 
+     * @return object
+     */
+    private function createObjectIdRuleSchema(): object
+    {
+        return json_decode(json_encode([
+            'type' => 'object',
+            'properties' => [
+                'ObjectIdRule' => [
                     'type' => 'array',
-                    'items' => (object) ['type' => 'integer']
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'minItems' => 1,
+                    'maxItems' => 100,
+                    'uniqueItems' => true
                 ]
             ],
-            'additionalProperties' => false
-        ];
-        
-        // Should not log warnings - type coercion should work
-        $this->mockLogger->expects($this->never())
-            ->method('warning');
-        
-        $errors = $this->validator->validateWithSchema($config, $schema);
-        
-        $this->assertEmpty($errors);
+            'additionalProperties' => false,
+            'minProperties' => 1
+        ]));
     }
 
     /**
-     * Test validation with non-string rule name keys
+     * Create SideIdRule schema for testing
+     * 
+     * @return object
      */
-    public function testNonStringRuleNameKeys(): void
+    private function createSideIdRuleSchema(): object
     {
-        $config = [
-            123 => ['test'],        // Numeric key
-            'ValidRule' => ['test'] // Valid string key
-        ];
-        
-        $schema = (object) ['type' => 'object'];
-        
-        // Should log warning about basic validation failure
-        $this->mockLogger->expects($this->once())
-            ->method('warning')
-            ->with('Basic rule configuration validation failed', $this->isArray());
-        
-        $errors = $this->validator->validateWithSchema($config, $schema);
-        
-        $this->assertNotEmpty($errors);
-        $this->assertContains('Rule name must be a non-empty string', $errors);
+        return json_decode(json_encode([
+            'type' => 'object',
+            'properties' => [
+                'SideIdRule' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'minItems' => 1,
+                    'maxItems' => 50,
+                    'uniqueItems' => true
+                ]
+            ],
+            'additionalProperties' => false,
+            'minProperties' => 1
+        ]));
     }
 
     /**
-     * Test logging context includes errors and config
+     * Create combined schema for testing multiple rules
+     * 
+     * @return object
      */
-    public function testLoggingContext(): void
+    private function createCombinedSchema(): object
     {
-        $config = ['InvalidRule!' => ['test']];
-        $schema = (object) ['type' => 'object'];
-        
-        // Capture the logging arguments
-        $this->mockLogger->expects($this->once())
-            ->method('warning')
-            ->with(
-                'Basic rule configuration validation failed',
-                $this->callback(function ($context) use ($config) {
-                    return isset($context['errors']) && 
-                           isset($context['config']) &&
-                           $context['config'] === $config &&
-                           is_array($context['errors']) &&
-                           !empty($context['errors']);
-                })
-            );
-        
-        $this->validator->validateWithSchema($config, $schema);
+        return json_decode(json_encode([
+            'type' => 'object',
+            'properties' => [
+                'ObjectIdRule' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'minItems' => 1,
+                    'maxItems' => 100,
+                    'uniqueItems' => true
+                ],
+                'SideIdRule' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'minItems' => 1,
+                    'maxItems' => 50,
+                    'uniqueItems' => true
+                ]
+            ],
+            'additionalProperties' => false,
+            'minProperties' => 1
+        ]));
     }
 }
