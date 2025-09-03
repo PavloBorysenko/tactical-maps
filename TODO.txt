@@ -1,5 +1,5 @@
-ObjectIdRuleTest проверить
 create  rules functionality 
+add function on geoobject to observer
 create page to add rules
 create action functionality
 refactor php

@@ -143,7 +143,7 @@ class ObjectIdRule extends AbstractObserverRule
 }
 ```
 
-### 1.4 JSON Schema валидатор (статический подход для лучшей производительности)
+### 1.4 JSON Schema validator (static approach for better performance)
 
 **File: `src/Service/RuleConfigValidator.php`**
 
@@ -347,7 +347,7 @@ class ObserverRuleService
 }
 ```
 
-### 1.5 RuleFactory для динамической работы с правилами
+### 1.5 RuleFactory for dynamic rule management
 
 **File: `src/Service/Rule/RuleFactory.php`**
 
@@ -427,12 +427,12 @@ class RuleFactory implements RuleFactoryInterface
 }
 ```
 
-### 1.7 services.yaml configuration (обновлено для новой архитектуры)
+### 1.7 services.yaml configuration (updated for new architecture)
 
 ```yaml
 # config/services.yaml
 services:
-    # Rule Factory - центральная фабрика правил
+    # Rule Factory - central rule factory
     App\Service\Rule\RuleFactory:
         arguments:
             $rules: !tagged_iterator observer.rule
@@ -442,12 +442,12 @@ services:
     App\Service\Rule\RuleFactoryInterface: '@App\Service\Rule\RuleFactory'
     App\Service\Rule\RuleValidatorInterface: '@App\Service\RuleConfigValidator'
 
-    # JSON Schema validator с статическими схемами (без зависимости от RuleFactory)
+    # JSON Schema validator with static schemas (no dependency on RuleFactory)
     App\Service\RuleConfigValidator:
         arguments:
             $logger: '@logger'
 
-    # Main rule service (упрощенный)
+    # Main rule service (simplified)
     App\Service\ObserverRuleService:
         arguments:
             $logger: '@logger'
@@ -462,7 +462,7 @@ services:
         tags: ['observer.rule']
 ```
 
-### 1.8 Интерфейсы для основных компонентов
+### 1.8 Interfaces for core components
 
 **File: `src/Service/Rule/RuleInterface.php`**
 
@@ -578,25 +578,25 @@ interface RuleFactoryInterface
 }
 ```
 
-## 🚀 **АРХИТЕКТУРНЫЕ УЛУЧШЕНИЯ (Stage 1.1)**
+## 🚀 **ARCHITECTURAL IMPROVEMENTS (Stage 1.1)**
 
-### ✨ **Улучшенная архитектура с динамическими схемами**
+### ✨ **Enhanced architecture with dynamic schemas**
 
-**Проблемы старого подхода:**
+**Problems with the old approach:**
 
--   ❌ Нарушение Single Responsibility - валидатор знал о всех правилах
--   ❌ Нарушение Open/Closed - для нового правила нужно было менять валидатор
--   ❌ Тесная связанность - схемы разбросаны по разным классам
+-   ❌ Single Responsibility violation - validator knew about all rules
+-   ❌ Open/Closed violation - new rule required changing validator
+-   ❌ Tight coupling - schemas scattered across different classes
 
-**Новое решение:**
+**New solution:**
 
--   ✅ **Каждое правило определяет свою схему** через `getConfigSchema()`
--   ✅ **Динамическое построение схемы** из всех доступных правил
--   ✅ **Open/Closed принцип** - новые правила добавляются без изменений
--   ✅ **Single Responsibility** - каждый класс отвечает за свою часть
--   ✅ **Cohesion** - все о правиле в одном месте
+-   ✅ **Each rule defines its own schema** via `getConfigSchema()`
+-   ✅ **Dynamic schema building** from all available rules
+-   ✅ **Open/Closed principle** - new rules added without changes
+-   ✅ **Single Responsibility** - each class responsible for its part
+-   ✅ **Cohesion** - everything about a rule in one place
 
-**Пример добавления нового правила:**
+**Example of adding a new rule:**
 
 ```php
 class RadiusRule extends AbstractObserverRule
@@ -612,73 +612,73 @@ class RadiusRule extends AbstractObserverRule
         ];
     }
 }
-// Валидатор автоматически подхватит схему!
+// Validator will automatically pick up the schema!
 ```
 
-### 🎯 **Упрощение архитектуры - удаление canApplyToQuery()**
+### 🎯 **Architecture simplification - removing canApplyToQuery()**
 
-**Проблема старого подхода:**
+**Problem with the old approach:**
 
 ```php
-// ❌ Было: Лишняя сложность и условная логика
+// ❌ Was: Unnecessary complexity and conditional logic
 if ($rule->canApplyToQuery()) {
     $queryBuilder = $rule->applyToQuery($queryBuilder, $config);
 }
 ```
 
-**Новое решение:**
+**New solution:**
 
 ```php
-// ✅ Стало: Всегда вызываем, правило само решает
+// ✅ Now: Always call, rule decides itself
 $queryBuilder = $rule->applyToQuery($queryBuilder, $config);
 
-// Если правило не может применяться к SQL - возвращает неизмененный QB
+// If rule cannot be applied to SQL - returns unchanged QB
 public function applyToQuery(QueryBuilder $qb, array $config): QueryBuilder {
-    return $qb; // Отложить на memory phase
+    return $qb; // Defer to memory phase
 }
 ```
 
-**Преимущества:**
+**Advantages:**
 
--   ✅ **Меньше кода** - на один метод и условие меньше
--   ✅ **YAGNI принцип** - убрали overengineering
--   ✅ **Больше гибкости** - правила могут быть "умными"
--   ✅ **Проще тестировать** - нет условной логики
+-   ✅ **Less code** - one less method and condition
+-   ✅ **YAGNI principle** - removed overengineering
+-   ✅ **More flexibility** - rules can be "smart"
+-   ✅ **Easier to test** - no conditional logic
 
-### 🚀 **Статический getConfigSchema() - оптимизация производительности**
+### 🚀 **Static getConfigSchema() - performance optimization**
 
-**Проблема старого подхода:**
+**Problem with the old approach:**
 
 ```php
-// ❌ Было: Нужно создавать объекты для получения схем
+// ❌ Was: Need to create objects to get schemas
 foreach ($allRules as $rule) {
     $schema = $rule->getConfigSchema(); // Instance method
 }
 ```
 
-**Новое решение:**
+**New solution:**
 
 ```php
-// ✅ Стало: Статический вызов без создания объектов
+// ✅ Now: Static call without object creation
 foreach ($ruleClasses as $ruleClass) {
     $schema = $ruleClass::getConfigSchema(); // Static call!
 }
 ```
 
-**Результаты тестирования:**
+**Test results:**
 
--   ⚡ **Статические вызовы**: 0.05ms (1000 раз)
--   🐌 **Создание объектов**: 0.09ms (1000 раз)
--   🚀 **Улучшение**: **1.8x быстрее!**
+-   ⚡ **Static calls**: 0.05ms (1000 times)
+-   🐌 **Object creation**: 0.09ms (1000 times)
+-   🚀 **Improvement**: **1.8x faster!**
 
-**Дополнительные преимущества:**
+**Additional advantages:**
 
--   ✅ **Логичность** - схема не зависит от состояния объекта
--   ✅ **Раннее обнаружение ошибок** - валидация ДО создания правил
--   ✅ **Упрощение архитектуры** - убрана зависимость от RuleFactory
--   ✅ **Автоматическое обнаружение** - правила находятся через файловую систему
+-   ✅ **Logical** - schema doesn't depend on object state
+-   ✅ **Early error detection** - validation BEFORE rule creation
+-   ✅ **Architecture simplification** - removed dependency on RuleFactory
+-   ✅ **Automatic discovery** - rules found through filesystem
 
-### ✅ Stage 1 success criteria (обновлено):
+### ✅ Stage 1 success criteria (updated):
 
 -   [x] Code compiles without errors
 -   [x] Service is registered in DI
@@ -805,7 +805,7 @@ class ObserverRuleService
     }
 
     /**
-     * Индексация правил по имени класса для быстрого доступа
+     * Index rules by class name for quick access
      */
     private function indexRules(): void
     {
@@ -874,7 +874,7 @@ class ObserverRuleService
     }
 
     /**
-     * Применение правил в памяти с graceful error handling
+     * Apply rules in memory with graceful error handling
      */
     private function applyMemoryRules(array $geoObjects, array $rulesConfig, Observer $observer, array &$appliedRules, array &$failedRules): array
     {
@@ -900,14 +900,14 @@ class ObserverRuleService
     }
 
     /**
-     * Безопасное получение правила по имени из tagged services
+     * Safe rule retrieval by name from tagged services
      */
     private function getRule(string $ruleName): ?AbstractObserverRule
     {
-        // Санитизация имени правила
+        // Rule name sanitization
         $sanitizedName = $this->sanitizeRuleName($ruleName);
 
-        // Поиск в уже проиндексированных правилах
+        // Search in already indexed rules
         if (isset($this->ruleInstances[$sanitizedName])) {
             return $this->ruleInstances[$sanitizedName];
         }
@@ -1034,11 +1034,11 @@ composer require justinrainbow/json-schema
 
 ---
 
-## 📋 Stage 3.5: Рефакторинг архитектуры (Специализированные сервисы)
+## 📋 Stage 3.5: Architecture Refactoring (Specialized Services)
 
 **Time: 2 days | Risk: Medium**
 
-### 3.5.1 RuleFactory - Фабрика правил
+### 3.5.1 RuleFactory - Rule Factory
 
 **File: `src/Service/Rule/RuleFactory.php`**
 
@@ -1124,7 +1124,7 @@ class RuleFactory implements RuleFactoryInterface
 }
 ```
 
-### 3.5.2 MetricsCollector - Сбор метрик производительности
+### 3.5.2 MetricsCollector - Performance Metrics Collection
 
 **File: `src/Service/Rule/MetricsCollector.php`**
 
@@ -1288,7 +1288,7 @@ class MetricsCollector implements MetricsCollectorInterface
 }
 ```
 
-### 3.5.3 RuleEngine - Движок применения правил
+### 3.5.3 RuleEngine - Rule Application Engine
 
 **File: `src/Service/Rule/RuleEngine.php`**
 
@@ -1538,11 +1538,12 @@ services:
 
 ## 📋 Stages 4-8: Additional Implementation Details
 
-### Stage 4: SQL-Compatible Rules (2-3 days | Medium Risk)
+### Stage 4: Stateful Rules and Rule Combinations (3-4 days | Medium-High Risk)
 
--   Add SideVisibilityRule, TtlRule
--   Implement multiple rule processing
--   Test rule combinations
+-   Implement StatefulRuleInterface and RuleStateManager
+-   Create RequestLimitRule and TimeLimitRule (stateful rules)
+-   Test rule combinations (ObjectIdRule + SideIdRule + stateful rules)
+-   Performance testing with multiple rules
 
 ### Stage 5: Geospatial Rules and Hybrid Logic (3-4 days | High Risk)
 
@@ -1751,3 +1752,541 @@ services:
 -   **Efficiency**: 6/10 → 9.5/10 ⬆️ **NEW!** (Статические методы, меньше связанности)
 -   **Readability**: 5/10 → 10/10 ⬆️ **NEW!** (Короткие методы, четкие имена, устранение дублирования)
 -   **Code Quality**: 6/10 → 10/10 ⬆️ **NEW!** (SRP, DRY, правильное именование методов)
+
+---
+
+## 📋 Stage 4.5: Dynamic (Stateful) Rules Implementation (Moved to Stage 4)
+
+**Time: Integrated into Stage 4 | Risk: Medium-High**
+
+### 🎯 Dynamic Rules Concept
+
+Implementation of stateful rules that can modify their configuration and behavior based on usage. State is stored in the Observer's JSON configuration.
+
+**Stage 4 Priority Rationale:**
+
+-   ✅ **SideVisibilityRule not needed** - `SideIdRule` already covers side filtering
+-   ✅ **TtlRule not needed** - Observer gets only active objects by default
+-   🎯 **Focus on stateful rules** - RequestLimitRule, TimeLimitRule
+-   🧪 **Combination testing** - ObjectIdRule + SideIdRule + stateful rules
+
+### 9.1 Stateful Rules Architecture
+
+```mermaid
+graph TD
+    A[Observer Request] --> B[Load Observer Rules JSON]
+    B --> C[Parse Rules Configuration]
+
+    C --> D{Stateful Rule?}
+    D -->|No| E[Apply Static Rule]
+    D -->|Yes| F[Check Rule State in JSON]
+
+    F --> G{Limit Exceeded?}
+    G -->|Yes| H[Apply Empty Query<br/>WHERE 1=0]
+    G -->|No| I[Update State Counter/Time]
+
+    I --> J[Apply Normal Rule Logic]
+    J --> K[Update Observer JSON Config]
+    K --> L[Save Observer to DB]
+
+    E --> M[Return Filtered Objects]
+    H --> N[Return Empty Array]
+    L --> M
+```
+
+### 9.2 StatefulRuleInterface
+
+**File: `src/Service/Rule/StatefulRuleInterface.php`**
+
+```php
+<?php
+
+namespace App\Service\Rule;
+
+interface StatefulRuleInterface extends RuleInterface
+{
+    /**
+     * Initialize rule state on first use
+     */
+    public function initializeRuleState(array $config): array;
+
+    /**
+     * Update state after rule usage
+     * Returns new state for saving in configuration
+     */
+    public function updateRuleState(array $config): array;
+}
+```
+
+### 9.3 RuleStateManager - Rule State Management
+
+**File: `src/Service/Rule/RuleStateManager.php`**
+
+```php
+<?php
+
+namespace App\Service\Rule;
+
+use App\Entity\Observer;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+
+interface RuleStateManagerInterface
+{
+    /**
+     * Process state of all rules for observer
+     * Returns updated rule configuration
+     */
+    public function processRulesState(Observer $observer, array $rulesConfig): array;
+}
+
+class RuleStateManager implements RuleStateManagerInterface
+{
+    public function __construct(
+        private RuleFactoryInterface $ruleFactory,
+        private EntityManagerInterface $entityManager,
+        private LoggerInterface $logger
+    ) {}
+
+    public function processRulesState(Observer $observer, array $rulesConfig): array
+    {
+        $configChanged = false;
+        $updatedConfig = $rulesConfig;
+
+        foreach ($rulesConfig as $ruleName => $config) {
+            $rule = $this->ruleFactory->getRule($ruleName);
+
+            if (!($rule instanceof StatefulRuleInterface)) {
+                continue; // Regular rule - skip
+            }
+
+            // Initialize state on first use
+            if (!isset($config['_state'])) {
+                $config['_state'] = $rule->initializeRuleState($config);
+                $updatedConfig[$ruleName] = $config;
+                $configChanged = true;
+
+                $this->logger->info('Rule state initialized', [
+                    'observer' => $observer->getName(),
+                    'rule' => $ruleName,
+                    'initial_state' => $config['_state']
+                ]);
+            }
+
+            // Update state (rule decides what to do with limits)
+            $newState = $rule->updateRuleState($config);
+            if ($newState !== $config['_state']) {
+                $updatedConfig[$ruleName]['_state'] = $newState;
+                $configChanged = true;
+
+                $this->logger->debug('Rule state updated', [
+                    'observer' => $observer->getName(),
+                    'rule' => $ruleName,
+                    'old_state' => $config['_state'],
+                    'new_state' => $newState
+                ]);
+            }
+        }
+
+        // Save updated configuration if needed
+        if ($configChanged) {
+            $observer->setRules($updatedConfig);
+            $this->entityManager->flush();
+
+            $this->logger->info('Observer rules configuration updated', [
+                'observer' => $observer->getName(),
+                'updated_rules' => array_keys($updatedConfig)
+            ]);
+        }
+
+        return $updatedConfig;
+    }
+}
+```
+
+### 9.4 Integration with ObserverRuleService
+
+**Update: `src/Service/ObserverRuleService.php`**
+
+```php
+<?php
+
+namespace App\Service;
+
+use App\Entity\Observer;
+use App\Exception\InvalidRuleConfigurationException;
+use App\Repository\GeoObjectRepository;
+use App\Service\Rule\RuleFactoryInterface;
+use App\Service\Rule\RuleStateManagerInterface;
+use Psr\Log\LoggerInterface;
+
+class ObserverRuleService
+{
+    public function __construct(
+        private GeoObjectRepository $geoObjectRepository,
+        private RuleFactoryInterface $ruleFactory,
+        private RuleStateManagerInterface $stateManager, // NEW
+        private LoggerInterface $logger
+    ) {}
+
+    public function getFilteredGeoObjects(Observer $observer): array
+    {
+        $rulesConfig = $observer->getRules();
+
+        if (empty($rulesConfig)) {
+            return $this->getDefaultGeoObjects($observer);
+        }
+
+        try {
+            // Process state of all rules
+            $updatedRulesConfig = $this->stateManager->processRulesState($observer, $rulesConfig);
+
+            // Apply all rules - they decide what to do with limits
+            return $this->applyRulesToObserver($observer, $updatedRulesConfig);
+
+        } catch (InvalidRuleConfigurationException $e) {
+            $this->logValidationError($observer, $rulesConfig, $e);
+            return $this->getDefaultGeoObjects($observer);
+        }
+    }
+
+    // ... other methods unchanged
+}
+```
+
+### 9.5 RequestLimitRule - Request Limit Rule
+
+**File: `src/Service/Rule/RequestLimitRule.php`**
+
+```php
+<?php
+
+namespace App\Service\Rule;
+
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * Request limit rule
+ * Blocks access after N uses
+ */
+class RequestLimitRule extends AbstractObserverRule implements StatefulRuleInterface
+{
+    public function initializeRuleState(array $config): array
+    {
+        return [
+            'currentCount' => 0,
+            'firstUsed' => (new \DateTime())->format('c'),
+            'lastUsed' => null
+        ];
+    }
+
+    public function updateRuleState(array $config): array
+    {
+        $state = $config['_state'];
+        $state['currentCount'] = ($state['currentCount'] ?? 0) + 1;
+        $state['lastUsed'] = (new \DateTime())->format('c');
+
+        return $state;
+    }
+
+    public function applyToQuery(QueryBuilder $queryBuilder, array $config): QueryBuilder
+    {
+        $maxRequests = $config['maxRequests'] ?? 10;
+        $currentCount = $config['_state']['currentCount'] ?? 0;
+
+        // Rule decides: limit exceeded or not
+        if ($currentCount >= $maxRequests) {
+            // Guaranteed empty result
+            return $queryBuilder->andWhere('1 = 0');
+        }
+
+        // Apply normal filtering logic (if any)
+        $allowedIds = $config['allowedIds'] ?? [];
+
+        if (!empty($allowedIds)) {
+            return $queryBuilder
+                ->andWhere('g.id IN (:requestLimitIds)')
+                ->setParameter('requestLimitIds', $allowedIds);
+        }
+
+        return $queryBuilder; // Don't change query
+    }
+
+    public function getPriority(): int
+    {
+        return 25; // Very high priority - check limits first
+    }
+
+    public static function getConfigSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'maxRequests' => [
+                    'type' => 'integer',
+                    'minimum' => 1,
+                    'maximum' => 1000
+                ],
+                'allowedIds' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'maxItems' => 100
+                ],
+                '_state' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'currentCount' => ['type' => 'integer'],
+                        'firstUsed' => ['type' => 'string', 'format' => 'date-time'],
+                        'lastUsed' => ['type' => ['string', 'null'], 'format' => 'date-time']
+                    ]
+                ]
+            ],
+            'required' => ['maxRequests'],
+            'additionalProperties' => false
+        ];
+    }
+}
+```
+
+### 9.6 TimeLimitRule - временное правило
+
+**File: `src/Service/Rule/TimeLimitRule.php`**
+
+```php
+<?php
+
+namespace App\Service\Rule;
+
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * Правило временного ограничения
+ * Активно только N минут после первого использования
+ */
+class TimeLimitRule extends AbstractObserverRule implements StatefulRuleInterface
+{
+    public function initializeRuleState(array $config): array
+    {
+        return [
+            'startTime' => (new \DateTime())->format('c'),
+            'lastUsed' => (new \DateTime())->format('c'),
+            'isExpired' => false
+        ];
+    }
+
+    public function updateRuleState(array $config): array
+    {
+        $state = $config['_state'];
+        $state['lastUsed'] = (new \DateTime())->format('c');
+
+        // Проверить истечение времени
+        $limitMinutes = $config['limitMinutes'] ?? 15;
+        $startTime = new \DateTime($state['startTime']);
+        $now = new \DateTime();
+
+        $diffMinutes = $now->diff($startTime)->i + ($now->diff($startTime)->h * 60);
+
+        if ($diffMinutes > $limitMinutes) {
+            $state['isExpired'] = true;
+        }
+
+        return $state;
+    }
+
+    public function applyToQuery(QueryBuilder $queryBuilder, array $config): QueryBuilder
+    {
+        $isExpired = $config['_state']['isExpired'] ?? false;
+
+        // Правило само решает: истекло время или нет
+        if ($isExpired) {
+            // Время истекло - пустой результат
+            return $queryBuilder->andWhere('1 = 0');
+        }
+
+        // Применить обычную логику фильтрации по сторонам
+        $allowedSideIds = $config['allowedSideIds'] ?? [];
+
+        if (!empty($allowedSideIds)) {
+            return $queryBuilder
+                ->leftJoin('g.side', 's')
+                ->andWhere('s.id IN (:timeLimitSideIds)')
+                ->setParameter('timeLimitSideIds', $allowedSideIds);
+        }
+
+        return $queryBuilder; // Не изменять запрос
+    }
+
+    public function getPriority(): int
+    {
+        return 30; // Очень высокий приоритет
+    }
+
+    public static function getConfigSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'limitMinutes' => [
+                    'type' => 'integer',
+                    'minimum' => 1,
+                    'maximum' => 1440 // Максимум сутки
+                ],
+                'allowedSideIds' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'integer',
+                        'minimum' => 1
+                    ],
+                    'maxItems' => 50
+                ],
+                '_state' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'startTime' => ['type' => 'string', 'format' => 'date-time'],
+                        'lastUsed' => ['type' => 'string', 'format' => 'date-time'],
+                        'isExpired' => ['type' => 'boolean']
+                    ]
+                ]
+            ],
+            'required' => ['limitMinutes'],
+            'additionalProperties' => false
+        ];
+    }
+}
+```
+
+### 9.7 Обновленная DI конфигурация
+
+```yaml
+# config/services.yaml
+services:
+    # ... существующие сервисы ...
+
+    # State Manager для stateful правил
+    App\Service\Rule\RuleStateManager:
+        arguments:
+            $ruleFactory: '@App\Service\Rule\RuleFactoryInterface'
+            $entityManager: '@doctrine.orm.entity_manager'
+            $logger: '@logger'
+
+    App\Service\Rule\RuleStateManagerInterface: '@App\Service\Rule\RuleStateManager'
+
+    # Обновленный Observer Rule Service
+    App\Service\ObserverRuleService:
+        arguments:
+            $geoObjectRepository: '@App\Repository\GeoObjectRepository'
+            $ruleFactory: '@App\Service\Rule\RuleFactoryInterface'
+            $stateManager: '@App\Service\Rule\RuleStateManagerInterface'
+            $logger: '@logger'
+
+    # Автоматическая регистрация всех правил (включая новые stateful)
+    App\Service\Rule\:
+        resource: '../src/Service/Rule/*'
+        exclude:
+            - '../src/Service/Rule/AbstractObserverRule.php'
+            - '../src/Service/Rule/*Interface.php'
+        tags: ['observer.rule']
+```
+
+### 9.8 Примеры конфигурации
+
+#### Лимит запросов:
+
+```json
+{
+    "RequestLimitRule": {
+        "maxRequests": 5,
+        "allowedIds": [1, 2, 3, 4, 5]
+    }
+}
+```
+
+#### Временное правило:
+
+```json
+{
+    "TimeLimitRule": {
+        "limitMinutes": 15,
+        "allowedSideIds": [1, 2, 3]
+    }
+}
+```
+
+#### Комбинированное использование:
+
+```json
+{
+    "RequestLimitRule": {
+        "maxRequests": 10
+    },
+    "TimeLimitRule": {
+        "limitMinutes": 30,
+        "allowedSideIds": [1, 2]
+    },
+    "SideIdRule": [1, 2, 3]
+}
+```
+
+### 9.9 Обработка race conditions
+
+Для предотвращения race conditions при одновременных запросах:
+
+```php
+// В RuleStateManager
+private function updateObserverWithLocking(Observer $observer, array $newRules): void
+{
+    $this->entityManager->beginTransaction();
+
+    try {
+        // Перезагрузить Observer для получения свежих данных
+        $this->entityManager->refresh($observer);
+
+        // Обновить правила
+        $observer->setRules($newRules);
+        $this->entityManager->flush();
+
+        $this->entityManager->commit();
+    } catch (\Exception $e) {
+        $this->entityManager->rollback();
+        $this->logger->error('Failed to update observer rules', [
+            'observer' => $observer->getName(),
+            'error' => $e->getMessage()
+        ]);
+        throw $e;
+    }
+}
+```
+
+### ✅ Stage 9 success criteria:
+
+-   [ ] StatefulRuleInterface корректно определен
+-   [ ] RuleStateManager управляет состоянием правил
+-   [ ] RequestLimitRule блокирует доступ после N запросов
+-   [ ] TimeLimitRule блокирует доступ после истечения времени
+-   [ ] Состояние сохраняется в JSON конфигурации Observer'а
+-   [ ] Правила сами решают применять пустой запрос или обычную логику
+-   [ ] Race conditions обрабатываются корректно
+-   [ ] Логирование изменений состояния работает
+-   [ ] JSON Schema валидация включает поля состояния
+-   [ ] Интеграция с существующей системой правил работает
+-   [ ] Производительность: обновление состояния < 100ms
+-   [ ] Безопасность: невозможно обойти лимиты через конфигурацию
+
+### 🎯 Применение динамических правил:
+
+1. **Демо-режимы** с ограниченным количеством просмотров
+2. **Временные разрешения** для наблюдателей
+3. **Rate limiting** для предотвращения злоупотреблений
+4. **A/B тестирование** с автоматическим истечением
+5. **Постепенный rollout** новых функций с временными ограничениями
+
+### 🔧 Архитектурные преимущества:
+
+-   **Простота хранения**: состояние в JSON конфигурации Observer'а
+-   **Атомарность**: обновление в одной транзакции
+-   **Гибкость**: правила сами решают как обрабатывать лимиты
+-   **Расширяемость**: легко добавлять новые типы stateful правил
+-   **Производительность**: минимум дополнительных запросов к БД
