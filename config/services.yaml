@@ -24,7 +24,7 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    # === Observer Rules System (Stage 1) ===
+    # === Observer Rules System (Stage 1-4) ===
 
     # Rule Factory - manages rule instances with validation and priority sorting
     App\Service\Rule\RuleFactory:
@@ -42,11 +42,13 @@ services:
         arguments:
             $logger: '@logger'
 
-    # Main Observer Rule Service (Stage 1 - validation + graceful fallback)
+    # Main Observer Rule Service (Integrated approach - single pass processing)
     App\Service\ObserverRuleService:
         arguments:
             $geoObjectRepository: '@App\Repository\GeoObjectRepository'
             $ruleFactory: '@App\Service\Rule\RuleFactoryInterface'
+            $configValidator: '@App\Service\Rule\RuleValidatorInterface'
+            $entityManager: '@doctrine.orm.entity_manager'
             $logger: '@logger'
 
     # Automatic registration of all rules with observer.rule tag

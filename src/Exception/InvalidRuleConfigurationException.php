@@ -1,33 +1,33 @@
 <?php
 
-/**
- * Exception thrown when rule configuration validation fails
- */
-
 namespace App\Exception;
 
-use Exception;
-
 /**
- * Invalid Rule Configuration Exception
+ * Exception thrown when rule configuration is invalid
  * 
- * Thrown when observer rule configuration fails validation
+ * This exception is used when JSON Schema validation fails
+ * or when rule configuration contains invalid data.
  */
-class InvalidRuleConfigurationException extends Exception
+class InvalidRuleConfigurationException extends \Exception
 {
+    private array $validationErrors = [];
+
     /**
-     * @param array $validationErrors Array of validation error messages
+     * Create exception with validation errors
+     * 
      * @param string $message Exception message
+     * @param array $validationErrors Array of validation error messages
      * @param int $code Exception code
-     * @param Exception|null $previous Previous exception
+     * @param \Throwable|null $previous Previous exception
      */
     public function __construct(
-        private array $validationErrors,
         string $message = 'Rule configuration validation failed',
+        array $validationErrors = [],
         int $code = 0,
-        ?Exception $previous = null
+        \Throwable $previous = null
     ) {
         parent::__construct($message, $code, $previous);
+        $this->validationErrors = $validationErrors;
     }
 
     /**
@@ -41,12 +41,14 @@ class InvalidRuleConfigurationException extends Exception
     }
 
     /**
-     * Get formatted error message with all validation errors
+     * Set validation errors
      * 
-     * @return string Formatted error message
+     * @param array $errors Array of validation error messages
+     * 
+     * @return void
      */
-    public function getDetailedMessage(): string
+    public function setValidationErrors(array $errors): void
     {
-        return $this->getMessage() . ': ' . implode(', ', $this->validationErrors);
+        $this->validationErrors = $errors;
     }
 }

@@ -55,7 +55,7 @@ class RuleConfigValidatorTest extends TestCase
 
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertEmpty($errors, 'Valid configuration should pass validation');
     }
@@ -70,16 +70,16 @@ class RuleConfigValidatorTest extends TestCase
         // Arrange
         $config = [];
         $schema = $this->createBasicSchema();
-
+        
         // Expect logger to be called
         $this->mockLogger
             ->expects($this->once())
             ->method('warning')
             ->with('Basic rule configuration validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $this->assertContains('Configuration cannot be empty', $errors);
@@ -108,10 +108,10 @@ class RuleConfigValidatorTest extends TestCase
             ->expects($this->once())
             ->method('warning')
             ->with('Basic rule configuration validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $this->assertStringContainsString('Rule name must be a non-empty string', implode(' ', $errors));
@@ -165,10 +165,10 @@ class RuleConfigValidatorTest extends TestCase
             ->expects($this->once())
             ->method('warning')
             ->with('JSON schema validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors, 'Invalid ObjectIdRule configuration should fail');
         
@@ -218,7 +218,7 @@ class RuleConfigValidatorTest extends TestCase
 
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $errorString = implode(' ', $errors);
@@ -243,10 +243,10 @@ class RuleConfigValidatorTest extends TestCase
             ->expects($this->once())
             ->method('warning')
             ->with('JSON schema validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $errorString = implode(' ', $errors);
@@ -272,10 +272,10 @@ class RuleConfigValidatorTest extends TestCase
             ->expects($this->once())
             ->method('warning')
             ->with('JSON schema validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $errorString = implode(' ', $errors);
@@ -325,7 +325,7 @@ class RuleConfigValidatorTest extends TestCase
 
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
         $errorString = implode(' ', $errors);
@@ -350,10 +350,10 @@ class RuleConfigValidatorTest extends TestCase
             ->expects($this->once())
             ->method('warning')
             ->with('JSON schema validation failed');
-
+        
         // Act
         $errors = $this->validator->validateWithSchema($config, $schema);
-
+        
         // Assert
         $this->assertNotEmpty($errors);
     }

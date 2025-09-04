@@ -126,7 +126,10 @@ class RuleFactory implements RuleFactoryInterface
         $validationErrors = $this->configValidator->validateWithSchema($config, $schema);
         
         if (!empty($validationErrors)) {
-            throw new InvalidRuleConfigurationException($validationErrors);
+            throw new InvalidRuleConfigurationException(
+                'Rule configuration validation failed',
+                $validationErrors
+            );
         }
     }
 

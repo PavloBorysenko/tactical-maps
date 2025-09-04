@@ -12,19 +12,24 @@ use App\Entity\Observer;
 use App\Exception\InvalidRuleConfigurationException;
 use App\Repository\GeoObjectRepository;
 use App\Service\Rule\RuleFactoryInterface;
+use App\Service\Rule\RuleValidatorInterface;
+use App\Service\Rule\StatefulRuleInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Observer Rule Service
  * 
- * Stage 1 implementation with validation and graceful fallback
- * Later stages will add actual rule application logic
+ * Integrated approach: handles rule creation, state management, validation and application
+ * in a single optimized flow without duplication
  */
 class ObserverRuleService
 {
     public function __construct(
         private GeoObjectRepository $geoObjectRepository,
         private RuleFactoryInterface $ruleFactory,
+        private RuleValidatorInterface $configValidator,
+        private EntityManagerInterface $entityManager,
         private LoggerInterface $logger
     ) {
     }
@@ -32,7 +37,7 @@ class ObserverRuleService
     /**
      * Get filtered geo objects for observer
      * 
-     * Stage 1: Validates rules configuration and logs, but falls back to default behavior
+     * Integrated approach: processes all rules in single pass - creation, state, validation, application
      * 
      * @param Observer $observer Observer entity with potential rules configuration
      * @return array Array of GeoObject entities
@@ -46,13 +51,63 @@ class ObserverRuleService
             return $this->getDefaultGeoObjects($observer);
         }
 
-        // Try to validate and create rules
         try {
-            $rules = $this->validateAndCreateRules($rulesConfig);
-            $this->logRulesValidated($observer, $rules);
+            // Single integrated processing loop
+            $processedRules = [];
+            $updatedConfig = $rulesConfig;
+            $configChanged = false;
             
-            // Apply rules using hybrid SQL+Memory approach
-            return $this->applyRulesToObserver($observer, $rules);
+            // Process each rule: create -> state -> validate -> prepare
+            foreach ($rulesConfig as $ruleName => $config) {
+                try {
+                    // 1. Create rule instance ONCE
+                    $rule = $this->ruleFactory->getRule($ruleName);
+                    
+                    if (!$rule) {
+                        $this->logger->warning("Rule not found: $ruleName");
+                        continue;
+                    }
+                    
+                    // 2. Process state (if stateful)
+                    if ($rule instanceof StatefulRuleInterface) {
+                        [$config, $stateChanged] = $this->processRuleState($rule, $config);
+                        
+                        if ($stateChanged) {
+                            $updatedConfig[$ruleName] = $config;
+                            $configChanged = true;
+                        }
+                    }
+                    
+                    // 3. Validate configuration
+                    $this->validateRuleConfig($rule, $config);
+                    
+                    // 4. Add to processed rules
+                    $processedRules[] = [
+                        'rule' => $rule,
+                        'config' => $config,
+                        'name' => $ruleName
+                    ];
+                    
+                } catch (\Exception $e) {
+                    $this->logger->error("Failed to process rule: $ruleName", [
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue with other rules
+                }
+            }
+            
+            // 5. Save configuration changes if any
+            if ($configChanged) {
+                $this->saveObserverConfiguration($observer, $updatedConfig);
+            }
+            
+            // 6. Apply all processed rules
+            $this->logger->debug('Rules processed successfully', [
+                'observer' => $observer->getName(),
+                'rules_count' => count($processedRules)
+            ]);
+            
+            return $this->applyProcessedRules($observer, $processedRules);
             
         } catch (InvalidRuleConfigurationException $e) {
             $this->logValidationError($observer, $rulesConfig, $e);
@@ -72,40 +127,114 @@ class ObserverRuleService
     }
 
     /**
-     * Validate rules configuration and create rule instances
+     * Process rule state (initialize or update)
      * 
-     * @param array $rulesConfig Rules configuration from observer
-     * @return array Array of validated rule instances
+     * @param StatefulRuleInterface $rule Rule instance
+     * @param array $config Rule configuration
+     * @return array [updated_config, state_changed]
+     */
+    private function processRuleState(StatefulRuleInterface $rule, array $config): array
+    {
+        $stateChanged = false;
+        
+        // Initialize state on first use
+        if (!isset($config['_state'])) {
+            $config['_state'] = $rule->initializeRuleState($config);
+            $stateChanged = true;
+            
+            $this->logger->info('Rule state initialized', [
+                'rule' => $rule->getName(),
+                'initial_state' => $config['_state']
+            ]);
+        }
+        
+        // Update state
+        $newState = $rule->updateRuleState($config);
+        if ($newState !== $config['_state']) {
+            $config['_state'] = $newState;
+            $stateChanged = true;
+            
+            $this->logger->debug('Rule state updated', [
+                'rule' => $rule->getName(),
+                'new_state' => $newState
+            ]);
+        }
+        
+        return [$config, $stateChanged];
+    }
+    
+    /**
+     * Validate rule configuration using JSON Schema
+     * 
+     * @param \App\Service\Rule\RuleInterface $rule Rule instance
+     * @param array $config Rule configuration
      * @throws InvalidRuleConfigurationException If validation fails
      */
-    private function validateAndCreateRules(array $rulesConfig): array
+    private function validateRuleConfig($rule, array $config): void
     {
-        return $this->ruleFactory->createRulesFromConfig($rulesConfig);
+        // Create temporary config for validation
+        $tempConfig = [$rule->getName() => $config];
+        
+        // Build schema for this specific rule
+        $schema = (object) [
+            'type' => 'object',
+            'properties' => (object) [
+                $rule->getName() => $rule::getConfigSchema()
+            ],
+            'additionalProperties' => false
+        ];
+        
+        $errors = $this->configValidator->validateWithSchema($tempConfig, $schema);
+        
+        if (!empty($errors)) {
+            throw new InvalidRuleConfigurationException(
+                "Rule configuration invalid: " . $rule->getName(),
+                $errors
+            );
+        }
     }
-
+    
     /**
-     * Log successful rules validation (only in debug mode)
+     * Save updated observer configuration
      * 
      * @param Observer $observer Observer entity
-     * @param array $rules Validated rules
-     * @return void
+     * @param array $config Updated rules configuration
      */
-    private function logRulesValidated(Observer $observer, array $rules): void
+    private function saveObserverConfiguration(Observer $observer, array $config): void
     {
-        $this->logger->debug('Rules validated successfully (Stage 1)', [
-            'observer' => $observer->getName(),
-            'rules_count' => count($rules)
-        ]);
+        try {
+            $this->entityManager->beginTransaction();
+            
+            // Refresh observer to prevent race conditions
+            $this->entityManager->refresh($observer);
+            $observer->setRules($config);
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+            
+            $this->logger->info('Observer configuration updated', [
+                'observer' => $observer->getName()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->entityManager->rollback();
+            
+            $this->logger->error('Failed to save observer configuration', [
+                'observer' => $observer->getName(),
+                'error' => $e->getMessage()
+            ]);
+            
+            throw $e;
+        }
     }
 
     /**
-     * Apply rules to observer using hybrid SQL+Memory approach
+     * Apply processed rules to observer using hybrid SQL+Memory approach
      * 
      * @param Observer $observer Observer entity
-     * @param array $rules Validated rules array
+     * @param array $processedRules Array of processed rules with their configurations
      * @return array Array of filtered GeoObject entities
      */
-    private function applyRulesToObserver(Observer $observer, array $rules): array
+    private function applyProcessedRules(Observer $observer, array $processedRules): array
     {
         $map = $observer->getMap();
         
@@ -116,7 +245,7 @@ class ObserverRuleService
             ->setParameter('map', $map);
         
         // Apply SQL-compatible rules to QueryBuilder
-        foreach ($rules as $ruleData) {
+        foreach ($processedRules as $ruleData) {
             $rule = $ruleData['rule'];
             $config = $ruleData['config'];
             
@@ -124,16 +253,16 @@ class ObserverRuleService
         }
         
         // Execute SQL query to get pre-filtered objects
-        $geoObjects = $queryBuilder->getQuery()->getResult();
+        $geoObjects = $queryBuilder->getQuery()->getResult() ?? [];
         
         $this->logger->debug('SQL phase completed', [
             'observer' => $observer->getName(),
             'objects_after_sql' => count($geoObjects),
-            'applied_rules' => count($rules)
+            'applied_rules' => count($processedRules)
         ]);
         
         // Phase 2: Memory-level filtering for complex rules
-        foreach ($rules as $ruleData) {
+        foreach ($processedRules as $ruleData) {
             $rule = $ruleData['rule'];
             $config = $ruleData['config'];
             
@@ -143,11 +272,13 @@ class ObserverRuleService
         $this->logger->info('Rules applied successfully', [
             'observer' => $observer->getName(),
             'final_objects_count' => count($geoObjects),
-            'rules_applied' => count($rules)
+            'rules_applied' => count($processedRules)
         ]);
         
         return $geoObjects;
     }
+
+
 
     /**
      * Log validation error

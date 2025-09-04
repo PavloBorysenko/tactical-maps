@@ -533,7 +533,7 @@ class GeoObjectRepository extends ServiceEntityRepository
                         
                     default:
                         // Unsupported geometry type
-                        continue;
+                        continue 2;
                 }
                 
                 if ($geoObject) {
