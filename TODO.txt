@@ -1,4 +1,4 @@
-create  rules functionality 
+maybe change rules creation from json, store rule name as class name
 add function on geoobject to observer
 create page to add rules
 create action functionality
